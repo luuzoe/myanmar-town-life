@@ -83,7 +83,7 @@ const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500)
 const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun);
-const moon = new THREE.Mesh(new THREE.SphereGeometry(2,12,10), new THREE.MeshBasicMaterial({color:0xfffde7}));
+const moon = new THREE.Mesh(new THREE.SphereGeometry(5,12,10), new THREE.MeshBasicMaterial({color:0xfffde7}));
 scene.add(moon);
 const mats = {};
 function M(c){ if(!mats[c]) mats[c] = new THREE.MeshLambertMaterial({color:c}); return mats[c]; }
@@ -418,7 +418,9 @@ function animate(now){
   sun.intensity = 0.25 + dayF * 1.0;
   sun.position.set(Math.cos(angle)*60, 10 + dayF*50, 20);
   hemi.intensity = 0.3 + dayF * 0.8;
-  moon.position.set(-Math.cos(angle)*60, 10 + (1-dayF)*50, -20);
+  // moon: night only, far up in the sky relative to the player (never a low ball in daytime)
+  moon.visible = dayF < 0.5;
+  moon.position.set(player.g.position.x - Math.cos(angle)*120, 70, player.g.position.z - 60);
   const timeText = phase < 0.5 ? (dayF > 0.7 ? '🌞 နေ့' : '🌅 နံနက်/ညနေ') : '🌙 ည';
   if(timeText !== lastTimeText){ lastTimeText = timeText; timeEl.textContent = timeText; }
   // camera-relative input: joystick/keyboard up = away from camera, right = screen right
