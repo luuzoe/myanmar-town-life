@@ -16,12 +16,14 @@
   #msg{position:fixed;top:88px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:10;display:none;max-width:92vw;text-align:center}
   #joy{position:fixed;left:16px;bottom:16px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
   #knob{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9)}
-  #btns{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:10;align-items:center}
-  #actLabel{background:rgba(0,0,0,.6);color:#fff;padding:4px 8px;border-radius:10px;font-size:12px;text-align:center;max-width:96px;min-height:18px}
-  #btns button{width:60px;height:60px;border-radius:50%;border:none;font-size:14px;font-weight:700;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.35)}
-  #act{background:#2e7d32}
-  #bikeBtn{background:#1565c0;font-size:22px}
-  #shopBtn{background:#ef6c00;font-size:22px}
+  #btns{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:row;gap:8px;z-index:10;align-items:flex-end}
+  #actWrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+  #actLabel{background:rgba(0,0,0,.6);color:#fff;padding:4px 8px;border-radius:10px;font-size:12px;text-align:center;max-width:120px;min-height:18px}
+  #btns button{width:50px;height:50px;border-radius:50%;border:none;font-size:14px;font-weight:700;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.35)}
+  #btns #act{background:#2e7d32;border-radius:16px;width:70px;font-size:17px}
+  #btns #bikeBtn{background:#1565c0;font-size:22px}
+  #btns #shopBtn{background:#ef6c00;font-size:22px}
+  @media(max-width:700px) and (orientation:portrait){#btns{bottom:140px}}
   #btns button:disabled{opacity:.45}
   #start{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
   #start .card{background:#fff;border-radius:20px;padding:18px;max-width:360px;width:100%;text-align:center}
@@ -52,12 +54,11 @@
 </div>
 <div id="job"><span id="jobText">ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ</span></div>
 <div id="msg"></div>
-<div id="hint">ကွန်ပျူတာ — WASD / မြှား၊ E = လုပ်ဆောင်ချက်၊ B = ဆိုင်ကယ်</div>
+<div id="hint">ကွန်ပျူတာ — WASD / မြှား၊ E = လုပ်ဆောင်ချက်၊ B = ဆိုင်ကယ်၊ မျက်နှာပြင်ဆွဲ / ↺ ↻ = ကင်မရာလှည့်</div>
 <div id="joy"><div id="knob"></div></div>
 <div id="btns">
-  <div id="actLabel"></div>
-  <button id="act">လုပ်</button>
   <button id="bikeBtn">🏍️</button>
+  <div id="actWrap"><div id="actLabel"></div><button id="act">လုပ်</button></div>
   <button id="shopBtn">🛒</button>
 </div>
 <button id="rotL">↺</button><button id="rotR">↻</button>
@@ -519,17 +520,17 @@ function playBird(){
 // player
 const player = makePerson(0x1565c0, 0x37474f, {skin:0xe8b88a, detailed:true});
 scene.add(player.g);
-player.g.position.set(0,0,10); player.g.scale.setScalar(1.15); player.g.rotation.y = Math.PI;
+player.g.position.set(0,0,10); player.g.scale.setScalar(1.05); player.g.rotation.y = Math.PI;
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
-bx(0.35,0.25,1.7,0xd32f2f,0,0.5,0,bikeG);
-bx(0.5,0.15,0.5,0x212121,0,0.7,-0.3,bikeG);
+bx(0.5,0.3,2.4,0xd32f2f,0,0.5,0,bikeG);
+bx(0.6,0.2,0.6,0x212121,0,0.7,-0.4,bikeG);
 (function(){
-  for(const wz of [-0.75,0.75]){
+  for(const wz of [-1.0,1.0]){
     const w = new THREE.Mesh(new THREE.TorusGeometry(0.45,0.09,8,16), M(0x212121));
     w.position.set(0,0.45,wz); w.rotation.y = Math.PI/2; bikeG.add(w);
   }
-  const hb = cyl(0.05,0.05,0.9,0x9e9e9e,0,0.95,0.85,bikeG); hb.rotation.z = Math.PI/2;
-  bx(0.5,0.4,0.4,0x8d6e63,0,0.75,1.05,bikeG);
+  const hb = cyl(0.05,0.05,0.9,0x9e9e9e,0,0.95,1.2,bikeG); hb.rotation.z = Math.PI/2;
+  bx(0.5,0.4,0.4,0x8d6e63,0,0.75,1.4,bikeG);
 })();
 // ---- people: road walkers, yard orbiters, school kids, workers ----
 const intersections = [];
@@ -883,7 +884,9 @@ function animate(now){
   for(const f of foam){ f.position.z += dt*4; if(f.position.z > 130) f.position.z = -130; }
   for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
   const n = nearest();
-  document.getElementById('actLabel').textContent = n ? n.label : '';
+  const actLabelEl = document.getElementById('actLabel');
+  actLabelEl.textContent = n ? n.label : '';
+  actLabelEl.style.display = n ? 'block' : 'none';
   actBtn.textContent = 'လုပ်';
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
