@@ -62,7 +62,7 @@
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p><b>အပြင်ကမြို့ရွာလို ပြည့်စုံတဲ့ မြို့ — အိမ်၊ ကျောင်း၊ ဆေးခန်း၊ လက်ဖက်ရည်ဆိုင်၊ ဘုန်းကြီးကျောင်း၊ ဘောလုံးကွင်း၊ ကားဂိတ်၊ တိရစ္ဆာန်တွေ၊ ကားတွေ။</b></p>
   <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (ခြင်းကြီးရင် ၁၅၀၀)</p>
-  <p>လမ်းလျှောက် အလယ်အလတ် (၁၀.၅) — လူတယောက်လို လျှောက်တဲ့အမြန်နှုန်း၊ ဆိုင်ကယ် ၁၈/၂၆။ ကင်မရာ လူနောက်ကို တိုက်ရိုက်လိုက်တယ်၊ အောက်ကို စောင်းမနေတော့ဘူး။ ↺ ↻ နဲ့ မျက်နှာပြင်ဆွဲပြီး လှည့်ပါ။<br>နေ့/ည ၃ မိနစ်တစ်ပတ်။</p>
+  <p>လမ်းလျှောက် အလယ်အလတ် (၁၀.၅)၊ ဆိုင်ကယ် ၁၈/၂၆။ ကင်မရာ လူနောက်ကို တိုက်ရိုက်လိုက်တယ်။ ဖုန်းမှာ အလိုလို ပေါ့ပါးတဲ့ mode၊ ကွန်ပျူတာမှာ အရိပ်ပါတဲ့ mode နဲ့ နှစ်မျိုးလုံး ချောချောဆော့လို့ရတယ်။ ↺ ↻ နဲ့ မျက်နှာပြင်ဆွဲပြီး လှည့်ပါ။<br>နေ့/ည ၃ မိနစ်တစ်ပတ်။</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="landscapeBtn" style="background:#1565c0">⤢ Landscape နဲ့ ဆော့မယ်</button>
 </div></div>
@@ -76,10 +76,11 @@
 <script type="module">
 import * as THREE from 'three';
 const canvas = document.getElementById('game');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+const isMobile = innerWidth <= 700;
+const renderer = new THREE.WebGLRenderer({canvas, antialias:!isMobile});
+renderer.setPixelRatio(isMobile ? 1 : Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = !isMobile;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const skyColor = new THREE.Color(0x87ceeb);
@@ -90,7 +91,7 @@ const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500)
 const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
-sun.castShadow = true;
+sun.castShadow = !isMobile;
 sun.shadow.mapSize.set(1024, 1024);
 sun.shadow.camera.left = -130; sun.shadow.camera.right = 130;
 sun.shadow.camera.top = 130; sun.shadow.camera.bottom = -130;
@@ -104,7 +105,12 @@ function M(c){ if(!mats[c]) mats[c] = new THREE.MeshLambertMaterial({color:c}); 
 function mesh(geo, color, x, y, z, parent){
   const m = new THREE.Mesh(geo, M(color));
   m.position.set(x, y, z); (parent || scene).add(m);
-  m.castShadow = true; m.receiveShadow = true; return m;
+  m.castShadow = !isMobile; m.receiveShadow = !isMobile; return m;
+}
+function blobShadow(parent, rx, rz){
+  if(!isMobile) return;
+  const b = new THREE.Mesh(new THREE.CircleGeometry(1,16), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.25, depthWrite:false}));
+  b.rotation.x = -Math.PI/2; b.scale.set(rx, rz, 1); b.position.y = 0.02; parent.add(b);
 }
 function bx(w,h,d,color,x,y,z,parent){ return mesh(new THREE.BoxGeometry(w,h,d), color, x, y, z, parent); }
 function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,10,8), color, x, y, z, parent); }
@@ -112,7 +118,7 @@ function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry
 function cap(r,len,color,x,y,z,parent){
   const m = new THREE.Mesh(new THREE.CapsuleGeometry(r,len,4,10), M(color));
   m.position.set(x,y,z); (parent || scene).add(m);
-  m.castShadow = true; m.receiveShadow = true; return m;
+  m.castShadow = !isMobile; m.receiveShadow = !isMobile; return m;
 }
 function signMesh(text, bg, fg, x, y, z, w, h, fs){
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
@@ -124,7 +130,7 @@ function signMesh(text, bg, fg, x, y, z, w, h, fs){
 }
 // ---- map ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(260,260), M(0x6fbf5a));
-ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = !isMobile; scene.add(ground);
 const roadLines = [-80,-40,0,40,80];
 for(const r of roadLines){
   bx(260,0.1,7,0x444444,0,0.05,r);
@@ -371,6 +377,7 @@ function makePerson(shirt, pants, opts){
     const beard = sph(0.17,0x212121,0,-0.16,0.15,head); beard.scale.set(1,0.7,0.6);
   }
   if(opts.hat) mesh(new THREE.ConeGeometry(0.38,0.25,12), 0xffd54f, 0, 0.32, 0, head);
+  blobShadow(g, 0.7, 0.7);
   return {g, thighL:legL.hip, thighR:legR.hip, shinL:legL.knee, shinR:legR.knee, upperL:armL.shoulder, upperR:armR.shoulder, foreL:armL.elbow, foreR:armR.elbow, head, eyes};
 }
 function animatePerson(p, moving, walkPhase, globalTime, riding){
@@ -503,6 +510,7 @@ function makeDog(color){
   bx(0.06,0.10,0.06,color,-0.08,0.52,0.30,g); bx(0.06,0.10,0.06,color,0.08,0.52,0.30,g);
   bx(0.28,0.06,0.06,color,0,0.35,-0.32,g);
   for(const lx of [-0.18,0.18]) for(const lz of [-0.12,0.12]) cyl(0.05,0.05,0.25,color,lx,0.12,lz,g);
+  blobShadow(g, 0.5, 0.4);
   return g;
 }
 function makeChicken(color){
@@ -510,6 +518,7 @@ function makeChicken(color){
   sph(0.20,color,0,0.28,0,g);
   sph(0.11,color,0,0.48,0.12,g);
   mesh(new THREE.ConeGeometry(0.05,0.12,6), 0xff9800, 0, 0.48, 0.26, g).rotation.x = Math.PI/2;
+  blobShadow(g, 0.3, 0.3);
   return g;
 }
 function makeCow(){
@@ -518,6 +527,7 @@ function makeCow(){
   bx(0.3,0.3,0.3,0x212121,0.3,0.9,0.2,g); bx(0.3,0.3,0.3,0x212121,-0.4,0.7,-0.1,g);
   bx(0.45,0.45,0.45,0xffffff,0,0.75,0.75,g);
   for(const lx of [-0.4,0.4]) for(const lz of [-0.25,0.25]) cyl(0.09,0.09,0.45,0xffffff,lx,0.22,lz,g);
+  blobShadow(g, 0.9, 0.6);
   return g;
 }
 const animals = [];
@@ -537,6 +547,7 @@ function makeCar(color){
   for(const wx of [-0.95,0.95]) for(const wz of [-1.0,1.0]){
     const w = cyl(0.32,0.32,0.25,0x212121,wx,0.32,wz,g); w.rotation.z = Math.PI/2;
   }
+  blobShadow(g, 1.1, 1.8);
   return g;
 }
 const cars = [];
@@ -552,6 +563,7 @@ bx(2.6,0.7,7.5,0x90caf9,0,1.7,0,bus);
 for(const wx of [-1.3,1.3]) for(const wz of [-3,-1,1,3]){
   const w = cyl(0.5,0.5,0.3,0x212121,wx,0.5,wz,bus); w.rotation.z = Math.PI/2;
 }
+blobShadow(bus, 1.6, 4.5);
 bus.position.set(0,0,-80); scene.add(bus);
 const busRoute = [{x:0,z:-80},{x:80,z:-80},{x:80,z:80},{x:-80,z:80},{x:-80,z:-80},{x:0,z:-80}];
 let busIdx = 1;
