@@ -392,13 +392,13 @@ function animate(now){
   // NPCs walk Manhattan-style along roads
   for(const n of npcs){
     const tx = n.target.x, tz = n.target.z;
-    const px = n.p.position.x, pz = n.p.position.z;
+    const px = n.p.g.position.x, pz = n.p.g.position.z;
     let mx = 0, mz = 0;
     if(Math.abs(tx-px) > 0.6) mx = Math.sign(tx-px);
     else if(Math.abs(tz-pz) > 0.6) mz = Math.sign(tz-pz);
     else { n.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
-    n.p.position.x += mx*n.speed*dt; n.p.position.z += mz*n.speed*dt;
-    n.p.rotation.y = Math.atan2(mx,mz);
+    n.p.g.position.x += mx*n.speed*dt; n.p.g.position.z += mz*n.speed*dt;
+    n.p.g.rotation.y = Math.atan2(mx,mz);
     animatePerson(n.p, true, now/1000 + px);
   }
   for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
