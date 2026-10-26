@@ -157,6 +157,8 @@ function house(x,z,wall,roof){
   bx(5,0.9,0.25,0xffffff,x-4,0.45,z+7.5);
   bx(5,0.9,0.25,0xffffff,x+4,0.45,z+7.5);
   colliders.push({x,z,r:8});
+  colliders.push({x:x-4,z:z+7.5,r:2.5,cam:false});
+  colliders.push({x:x+4,z:z+7.5,r:2.5,cam:false});
 }
 const houseList = [
   [-18,-18,0xfff2cc,0xb3402a],[18,-18,0xddeeff,0x37474f],[-18,18,0xffe0e0,0xb3402a],[18,18,0xe0ffe0,0x6d4c41],
@@ -185,6 +187,8 @@ cyl(0.08,0.08,6,0x455a64,-118,3,70);
 bx(2,1.2,0.1,0xe53935,-117,5.5,70);
 bx(10,0.9,0.25,0xffffff,-110,0.45,72);
 bx(10,0.9,0.25,0xffffff,-90,0.45,72);
+colliders.push({x:-110,z:72,r:5,cam:false});
+colliders.push({x:-90,z:72,r:5,cam:false});
 cyl(0.1,0.1,2,0x455a64,-94,1,72); cyl(0.1,0.1,2,0x455a64,-91,1,72);
 bx(0.1,0.1,3,0x455a64,-92.5,2,72);
 colliders.push({x:-100,z:60,r:16});
@@ -201,6 +205,8 @@ bx(2,0.6,0.1,0xe53935,100,6,-13);
 bx(0.6,2,0.1,0xe53935,100,6,-13);
 bx(12,0.9,0.25,0xffffff,90,0.45,-8);
 bx(12,0.9,0.25,0xffffff,110,0.45,-8);
+colliders.push({x:90,z:-8,r:6,cam:false});
+colliders.push({x:110,z:-8,r:6,cam:false});
 colliders.push({x:100,z:-20,r:14});
 // ---- NEW: tea shop, grocery, town hall, monastery, football field, bus station ----
 function shopBuilding(x,z,w,h,d,wall,roof,sign,signBg,signFg,fs){
@@ -567,7 +573,7 @@ const schoolKids = [];
 for(let i=0;i<4;i++){
   const p = makePerson([0xe53935,0x1565c0,0x43a047,0xf9a825][i], 0x37474f, {skin:skins[i%4]});
   p.g.scale.setScalar(0.7); p.g.position.set(-105+i*3, 0, 70); scene.add(p.g);
-  schoolKids.push({p, target:{x:-108+Math.random()*16, z:67+Math.random()*8}});
+  schoolKids.push({p, target:{x:-108+Math.random()*16, z:68+Math.random()*3}});
 }
 const staticPeople = [];
 function staticPerson(shirt, x, z, rotY, opts){
@@ -610,13 +616,22 @@ function makeCow(){
   return g;
 }
 const animals = [];
+function pickAnimalTarget(area){
+  let tx = area.xmin, tz = area.zmin, tries = 0;
+  do {
+    tx = area.xmin+Math.random()*(area.xmax-area.xmin);
+    tz = area.zmin+Math.random()*(area.zmax-area.zmin);
+    tries++;
+  } while(tries < 20 && colliders.some(c=>Math.hypot(tx-c.x, tz-c.z) < c.r+1));
+  return {x:tx, z:tz};
+}
 function addAnimal(g, area, speed){
   scene.add(g);
-  animals.push({g, area, speed, target:{x:area.xmin+Math.random()*(area.xmax-area.xmin), z:area.zmin+Math.random()*(area.zmax-area.zmin)}});
+  animals.push({g, area, speed, target:pickAnimalTarget(area)});
 }
 for(let i=0;i<3;i++){ const d = makeDog(0x8d6e63); d.position.set(-20+i*4,0,24); addAnimal(d, {xmin:-28,xmax:-8,zmin:14,zmax:30}, 2.0); }
 for(let i=0;i<4;i++){ const c = makeChicken(i%2?0xffffff:0x8d6e63); c.position.set(-22+i*2,0,-30); addAnimal(c, {xmin:-26,xmax:-10,zmin:-38,zmax:-26}, 1.5); }
-for(let i=0;i<2;i++){ const cow = makeCow(); cow.position.set(-95+i*6,0,-92); addAnimal(cow, {xmin:-108,xmax:-88,zmin:-108,zmax:-88}, 1.2); }
+for(let i=0;i<2;i++){ const cow = makeCow(); cow.position.set(-114+i*4,0,-100); addAnimal(cow, {xmin:-118,xmax:-110,zmin:-110,zmax:-90}, 1.2); }
 // ---- vehicles: cars on roads, bus loop, parked bikes ----
 function makeCar(color){
   const g = new THREE.Group();
@@ -808,7 +823,7 @@ function drawMinimap(){
   ctx.fillStyle = '#ef6c00'; ctx.fillRect(mx(95)-2, my(-72)-2, 4, 4);
   ctx.fillStyle = '#2e7d32'; ctx.fillRect(mx(12)-2, my(-32)-2, 4, 4);
   if(delivery){ ctx.fillStyle = '#ffeb3b'; ctx.fillRect(mx(delivery.x)-2, my(delivery.z)-2, 4, 4); }
-  else if(shopBeacon.position.y >= 0){ ctx.fillStyle = '#2e7d32'; ctx.fillRect(mx(12)-2, my(-32)-2, 4, 4); }
+  else { ctx.fillStyle = '#2e7d32'; ctx.fillRect(mx(12)-2, my(-32)-2, 4, 4); }
   ctx.fillStyle = '#ec407a';
   for(const p of [...npcs.map(n=>n.p), ...yardPeople.map(y=>y.p), ...schoolKids.map(k=>k.p), ...staticPeople]) ctx.fillRect(mx(p.g.position.x)-1, my(p.g.position.z)-1, 2, 2);
   const px = mx(player.g.position.x), py = my(player.g.position.z);
@@ -903,7 +918,7 @@ function animate(now){
   }
   for(const k of schoolKids){
     const dx2 = k.target.x - k.p.g.position.x, dz2 = k.target.z - k.p.g.position.z, d2 = Math.hypot(dx2,dz2);
-    if(d2 < 1){ k.target = {x:-108+Math.random()*16, z:67+Math.random()*8}; }
+    if(d2 < 1){ k.target = {x:-108+Math.random()*16, z:68+Math.random()*3}; }
     else {
       k.p.g.position.x += dx2/d2*3.5*dt; k.p.g.position.z += dz2/d2*3.5*dt;
       turnTo(k.p.g, Math.atan2(dx2,dz2), dt, 8);
@@ -913,11 +928,16 @@ function animate(now){
   for(const p of staticPeople) animatePerson(p, false, 0, gt, false);
   for(const a of animals){
     const dx2 = a.target.x - a.g.position.x, dz2 = a.target.z - a.g.position.z, d2 = Math.hypot(dx2,dz2);
-    if(d2 < 1){ a.target = {x:a.area.xmin+Math.random()*(a.area.xmax-a.area.xmin), z:a.area.zmin+Math.random()*(a.area.zmax-a.area.zmin)}; }
+    if(d2 < 1){ a.target = pickAnimalTarget(a.area); }
     else {
       a.g.position.x += dx2/d2*a.speed*dt; a.g.position.z += dz2/d2*a.speed*dt;
       turnTo(a.g, Math.atan2(dx2,dz2), dt, 8);
       a.g.position.y = Math.abs(Math.sin(gt*6))*0.05;
+    }
+    // animals no longer walk through houses, pond, trees, fences or stream
+    for(const c of colliders){
+      const adx = a.g.position.x-c.x, adz = a.g.position.z-c.z, ad = Math.hypot(adx,adz);
+      if(ad < c.r+0.5 && ad > 0.01){ a.g.position.x = c.x + adx/ad*(c.r+0.5); a.g.position.z = c.z + adz/ad*(c.r+0.5); }
     }
   }
   for(const car of cars){
@@ -950,9 +970,9 @@ function animate(now){
   actBtn.textContent = 'လုပ်';
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
-  if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
+  if(delivery) beacon.position.y = Math.sin(now/300)*0.6;
   shopBeacon.rotation.y += dt*2;
-  if(shopBeacon.position.y >= 0) shopBeacon.position.y = Math.sin(now/300)*0.6;
+  if(!delivery) shopBeacon.position.y = Math.sin(now/300)*0.6;
   if(++mapFrame % 3 === 0) drawMinimap();
   // smooth rot-button turn: camYaw glides to target, never snaps 45 degrees at once
   {
