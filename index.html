@@ -86,9 +86,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const skyColor = new THREE.Color(0x87ceeb);
 scene.background = skyColor;
-scene.fog = new THREE.Fog(0x87ceeb, 120, 420);
+scene.fog = new THREE.Fog(0x87ceeb, 150, 700);
 const nightColor = new THREE.Color(0x0b1026), dayColor = new THREE.Color(0x87ceeb);
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 800);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
@@ -130,8 +130,8 @@ function signMesh(text, bg, fg, x, y, z, w, h, fs){
   sign.position.set(x,y,z); scene.add(sign); return sign;
 }
 // ---- map ----
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(400,260), M(0x6fbf5a));
-ground.rotation.x = -Math.PI/2; ground.position.set(70,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(560,260), M(0x6fbf5a));
+ground.rotation.x = -Math.PI/2; ground.position.set(145,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
 const roadLines = [-80,-40,0,40,80];
 for(const r of roadLines){
   bx(260,0.1,7,0x444444,0,0.05,r);
@@ -143,17 +143,17 @@ for(let d=-110; d<=110; d+=20){
 }
 const colliders = [];
 function house(x,z,wall,roof){
-  bx(8.4,0.5,7,0x9e9e9e,x,0.25,z);
-  bx(8,4.2,6,wall,x,2.6,z);
-  const r = mesh(new THREE.ConeGeometry(6.2,2.8,4), roof, x, 6.1, z);
+  bx(12.4,0.5,10,0x9e9e9e,x,0.25,z);
+  bx(12,6,9,wall,x,3.5,z);
+  const r = mesh(new THREE.ConeGeometry(9,3.5,4), roof, x, 8.25, z);
   r.rotation.y = Math.PI/4; r.scale.x = 1.3;
-  bx(1.3,2.6,0.15,0x6d4c41,x,1.8,z+3.05);
-  for(const wx of [-2.5,2.5]){
-    bx(1.4,1.4,0.12,0x90caf9,wx+x,2.9,z+3.05);
+  bx(1.3,2.6,0.15,0x6d4c41,x,1.8,z+4.55);
+  for(const wx of [-3.5,3.5]){
+    bx(2,2,0.12,0x90caf9,wx+x,3.5,z+4.55);
   }
-  bx(3.4,0.9,0.25,0xffffff,x-2.7,0.45,z+5.5);
-  bx(3.4,0.9,0.25,0xffffff,x+2.7,0.45,z+5.5);
-  colliders.push({x,z,r:5.5});
+  bx(5,0.9,0.25,0xffffff,x-4,0.45,z+7.5);
+  bx(5,0.9,0.25,0xffffff,x+4,0.45,z+7.5);
+  colliders.push({x,z,r:8});
 }
 const houseList = [
   [-18,-18,0xfff2cc,0xb3402a],[18,-18,0xddeeff,0x37474f],[-18,18,0xffe0e0,0xb3402a],[18,18,0xe0ffe0,0x6d4c41],
@@ -164,38 +164,41 @@ const houseList = [
   [55,-65,0xffe0e0,0x37474f],[55,-25,0xe0ffe0,0xb3402a],[55,15,0xf5f5f5,0x6d4c41],[55,55,0xfff8dc,0x37474f],
   [-95,-55,0xfff2cc,0xb3402a],[-95,25,0xddeeff,0x6d4c41],[95,-55,0xffe0e0,0xb3402a],[95,25,0xe0ffe0,0x37474f],
   [-55,-95,0xf5f5f5,0xb3402a],[25,-95,0xfff8dc,0x6d4c41],[-55,95,0xfff2cc,0x37474f],[25,95,0xddeeff,0xb3402a],
-  [-95,-95,0xffe0e0,0x6d4c41]
+  [-95,-95,0xffe0e0,0x6d4c41],
+  [15,110,0xfff2cc,0xb3402a],[-15,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-10,0xe0ffe0,0xb3402a]
 ];
 for(const h of houseList) house(h[0],h[1],h[2],h[3]);
-// ---- school, clinic ----
-bx(16,0.5,10,0x9e9e9e,-100,0.25,60);
-bx(15,5,9,0xfff9c4,-100,3.0,60);
-bx(16,0.4,10,0x1565c0,-100,5.7,60);
-bx(1.6,3,0.15,0x6d4c41,-100,2.0,64.55);
-for(const wx of [-6,-3,3,6]){
-  bx(1.6,1.6,0.1,0xffffff,wx-100,3.2,64.53);
-  bx(1.4,1.4,0.12,0x90caf9,wx-100,3.2,64.55);
+// ---- school (big, 2 floors), hospital (was clinic) ----
+bx(30,0.5,16,0x9e9e9e,-100,0.25,60);
+bx(28,10,14,0xfff9c4,-100,5.5,60);
+bx(30,0.4,16,0x1565c0,-100,10.7,60);
+bx(1.8,3.5,0.15,0x6d4c41,-100,2.25,67.05);
+for(const wy of [3.5,7.5]) for(const wx of [-12,-8,-4,4,8,12]){
+  bx(2,2,0.1,0xffffff,wx-100,wy,67.03);
+  bx(1.8,1.8,0.12,0x90caf9,wx-100,wy,67.05);
 }
-signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 4.8, 64.6, 8, 1.2);
-cyl(0.08,0.08,5,0x455a64,-106,2.5,67);
-bx(1.4,0.8,0.1,0xe53935,-105.2,4.6,67);
-bx(6,0.9,0.25,0xffffff,-104,0.45,68);
-bx(6,0.9,0.25,0xffffff,-96,0.45,68);
-cyl(0.1,0.1,2,0x455a64,-94,1,68); cyl(0.1,0.1,2,0x455a64,-91,1,68);
-bx(0.1,0.1,3,0x455a64,-92.5,2,68);
-colliders.push({x:-100,z:60,r:10});
-bx(11,0.5,8,0x9e9e9e,100,0.25,-20);
-bx(10,4.5,7,0xffffff,100,2.75,-20);
-bx(11,0.4,8,0xe53935,100,5.2,-20);
-bx(1.4,2.8,0.15,0x6d4c41,100,1.9,-16.45);
-for(const wx of [-3,3]){
-  bx(1.5,1.5,0.1,0xffffff,wx+100,2.9,-16.53);
-  bx(1.3,1.3,0.12,0x90caf9,wx+100,2.9,-16.55);
+signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 67.1, 12, 1.8);
+cyl(0.08,0.08,6,0x455a64,-118,3,70);
+bx(2,1.2,0.1,0xe53935,-117,5.5,70);
+bx(10,0.9,0.25,0xffffff,-110,0.45,72);
+bx(10,0.9,0.25,0xffffff,-90,0.45,72);
+cyl(0.1,0.1,2,0x455a64,-94,1,72); cyl(0.1,0.1,2,0x455a64,-91,1,72);
+bx(0.1,0.1,3,0x455a64,-92.5,2,72);
+colliders.push({x:-100,z:60,r:16});
+bx(26,0.5,16,0x9e9e9e,100,0.25,-20);
+bx(24,9,14,0xffffff,100,5,-20);
+bx(26,0.4,16,0xe53935,100,9.7,-20);
+bx(1.8,3.5,0.15,0x6d4c41,100,2.25,-12.95);
+for(const wy of [3,7]) for(const wx of [-10,-5,5,10]){
+  bx(2,2,0.1,0xffffff,wx+100,wy,-13.03);
+  bx(1.8,1.8,0.12,0x90caf9,wx+100,wy,-13.05);
 }
-signMesh('ဆေးခန်း', '#ffffff', '#e53935', 100, 4.3, -16.4, 6, 1.2);
-bx(5,0.9,0.25,0xffffff,96.5,0.45,-13);
-bx(5,0.9,0.25,0xffffff,103.5,0.45,-13);
-colliders.push({x:100,z:-20,r:7});
+signMesh('ဆေးရုံ', '#ffffff', '#e53935', 100, 8.5, -12.9, 12, 1.8);
+bx(2,0.6,0.1,0xe53935,100,6,-13);
+bx(0.6,2,0.1,0xe53935,100,6,-13);
+bx(12,0.9,0.25,0xffffff,90,0.45,-8);
+bx(12,0.9,0.25,0xffffff,110,0.45,-8);
+colliders.push({x:100,z:-20,r:14});
 // ---- NEW: tea shop, grocery, town hall, monastery, football field, bus station ----
 function shopBuilding(x,z,w,h,d,wall,roof,sign,signBg,signFg,fs){
   bx(w+0.4,0.5,d+1,0x9e9e9e,x,0.25,z);
@@ -205,10 +208,10 @@ function shopBuilding(x,z,w,h,d,wall,roof,sign,signBg,signFg,fs){
   signMesh(sign, signBg, signFg, x, 0.5+h-0.7, z+d/2+0.1, Math.min(w-1,8), 1.3, fs);
   colliders.push({x,z,r:Math.max(w,d)/2+1.5});
 }
-shopBuilding(-20,100,10,4.5,7,0xffe0b2,0xef6c00,'လက်ဖက်ရည်ဆိုင်','#ffeb3b','#6d4c41',56);
-shopBuilding(100,60,10,4.5,7,0xe3f2fd,0x1565c0,'ကုန်စုံဆိုင်','#ffffff','#1565c0');
-shopBuilding(60,-100,12,5,8,0xfff9c4,0x37474f,'မြို့အုပ်ချုပ်ရေးရုံး','#ffeb3b','#1565c0',52);
-shopBuilding(-20,-100,12,4.5,8,0xffffff,0xffc107,'ဘုန်းကြီးကျောင်း','#fff8e1','#6d4c41',56);
+shopBuilding(-20,100,10,6.5,7,0xffe0b2,0xef6c00,'လက်ဖက်ရည်ဆိုင်','#ffeb3b','#6d4c41',56);
+shopBuilding(100,60,10,6.5,7,0xe3f2fd,0x1565c0,'ကုန်စုံဆိုင်','#ffffff','#1565c0');
+shopBuilding(60,-100,12,7,8,0xfff9c4,0x37474f,'မြို့အုပ်ချုပ်ရေးရုံး','#ffeb3b','#1565c0',52);
+shopBuilding(-20,-100,12,6.5,8,0xffffff,0xffc107,'ဘုန်းကြီးကျောင်း','#fff8e1','#6d4c41',56);
 mesh(new THREE.ConeGeometry(2.5,5,10), 0xffc107, -12, 2.5, -100);
 bx(30,0.2,20,0x2e7d32,-100,0.1,100);
 bx(30,0.25,0.4,0xffffff,-100,0.22,90.2); bx(30,0.25,0.4,0xffffff,-100,0.22,109.8);
@@ -217,11 +220,11 @@ cyl(0.1,0.1,2,0xffffff,-113,1,92); cyl(0.1,0.1,2,0xffffff,-113,1,108);
 bx(0.1,0.1,16,0xffffff,-113,2,100);
 cyl(0.1,0.1,2,0xffffff,-87,1,92); cyl(0.1,0.1,2,0xffffff,-87,1,108);
 bx(0.1,0.1,16,0xffffff,-87,2,100);
-bx(2.5,2.2,8,0xffc107,100,1.3,-100);
-bx(2.6,0.8,8,0x90caf9,100,1.6,-100);
-for(const wz of [-103,-97]){
-  const w1 = cyl(0.55,0.55,0.3,0x212121,97.4,0.55,wz); w1.rotation.z = Math.PI/2;
-  const w2 = cyl(0.55,0.55,0.3,0x212121,102.6,0.55,wz); w2.rotation.z = Math.PI/2;
+bx(3.0,3.0,12,0xffc107,100,1.6,-100);
+bx(3.1,0.9,11,0x90caf9,100,2.2,-100);
+for(const wz of [-104,-96]){
+  const w1 = cyl(0.7,0.7,0.3,0x212121,98.5,0.7,wz); w1.rotation.z = Math.PI/2;
+  const w2 = cyl(0.7,0.7,0.3,0x212121,101.5,0.7,wz); w2.rotation.z = Math.PI/2;
 }
 colliders.push({x:100,z:-100,r:6});
 signMesh('ကားဂိတ်', '#ffffff', '#1565c0', 100, 3.2, -95.5, 6, 1.2);
@@ -293,18 +296,25 @@ for(let i=0;i<10;i++){
   const fm = bx(1.5,0.2,0.5,0xffffff,175,0.35,-120+i*26);
   foam.push(fm);
 }
-function mountain(x,z,r,h,color){
-  mesh(new THREE.ConeGeometry(r,h,8), color, x, h/2, z);
-  if(h >= 34) mesh(new THREE.ConeGeometry(r*0.28,h*0.25,8), 0xffffff, x, h - h*0.12, z);
+function mountain(x,z,r,h){
+  // layered ridge peak: green foothill cone, grey rocky middle, white snow top
+  mesh(new THREE.ConeGeometry(r,h*0.7,8), 0x2e7d32, x, h*0.35, z);
+  mesh(new THREE.ConeGeometry(r*0.65,h*0.55,8), 0x607d8b, x, h*0.6, z);
+  mesh(new THREE.ConeGeometry(r*0.3,h*0.3,8), 0xffffff, x, h*0.85, z);
   colliders.push({x,z,r:r*0.85});
 }
-mountain(225,0,35,48,0x607d8b);
-mountain(205,-75,26,34,0x78909c);
-mountain(205,75,28,36,0x78909c);
-mountain(245,-45,20,28,0x607d8b);
-mountain(245,45,22,30,0x607d8b);
-mountain(230,110,18,24,0x78909c);
-mountain(230,-110,18,24,0x78909c);
+mountain(320,0,55,85);
+mountain(300,-90,45,70);
+mountain(300,90,48,75);
+mountain(350,-50,40,60);
+mountain(350,50,42,65);
+mountain(330,120,35,50);
+mountain(330,-120,35,50);
+for(let i=0;i<20;i++){
+  const fx = 205 + ((i*37)%60), fz = -115 + ((i*53)%230);
+  if(Math.abs(fz) < 8) continue;
+  tree(fx, fz);
+}
 sph(1.5,0x9e9e9e,195,0.8,-20); sph(1.2,0x9e9e9e,198,0.6,25); sph(1.8,0x9e9e9e,192,0.9,60);
 const streamSign = signMesh('ရေချောင်း', '#4fc3f7', '#ffffff', 168, 2.5, 12, 6, 1.2);
 streamSign.rotation.y = -Math.PI/2;
@@ -335,12 +345,26 @@ function marketStall(cx){
 }
 marketStall(18); marketStall(27);
 let marketTimer = 0;
-// ---- shop ----
-bx(9,4.5,7,0xffe082,12,2.25,-32); bx(9.4,0.4,7.4,0x1565c0,12,4.7,-32);
+// ---- big market hall (proper market building) ----
+bx(20.4,0.5,8.4,0x9e9e9e,95,0.25,-72);
+bx(20,7,8,0xfff3e0,95,4,-72);
+bx(20.4,0.4,8.4,0xe53935,95,7.7,-72);
+bx(1.8,3.5,0.15,0x6d4c41,95,2.25,-67.95);
+for(const wx of [87,91,99,103]){
+  bx(2,2,0.1,0xffffff,wx,4,-67.93);
+  bx(1.8,1.8,0.12,0x90caf9,wx,4,-67.95);
+}
+signMesh('ဈေးကြီး', '#ffeb3b', '#1565c0', 95, 6.5, -67.9, 10, 1.5);
+bx(7,0.3,4,0x8d5a2b,90,0.9,-64); bx(7,0.3,4,0x8d5a2b,100,0.9,-64);
+for(let i=0;i<3;i++) sph(0.35,0xff9800,88+i*1.2,1.3,-64);
+for(let i=0;i<3;i++) sph(0.35,0x66bb6a,98+i*1.2,1.3,-64);
+colliders.push({x:95,z:-72,r:11.5});
+// ---- shop (taller) ----
+bx(9,6.5,7,0xffe082,12,3.25,-32); bx(9.4,0.4,7.4,0x1565c0,12,6.7,-32);
 bx(1.4,2.6,0.15,0x6d4c41,12,1.8,-28.45);
-bx(1.5,1.5,0.1,0xffffff,9.5,2.9,-28.53); bx(1.3,1.3,0.12,0x90caf9,9.5,2.9,-28.55);
-bx(1.5,1.5,0.1,0xffffff,14.5,2.9,-28.53); bx(1.3,1.3,0.12,0x90caf9,14.5,2.9,-28.55);
-signMesh('မြို့လေးဆိုင်', '#ffeb3b', '#1565c0', 12, 3.9, -28.4, 6, 1.5);
+bx(2,2,0.1,0xffffff,9.5,3.5,-28.53); bx(1.8,1.8,0.12,0x90caf9,9.5,3.5,-28.55);
+bx(2,2,0.1,0xffffff,14.5,3.5,-28.53); bx(1.8,1.8,0.12,0x90caf9,14.5,3.5,-28.55);
+signMesh('မြို့လေးဆိုင်', '#ffeb3b', '#1565c0', 12, 5.9, -28.4, 6, 1.5);
 colliders.push({x:12,z:-32,r:6});
 // ---- beacon ----
 const beacon = new THREE.Group();
@@ -349,10 +373,11 @@ bm.position.y = 6; beacon.add(bm);
 const bs = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
 bs.position.y = 12.5; beacon.add(bs); scene.add(beacon);
 const targets = [
-  {x:-18,z:-18,label:'အိမ်အဝါ'},{x:18,z:-18,label:'အိမ်အပြာ'},{x:-18,z:18,label:'အိမ်ပန်းရောင်'},{x:18,z:18,label:'အိမ်အစိမ်း'},{x:-100,z:-20,label:'အိမ်အဖြူ'},
-  {x:-65,z:-65,label:'မြောက်အနောက်အိမ်'},{x:-65,z:55,label:'တောင်အနောက်အိမ်'},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်'},{x:55,z:55,label:'တောင်အရှေ့အိမ်'},
-  {x:-95,z:25,label:'အနောက်အိမ်'},{x:95,z:-55,label:'အရှေ့အိမ်'},{x:-55,z:95,label:'တောင်အိမ်'},
-  {x:-100,z:60,label:'ကျောင်း'},{x:100,z:-20,label:'ဆေးခန်း'},{x:-20,z:100,label:'လက်ဖက်ရည်ဆိုင်'},{x:100,z:60,label:'ကုန်စုံဆိုင်'}
+  {x:-18,z:-18,label:'အိမ်အဝါ',r:8},{x:18,z:-18,label:'အိမ်အပြာ',r:8},{x:-18,z:18,label:'အိမ်ပန်းရောင်',r:8},{x:18,z:18,label:'အိမ်အစိမ်း',r:8},{x:-100,z:-20,label:'အိမ်အဖြူ',r:8},
+  {x:-65,z:-65,label:'မြောက်အနောက်အိမ်',r:8},{x:-65,z:55,label:'တောင်အနောက်အိမ်',r:8},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်',r:8},{x:55,z:55,label:'တောင်အရှေ့အိမ်',r:8},
+  {x:-95,z:25,label:'အနောက်အိမ်',r:8},{x:95,z:-55,label:'အရှေ့အိမ်',r:8},{x:-55,z:95,label:'တောင်အိမ်',r:8},
+  {x:15,z:110,label:'တောင်အိမ်သစ်',r:8},{x:-15,z:-105,label:'မြောက်အိမ်သစ်',r:8},{x:112,z:20,label:'အရှေ့အိမ်သစ်',r:8},{x:-110,z:-10,label:'အနောက်အိမ်သစ်',r:8},
+  {x:-100,z:60,label:'ကျောင်း',r:16},{x:100,z:-20,label:'ဆေးရုံ',r:14},{x:-20,z:100,label:'လက်ဖက်ရည်ဆိုင်',r:6.5},{x:100,z:60,label:'ကုန်စုံဆိုင်',r:6.5}
 ];
 let delivery = null;
 // ---- CHARACTER V2: capsule limbs, knees/elbows, fingers, feet, face, hair/beard, longyi ----
@@ -585,13 +610,13 @@ for(let i=0;i<2;i++){ const cow = makeCow(); cow.position.set(-95+i*6,0,-92); ad
 // ---- vehicles: cars on roads, bus loop, parked bikes ----
 function makeCar(color){
   const g = new THREE.Group();
-  bx(1.8,0.5,3.2,color,0,0.45,0,g);
-  bx(1.6,0.5,1.6,color,0,0.95,-0.2,g);
-  bx(1.65,0.4,1.4,0x90caf9,0,0.95,-0.2,g);
-  for(const wx of [-0.95,0.95]) for(const wz of [-1.0,1.0]){
-    const w = cyl(0.32,0.32,0.25,0x212121,wx,0.32,wz,g); w.rotation.z = Math.PI/2;
+  bx(2.2,0.7,5.5,color,0,0.6,0,g);
+  bx(2.0,0.6,2.8,color,0,1.25,-0.3,g);
+  bx(2.05,0.5,2.5,0x90caf9,0,1.25,-0.3,g);
+  for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){
+    const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,g); w.rotation.z = Math.PI/2;
   }
-  blobShadow(g, 1.1, 1.8);
+  blobShadow(g, 1.4, 3.0);
   return g;
 }
 const cars = [];
@@ -602,12 +627,12 @@ for(let i=0;i<3;i++){
   cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 9});
 }
 const bus = new THREE.Group();
-bx(2.5,2.2,8,0xffc107,0,1.3,0,bus);
-bx(2.6,0.7,7.5,0x90caf9,0,1.7,0,bus);
-for(const wx of [-1.3,1.3]) for(const wz of [-3,-1,1,3]){
-  const w = cyl(0.5,0.5,0.3,0x212121,wx,0.5,wz,bus); w.rotation.z = Math.PI/2;
+bx(3.0,3.0,12,0xffc107,0,1.6,0,bus);
+bx(3.1,0.9,11,0x90caf9,0,2.2,0,bus);
+for(const wx of [-1.5,1.5]) for(const wz of [-4.5,-1.5,1.5,4.5]){
+  const w = cyl(0.7,0.7,0.3,0x212121,wx,0.7,wz,bus); w.rotation.z = Math.PI/2;
 }
-blobShadow(bus, 1.6, 4.5);
+blobShadow(bus, 2.0, 6.5);
 bus.position.set(0,0,-80); scene.add(bus);
 const busRoute = [{x:0,z:-80},{x:80,z:-80},{x:80,z:80},{x:-80,z:80},{x:-80,z:-80},{x:0,z:-80}];
 let busIdx = 1;
@@ -637,19 +662,21 @@ function nearest(){
   const opts = [
     {d:dist(-18,-32), label:'🌾 လယ်ရိတ်မယ်', fn:harvest},
     {d:dist(18,32), label:'🏪 ဈေးရောင်းမယ်', fn:sell},
-    {d:dist(12,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept},
-    {d:dist(-100,60), label:'🏫 ကျောင်းကြည့်မယ်', fn:()=>showMsg('🏫 စာသင်ကျောင်းရောက်ပြီ — ကလေးတွေ စာသင်နေတယ်')},
-    {d:dist(100,-20), label:'🏥 ဆေးခန်းကြည့်မယ်', fn:()=>showMsg('🏥 ဆေးခန်းရောက်ပြီ — ဆရာဝန်ရှိတယ်')},
-    {d:dist(-20,100), label:'🍵 လက်ဖက်ရည်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🍵 လက်ဖက်ရည်ဆိုင် — လက်ဖက်ရည်သောက်လို့ရတယ်')},
-    {d:dist(100,60), label:'🛒 ကုန်စုံဆိုင်ကြည့်မယ်', fn:()=>showMsg('🛒 ကုန်စုံဆိုင် — ပစ္စည်းစုံတယ်')},
-    {d:dist(60,-100), label:'🏛️ မြို့အုပ်ချုပ်ရေးရုံးကြည့်မယ်', fn:()=>showMsg('🏛️ မြို့အုပ်ချုပ်ရေးရုံး')},
-    {d:dist(-20,-100), label:'🙏 ဘုန်းကြီးကျောင်းကြည့်မယ်', fn:()=>showMsg('🙏 ဘုန်းကြီးကျောင်း')},
+    {d:dist(95,-72), label:'🏪 ဈေးကြီးရောင်းမယ်', fn:sell, r:11.5},
+    {d:dist(12,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept, r:6},
+    {d:dist(-100,60), label:'🏫 ကျောင်းကြည့်မယ်', fn:()=>showMsg('🏫 စာသင်ကျောင်းရောက်ပြီ — ကလေးတွေ စာသင်နေတယ်'), r:16},
+    {d:dist(100,-20), label:'🏥 ဆေးရုံကြည့်မယ်', fn:()=>showMsg('🏥 ဆေးရုံကြည့်ပြီ — ဆရာဝန်တွေ ရှိတယ်'), r:14},
+    {d:dist(-20,100), label:'🍵 လက်ဖက်ရည်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🍵 လက်ဖက်ရည်ဆိုင် — လက်ဖက်ရည်သောက်လို့ရတယ်'), r:6.5},
+    {d:dist(100,60), label:'🛒 ကုန်စုံဆိုင်ကြည့်မယ်', fn:()=>showMsg('🛒 ကုန်စုံဆိုင် — ပစ္စည်းစုံတယ်'), r:6.5},
+    {d:dist(60,-100), label:'🏛️ မြို့အုပ်ချုပ်ရေးရုံးကြည့်မယ်', fn:()=>showMsg('🏛️ မြို့အုပ်ချုပ်ရေးရုံး'), r:7.5},
+    {d:dist(-20,-100), label:'🙏 ဘုန်းကြီးကျောင်းကြည့်မယ်', fn:()=>showMsg('🙏 ဘုန်းကြီးကျောင်း'), r:7.5},
     {d:dist(-100,100), label:'⚽ ဘောလုံးကွင်းကြည့်မယ်', fn:()=>showMsg('⚽ ဘောလုံးကွင်း — ကန်လို့ရတယ်')},
-    {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်')},
+    {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်'), r:6},
   ];
-  if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver});
+  if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
   opts.sort((a,b)=>a.d-b.d);
-  return opts[0].d < 12 ? opts[0] : null;
+  const top = opts[0];
+  return top.d < (top.r ? top.r+3 : 12) ? top : null;
 }
 function harvest(){
   if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
