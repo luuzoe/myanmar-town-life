@@ -42,7 +42,8 @@
   @media(pointer:coarse){#hint{display:none}}
   @media(max-height:500px){#hint{display:none}}
   @media(pointer:fine){#joy{display:none}}
-  #minimap{position:fixed;top:56px;right:12px;width:240px;height:120px;border-radius:12px;z-index:10;opacity:.92}
+  /* MINIMAP HIDDEN per Zaw 2026-10-26 (too big) - code kept, re-enable by removing display:none + the guard in drawMinimap */
+  #minimap{position:fixed;top:56px;right:12px;width:240px;height:120px;border-radius:12px;z-index:10;opacity:.92;display:none}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -861,6 +862,7 @@ function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
 const minimapEl = document.getElementById('minimap'), minimapCtx = minimapEl ? minimapEl.getContext('2d') : null;
 function drawMinimap(){
   if(!minimapCtx) return;
+  if(true) return; // MINIMAP HIDDEN per Zaw 2026-10-26 - remove this line to show it again
   const ctx = minimapCtx, S = 240/560, offY = (120 - 260*S)/2;
   const mx = x => (x+135)*S, my = z => (z+130)*S + offY;
   ctx.clearRect(0,0,240,120); ctx.fillStyle = '#6fbf5a'; ctx.fillRect(0,0,240,120);
