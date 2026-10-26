@@ -42,6 +42,7 @@
 <div id="hud">
   <div class="pill">💰 <b id="money">0</b> ကျပ်</div>
   <div class="pill">🏍️ <span id="speedLabel">လမ်းလျှောက်</span></div>
+  <div class="pill" id="timePill">🌞 နေ့</div>
 </div>
 <div id="job"><span id="jobText">ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ</span></div>
 <div id="msg"></div>
@@ -54,10 +55,11 @@
 </div>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <p><b>မြို့ကြီးထဲမှာ ဘဝ စပါ — အိမ် ၂၇ လုံး၊ လူတွေ လမ်းလျှောက်နေတယ်။</b></p>
+  <p><b>မြို့ကြီးထဲမှာ ဘဝ စပါ — အိမ်ကြီး ၂၇ လုံး၊ ကျောင်း၊ ဆေးခန်း၊ နေ့/ည ရှိတယ်။</b></p>
   <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (ခြင်းကြီးရင် ၁၅၀၀)</p>
-  <p>ပိုက်ဆံစုပြီး ဆိုင်ကယ်မြန်တာ၊ ခြင်းကြီးတာ ဝယ်ပါ။<br>ဖုန်းဆို ဘယ်ဘက် စက်ဝိုင်းနဲ့ ရွှေ့ပါ၊ ညာဘက် ခလုတ်နဲ့ လုပ်ပါ။</p>
+  <p>နေ့/ည တစ်ပတ် ၃ မိနစ် — ညမှာ လမ်းမီးတွေ လင်းတယ်။<br>ဖုန်းဆို ဘယ်ဘက် စက်ဝိုင်းနဲ့ ရွှေ့ပါ၊ ညာဘက် ခလုတ်နဲ့ လုပ်ပါ။</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
+  <button id="landscapeBtn" style="background:#1565c0">⤢ Landscape နဲ့ ဆော့မယ်</button>
 </div></div>
 <div id="shop"><div class="card">
   <h2 style="margin:0">🛒 ဆိုင်</h2>
@@ -73,12 +75,16 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+const skyColor = new THREE.Color(0x87ceeb);
+scene.background = skyColor;
 scene.fog = new THREE.Fog(0x87ceeb, 90, 240);
+const nightColor = new THREE.Color(0x0b1026), dayColor = new THREE.Color(0x87ceeb);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
-scene.add(new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1));
+const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun);
+const moon = new THREE.Mesh(new THREE.SphereGeometry(2,12,10), new THREE.MeshBasicMaterial({color:0xfffde7}));
+scene.add(moon);
 const mats = {};
 function M(c){ if(!mats[c]) mats[c] = new THREE.MeshLambertMaterial({color:c}); return mats[c]; }
 function mesh(geo, color, x, y, z, parent){
@@ -88,6 +94,14 @@ function mesh(geo, color, x, y, z, parent){
 function bx(w,h,d,color,x,y,z,parent){ return mesh(new THREE.BoxGeometry(w,h,d), color, x, y, z, parent); }
 function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,10,8), color, x, y, z, parent); }
 function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry(rt,rb,h,10), color, x, y, z, parent); }
+function signMesh(text, bg, fg, x, y, z, w, h){
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
+  const ctx = cv.getContext('2d'); ctx.fillStyle = bg; ctx.fillRect(0,0,512,128);
+  ctx.fillStyle = fg; ctx.font = 'bold 68px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 64);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(cv)}));
+  sign.position.set(x,y,z); scene.add(sign); return sign;
+}
 // ---- big map: ground 260 x 260, road grid every 40 ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(260,260), M(0x6fbf5a));
 ground.rotation.x = -Math.PI/2; scene.add(ground);
@@ -101,28 +115,35 @@ for(let d=-110; d<=110; d+=20){
   bx(3,0.12,0.4,0xffffff,d,0.12,0);
 }
 const colliders = [];
-// ---- realistic house: plinth, walls, hip roof, door, windows, chimney, steps ----
+// ---- bigger house: walls 8 x 4.2, hip roof, door, windows, chimney, steps, FRONT FENCE with gate gap ----
 function house(x,z,wall,roof){
-  bx(6.6,0.4,5.6,0x9e9e9e,x,0.2,z);
-  bx(6,3.2,5,wall,x,2.0,z);
-  const r = mesh(new THREE.ConeGeometry(4.9,2.3,4), roof, x, 4.75, z);
-  r.rotation.y = Math.PI/4; r.scale.x = 1.25;
-  bx(1.1,2.1,0.15,0x6d4c41,x,1.45,z+2.55);
-  sph(0.07,0xffeb3b,x+0.35,1.45,z+2.65);
-  bx(1.6,0.3,0.9,0x9e9e9e,x,0.15,z+3.0);
-  for(const wx of [-1.9,1.9]){
-    bx(1.2,1.2,0.1,0xffffff,wx+x,2.2,z+2.53);
-    bx(1.0,1.0,0.12,0x90caf9,wx+x,2.2,z+2.55);
-    bx(0.08,1.0,0.14,0xffffff,wx+x,2.2,z+2.56);
+  bx(8.4,0.5,7,0x9e9e9e,x,0.25,z);
+  bx(8,4.2,6,wall,x,2.6,z);
+  const r = mesh(new THREE.ConeGeometry(6.2,2.8,4), roof, x, 6.1, z);
+  r.rotation.y = Math.PI/4; r.scale.x = 1.3;
+  bx(1.3,2.6,0.15,0x6d4c41,x,1.8,z+3.05);
+  sph(0.08,0xffeb3b,x+0.45,1.8,z+3.15);
+  bx(2.0,0.3,1.1,0x9e9e9e,x,0.15,z+3.6);
+  for(const wx of [-2.5,2.5]){
+    bx(1.5,1.5,0.1,0xffffff,wx+x,2.9,z+3.03);
+    bx(1.3,1.3,0.12,0x90caf9,wx+x,2.9,z+3.05);
+    bx(0.08,1.3,0.14,0xffffff,wx+x,2.9,z+3.06);
   }
-  bx(0.1,1.2,1.2,0xffffff,x+3.03,2.2,z);
-  bx(0.12,1.0,1.0,0x90caf9,x+3.05,2.2,z);
-  bx(0.7,1.6,0.7,0xb71c1c,x+2,5.2,z-1);
-  colliders.push({x,z,r:4.2});
+  bx(0.1,1.5,1.5,0xffffff,x+4.03,2.9,z);
+  bx(0.12,1.3,1.3,0x90caf9,x+4.05,2.9,z);
+  bx(0.8,1.8,0.8,0xb71c1c,x+2.5,6.8,z-1);
+  // front fence: two walls + gate posts, gate gap in the middle (door path)
+  bx(3.4,0.9,0.25,0xffffff,x-2.7,0.45,z+5.5);
+  bx(3.4,0.9,0.25,0xffffff,x+2.7,0.45,z+5.5);
+  bx(0.3,1.1,0.3,0x8d6e63,x-1.0,0.55,z+5.5);
+  bx(0.3,1.1,0.3,0x8d6e63,x+1.0,0.55,z+5.5);
+  bx(0.3,1.1,0.3,0x8d6e63,x-4.4,0.55,z+5.5);
+  bx(0.3,1.1,0.3,0x8d6e63,x+4.4,0.55,z+5.5);
+  colliders.push({x,z,r:5.5});
 }
 const houseList = [
   [-18,-18,0xfff2cc,0xb3402a],[18,-18,0xddeeff,0x37474f],[-18,18,0xffe0e0,0xb3402a],[18,18,0xe0ffe0,0x6d4c41],
-  [-30,0,0xf5f5f5,0xb3402a],[30,0,0xfff8dc,0x37474f],
+  [-100,-20,0xf5f5f5,0xb3402a],[60,100,0xfff8dc,0x37474f],
   [-65,-65,0xfff2cc,0xb3402a],[-65,-25,0xddeeff,0x6d4c41],[-65,15,0xffe0e0,0x37474f],[-65,55,0xe0ffe0,0xb3402a],
   [-25,-65,0xf5f5f5,0x37474f],[-25,55,0xfff8dc,0xb3402a],
   [15,-65,0xfff2cc,0x6d4c41],[15,55,0xddeeff,0xb3402a],
@@ -132,40 +153,68 @@ const houseList = [
   [-95,-95,0xffe0e0,0x6d4c41]
 ];
 for(const h of houseList) house(h[0],h[1],h[2],h[3]);
-// ---- pagoda in the far north-east block ----
+// ---- school at (-100,60), clinic at (100,-20) ----
+bx(16,0.5,10,0x9e9e9e,-100,0.25,60);
+bx(15,5,9,0xfff9c4,-100,3.0,60);
+bx(16,0.4,10,0x1565c0,-100,5.7,60);
+bx(1.6,3,0.15,0x6d4c41,-100,2.0,64.55);
+for(const wx of [-6,-3,3,6]){
+  bx(1.6,1.6,0.1,0xffffff,wx-100,3.2,64.53);
+  bx(1.4,1.4,0.12,0x90caf9,wx-100,3.2,64.55);
+}
+signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 4.8, 64.6, 8, 1.2);
+cyl(0.08,0.08,5,0x455a64,-106,2.5,67);
+bx(1.4,0.8,0.1,0xe53935,-105.2,4.6,67);
+bx(6,0.9,0.25,0xffffff,-104,0.45,68);
+bx(6,0.9,0.25,0xffffff,-96,0.45,68);
+cyl(0.1,0.1,2,0x455a64,-94,1,68); cyl(0.1,0.1,2,0x455a64,-91,1,68);
+bx(0.1,0.1,3,0x455a64,-92.5,2,68);
+colliders.push({x:-100,z:60,r:10});
+bx(11,0.5,8,0x9e9e9e,100,0.25,-20);
+bx(10,4.5,7,0xffffff,100,2.75,-20);
+bx(11,0.4,8,0xe53935,100,5.2,-20);
+bx(1.4,2.8,0.15,0x6d4c41,100,1.9,-16.45);
+for(const wx of [-3,3]){
+  bx(1.5,1.5,0.1,0xffffff,wx+100,2.9,-16.53);
+  bx(1.3,1.3,0.12,0x90caf9,wx+100,2.9,-16.55);
+}
+signMesh('ဆေးခန်း', '#ffffff', '#e53935', 100, 4.3, -16.4, 6, 1.2);
+bx(5,0.9,0.25,0xffffff,96.5,0.45,-13);
+bx(5,0.9,0.25,0xffffff,103.5,0.45,-13);
+colliders.push({x:100,z:-20,r:7});
+// ---- pagoda, pond ----
 bx(10,1,10,0xffe082,100,0.5,100); bx(7,1.5,7,0xffd54f,100,1.75,100);
-const stupa = mesh(new THREE.ConeGeometry(3.2,7,12), 0xffc107, 100, 6, 100);
+mesh(new THREE.ConeGeometry(3.2,7,12), 0xffc107, 100, 6, 100);
 sph(0.7,0xffc107,100,9.6,100); colliders.push({x:100,z:100,r:6});
-// ---- pond in the far south-west corner ----
-const pond = mesh(new THREE.CylinderGeometry(8,8,0.3,20), 0x4fc3f7, -100, 0.15, -100);
+mesh(new THREE.CylinderGeometry(8,8,0.3,20), 0x4fc3f7, -100, 0.15, -100);
 colliders.push({x:-100,z:-100,r:8});
-// ---- trees: trunk + two foliage balls ----
+// ---- trees ----
 function tree(x,z){
   cyl(0.3,0.45,2.2,0x7a4a22,x,1.1,z);
   sph(1.9,0x2e7d32,x,3.6,z); sph(1.3,0x388e3c,x+0.6,4.8,z-0.4);
   colliders.push({x,z,r:1.2});
 }
 [[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-36,-20],[36,20],[-70,-40],[70,40],[-40,70],[40,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1]));
-// ---- street lamps along the main roads ----
+// ---- street lamps (basic-material bulbs glow at night) ----
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
-  sph(0.45,0xffeb3b,x,4.7,z); colliders.push({x,z,r:0.5});
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.45,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
+  bulb.position.set(x,4.7,z); scene.add(bulb); colliders.push({x,z,r:0.5});
 }
 [[-80,5],[-40,5],[40,5],[80,5],[5,-80],[5,-40],[5,40],[5,80]].forEach(p=>lamp(p[0],p[1]));
-// ---- grass tufts ----
+// ---- grass, clouds ----
 for(let i=0;i<36;i++){
   const x = -115 + ((i*53)%230), z = -115 + ((i*89)%230);
   const nearRoad = roadLines.some(r=>Math.abs(x-r)<6 || Math.abs(z-r)<6);
   if(!nearRoad) mesh(new THREE.ConeGeometry(0.35,0.9,5), 0x388e3c, x, 0.45, z);
 }
-// ---- clouds ----
 const clouds = [];
 for(let i=0;i<5;i++){
   const g = new THREE.Group();
   sph(2.2,0xffffff,0,0,0,g); sph(1.6,0xffffff,2,0.4,0.5,g); sph(1.6,0xffffff,-2,0.3,-0.5,g);
   g.position.set(-100+i*50, 26, -60+i*25); scene.add(g); clouds.push(g);
 }
-// ---- farm: soil rows, crops, scarecrow ----
+// ---- farm ----
 bx(10,0.3,7,0x8d5a2b,-18,0.15,-32);
 for(let r=0;r<4;r++) bx(9,0.15,0.8,0x6d4c41,-18,0.35,-34.5+r*2);
 const crops = new THREE.Group(); scene.add(crops);
@@ -179,7 +228,7 @@ bx(1.4,0.15,0.15,0x7a4a22,-23,1.9,-36);
 bx(0.7,0.7,0.2,0x1565c0,-23,1.6,-36);
 mesh(new THREE.ConeGeometry(0.6,0.6,8), 0xffd54f, -23, 2.3, -36);
 let cropReady = true, cropTimer = 0;
-// ---- market stall with fruit ----
+// ---- market stall ----
 bx(7,0.3,4,0x8d5a2b,18,0.9,32);
 bx(0.3,2.2,0.3,0x7a4a22,15.2,1.1,32); bx(0.3,2.2,0.3,0x7a4a22,20.8,1.1,32);
 bx(0.3,2.2,0.3,0x7a4a22,15.2,1.1,28); bx(0.3,2.2,0.3,0x7a4a22,20.8,1.1,28);
@@ -187,34 +236,26 @@ bx(8,0.3,5.5,0xe53935,18,2.5,30);
 for(let i=0;i<6;i++) sph(0.35,0xff9800,15.5+(i%3)*1.2,1.3,31+Math.floor(i/3)*1.2);
 for(let i=0;i<4;i++) sph(0.35,0x66bb6a,19.5+(i%2)*1.2,1.3,31+Math.floor(i/2)*1.2);
 let marketTimer = 0;
-// ---- shop with Burmese sign ----
-bx(8,4,6,0xffe082,0,2,-32); bx(8.4,0.4,6.4,0x1565c0,0,4.2,-32);
-bx(1.4,2.4,0.15,0x6d4c41,0,1.6,-28.9);
-bx(1.2,1.2,0.1,0xffffff,-2.5,2.2,-28.95); bx(1.0,1.0,0.12,0x90caf9,-2.5,2.2,-28.97);
-bx(1.2,1.2,0.1,0xffffff,2.5,2.2,-28.95); bx(1.0,1.0,0.12,0x90caf9,2.5,2.2,-28.97);
-(function(){
-  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
-  const ctx = cv.getContext('2d'); ctx.fillStyle = '#ffeb3b'; ctx.fillRect(0,0,512,128);
-  ctx.fillStyle = '#1565c0'; ctx.font = 'bold 72px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('မြို့လေးဆိုင်', 256, 64);
-  const tex = new THREE.CanvasTexture(cv);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(6,1.5), new THREE.MeshLambertMaterial({map:tex}));
-  sign.position.set(0,3.4,-28.9); scene.add(sign);
-})();
-colliders.push({x:0,z:-32,r:5.5});
-// ---- delivery beacon, taller for the big map ----
+// ---- shop moved OFF the road: now at (12,-32), not on x=0 road ----
+bx(9,4.5,7,0xffe082,12,2.25,-32); bx(9.4,0.4,7.4,0x1565c0,12,4.7,-32);
+bx(1.4,2.6,0.15,0x6d4c41,12,1.8,-28.45);
+bx(1.5,1.5,0.1,0xffffff,9.5,2.9,-28.53); bx(1.3,1.3,0.12,0x90caf9,9.5,2.9,-28.55);
+bx(1.5,1.5,0.1,0xffffff,14.5,2.9,-28.53); bx(1.3,1.3,0.12,0x90caf9,14.5,2.9,-28.55);
+signMesh('မြို့လေးဆိုင်', '#ffeb3b', '#1565c0', 12, 3.9, -28.4, 6, 1.5);
+colliders.push({x:12,z:-32,r:6});
+// ---- delivery beacon ----
 const beacon = new THREE.Group();
 const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.MeshBasicMaterial({color:0xffeb3b}));
 bm.position.y = 6; beacon.add(bm);
 const bs = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
 bs.position.y = 12.5; beacon.add(bs); scene.add(beacon);
 const targets = [
-  {x:-18,z:-18,label:'အိမ်အဝါ'},{x:18,z:-18,label:'အိမ်အပြာ'},{x:-18,z:18,label:'အိမ်ပန်းရောင်'},{x:18,z:18,label:'အိမ်အစိမ်း'},{x:-30,z:0,label:'အိမ်အဖြူ'},
+  {x:-18,z:-18,label:'အိမ်အဝါ'},{x:18,z:-18,label:'အိမ်အပြာ'},{x:-18,z:18,label:'အိမ်ပန်းရောင်'},{x:18,z:18,label:'အိမ်အစိမ်း'},{x:-100,z:-20,label:'အိမ်အဖြူ'},
   {x:-65,z:-65,label:'မြောက်အနောက်အိမ်'},{x:-65,z:55,label:'တောင်အနောက်အိမ်'},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်'},{x:55,z:55,label:'တောင်အရှေ့အိမ်'},
   {x:-95,z:25,label:'အနောက်အိမ်'},{x:95,z:-55,label:'အရှေ့အိမ်'},{x:-55,z:95,label:'တောင်အိမ်'}
 ];
 let delivery = null;
-// ---- humanoid person builder: legs, torso, arms, head, hair, eyes ----
+// ---- humanoid person ----
 function makePerson(shirt, pants){
   const g = new THREE.Group();
   function limb(x, y, w, h, color, parent){
@@ -224,7 +265,7 @@ function makePerson(shirt, pants){
   }
   const legL = limb(-0.22, 0.85, 0.3, 0.85, pants, g);
   const legR = limb(0.22, 0.85, 0.3, 0.85, pants, g);
-  const torso = bx(0.95,1.0,0.5,shirt,0,1.35,0,g);
+  bx(0.95,1.0,0.5,shirt,0,1.35,0,g);
   const armL = limb(-0.62, 1.8, 0.26, 0.8, shirt, g);
   const armR = limb(0.62, 1.8, 0.26, 0.8, shirt, g);
   sph(0.14,0xffcc99,-0.62,0.95,0,g); sph(0.14,0xffcc99,0.62,0.95,0,g);
@@ -240,10 +281,9 @@ function animatePerson(p, moving, t){
   p.legL.rotation.x = s; p.legR.rotation.x = -s;
   p.armL.rotation.x = -s; p.armR.rotation.x = s;
 }
-// player
 const player = makePerson(0x1565c0, 0x37474f);
 scene.add(player.g);
-player.g.position.set(0,0,10); player.g.scale.setScalar(1.4);
+player.g.position.set(0,0,10); player.g.scale.setScalar(1.05); player.g.rotation.y = Math.PI;
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 bx(0.35,0.25,1.7,0xd32f2f,0,0.5,0,bikeG);
 bx(0.5,0.15,0.5,0x212121,0,0.7,-0.3,bikeG);
@@ -255,14 +295,14 @@ bx(0.5,0.15,0.5,0x212121,0,0.7,-0.3,bikeG);
   const hb = cyl(0.05,0.05,0.9,0x9e9e9e,0,0.95,0.85,bikeG); hb.rotation.z = Math.PI/2;
   bx(0.5,0.4,0.4,0x8d6e63,0,0.75,1.05,bikeG);
 })();
-// ---- NPC villagers walking on the roads, plus 3 standing workers ----
+// ---- NPCs ----
 const intersections = [];
 for(const x of roadLines) for(const z of roadLines) intersections.push({x,z});
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
 for(let i=0;i<12;i++){
   const p = makePerson(npcShirts[i], 0x37474f);
-  p.g.scale.setScalar(1.25);
+  p.g.scale.setScalar(1.0);
   const start = intersections[i*2 % intersections.length];
   p.g.position.set(start.x, 0, start.z);
   scene.add(p.g);
@@ -270,11 +310,11 @@ for(let i=0;i<12;i++){
 }
 function staticPerson(shirt, x, z, rotY){
   const p = makePerson(shirt, 0x37474f);
-  p.g.scale.setScalar(1.25); p.g.position.set(x,0,z); p.g.rotation.y = rotY; scene.add(p.g);
+  p.g.scale.setScalar(1.0); p.g.position.set(x,0,z); p.g.rotation.y = rotY; scene.add(p.g);
 }
 staticPerson(0x43a047, 21, 32, 0);
 staticPerson(0x8d6e63, -14, -32, 0);
-staticPerson(0xef6c00, 3, -28, Math.PI);
+staticPerson(0xef6c00, 15, -28, Math.PI);
 // state
 let money = parseInt(localStorage.getItem('mtl_money')||'0',10) || 0;
 let fastBike = localStorage.getItem('mtl_fast')==='1';
@@ -282,8 +322,8 @@ let bigBasket = localStorage.getItem('mtl_basket')==='1';
 let riding = false;
 const moneyEl = document.getElementById('money'), jobEl = document.getElementById('jobText'),
   actBtn = document.getElementById('act'), msgEl = document.getElementById('msg'),
-  speedEl = document.getElementById('speedLabel');
-let msgTimer = null;
+  speedEl = document.getElementById('speedLabel'), timeEl = document.getElementById('timePill');
+let msgTimer = null, lastTimeText = '';
 function showMsg(t){ msgEl.textContent = t; msgEl.style.display='block'; clearTimeout(msgTimer); msgTimer=setTimeout(()=>msgEl.style.display='none',2600); }
 function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.setItem('mtl_fast', fastBike?'1':'0'); localStorage.setItem('mtl_basket', bigBasket?'1':'0'); }
 function refresh(){
@@ -301,11 +341,13 @@ function nearest(){
   const opts = [
     {d:dist(-18,-32), label:'🌾 လယ်ရိတ်မယ်', fn:harvest},
     {d:dist(18,32), label:'🏪 ဈေးရောင်းမယ်', fn:sell},
-    {d:dist(0,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept},
+    {d:dist(12,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept},
+    {d:dist(-100,60), label:'🏫 ကျောင်းကြည့်မယ်', fn:()=>showMsg('🏫 စာသင်ကျောင်းရောက်ပြီ — ကလေးတွေ စာသင်နေတယ်')},
+    {d:dist(100,-20), label:'🏥 ဆေးခန်းကြည့်မယ်', fn:()=>showMsg('🏥 ဆေးခန်းရောက်ပြီ — ဆရာဝန်ရှိတယ်')},
   ];
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver});
   opts.sort((a,b)=>a.d-b.d);
-  return opts[0].d < 6 ? opts[0] : null;
+  return opts[0].d < 9 ? opts[0] : null;
 }
 function harvest(){
   if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
@@ -355,23 +397,51 @@ document.getElementById('closeShop').addEventListener('click', ()=>document.getE
 document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
 document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
 document.getElementById('playBtn').addEventListener('click', ()=>document.getElementById('start').style.display='none');
+document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
+  try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
+  try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
+  document.getElementById('start').style.display='none';
+});
 refresh();
-let last = performance.now(), walkT = 0;
+let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI;
 function animate(now){
   requestAnimationFrame(animate);
   const dt = Math.min((now-last)/1000, 0.05); last = now;
   if(cropTimer > 0){ cropTimer -= dt; if(cropTimer <= 0){ cropReady = true; crops.visible = true; } }
   if(marketTimer > 0) marketTimer -= dt;
-  let dx = 0, dz = 0;
-  if(keys.KeyW || keys.ArrowUp) dz -= 1;
-  if(keys.KeyS || keys.ArrowDown) dz += 1;
-  if(keys.KeyA || keys.ArrowLeft) dx -= 1;
-  if(keys.KeyD || keys.ArrowRight) dx += 1;
-  dx += joy.x; dz += joy.y;
+  // ---- day/night: full cycle 180 seconds ----
+  dayT += dt;
+  const phase = (dayT % 180) / 180, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
+  const dayF = Math.max(0, Math.min(1, sunH + 0.25));
+  skyColor.lerpColors(nightColor, dayColor, dayF);
+  scene.fog.color.copy(skyColor);
+  sun.intensity = 0.25 + dayF * 1.0;
+  sun.position.set(Math.cos(angle)*60, 10 + dayF*50, 20);
+  hemi.intensity = 0.3 + dayF * 0.8;
+  moon.position.set(-Math.cos(angle)*60, 10 + (1-dayF)*50, -20);
+  const timeText = phase < 0.5 ? (dayF > 0.7 ? '🌞 နေ့' : '🌅 နံနက်/ညနေ') : '🌙 ည';
+  if(timeText !== lastTimeText){ lastTimeText = timeText; timeEl.textContent = timeText; }
+  // camera-relative input: joystick/keyboard up = away from camera, right = screen right
+  let inRight = 0, inUp = 0;
+  if(keys.KeyD || keys.ArrowRight) inRight += 1;
+  if(keys.KeyA || keys.ArrowLeft) inRight -= 1;
+  if(keys.KeyW || keys.ArrowUp) inUp += 1;
+  if(keys.KeyS || keys.ArrowDown) inUp -= 1;
+  inRight += joy.x; inUp += -joy.y;
+  const camFwd = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
+  const camRight = {x: -Math.cos(camYaw), z: Math.sin(camYaw)};
+  let dx = camRight.x*inRight + camFwd.x*inUp;
+  let dz = camRight.z*inRight + camFwd.z*inUp;
   const len = Math.hypot(dx,dz);
   const moving = len > 0.1;
   if(moving){
     dx/=Math.max(1,len); dz/=Math.max(1,len);
+    // auto-rotate camera toward the direction of travel (shortest angle)
+    const targetYaw = Math.atan2(dx,dz);
+    let diff = targetYaw - camYaw;
+    while(diff > Math.PI) diff -= Math.PI*2;
+    while(diff < -Math.PI) diff += Math.PI*2;
+    camYaw += diff * Math.min(1, dt*3.5);
     const sp = riding ? (fastBike?18:12) : 5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     player.g.rotation.y = Math.atan2(dx,dz);
@@ -389,7 +459,6 @@ function animate(now){
   } else {
     animatePerson(player, moving, walkT);
   }
-  // NPCs walk Manhattan-style along roads
   for(const n of npcs){
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
@@ -407,7 +476,8 @@ function animate(now){
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
-  camera.position.lerp(new THREE.Vector3(player.g.position.x, 9, player.g.position.z+17), 0.12);
+  const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
+  camera.position.lerp(new THREE.Vector3(player.g.position.x - cf.x*17, 9, player.g.position.z - cf.z*17), 0.15);
   camera.lookAt(player.g.position.x, 1.5, player.g.position.z);
   renderer.render(scene,camera);
 }
