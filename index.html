@@ -80,10 +80,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=45">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=45">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=45">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=45">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=46">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=46">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=46">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=46">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -985,7 +985,7 @@ function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.
   localStorage.setItem('mtl_quest', String(questIdx)); localStorage.setItem('mtl_qprog', String(questProg));
   localStorage.setItem('mtl_health', String(health)); localStorage.setItem('mtl_lessons', String(schoolLessons)); localStorage.setItem('mtl_shirt', String(shirtIdx));
   localStorage.setItem('mtl_music', musicOn?'1':'0'); localStorage.setItem('mtl_quality', lowQuality?'1':'0');
-  try{ localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); }catch(e){} }
+  try{ localStorage.setItem('mtl_carpos', JSON.stringify({x:parkedCar.position.x, z:parkedCar.position.z, rot:parkedCar.rotation.y})); localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); }catch(e){} }
 function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ level = nl; showMsg('⭐ Level '+level+' ရောက်ပြီ!'); playChime(); } save(); refresh(); }
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
@@ -1199,7 +1199,8 @@ refresh();
 let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
-  const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); }
+  const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); if(sp.x >= 490 && sp.x <= 510 && sp.z >= 142 && sp.z <= 158){ inHouse = true; returnPos = {x:-18, z:-8}; } }
+  const cp = JSON.parse(localStorage.getItem('mtl_carpos')||'null'); if(cp && cp.x >= -195 && cp.x <= 540 && cp.z >= -195 && cp.z <= 195){ parkedCar.position.set(cp.x, 0, cp.z); if(typeof cp.rot === 'number') parkedCar.rotation.y = cp.rot; }
   const sd = parseFloat(localStorage.getItem('mtl_day')||'0'); if(!isNaN(sd) && sd >= 0 && sd < 600) dayT = sd; }catch(e){}
 function playTownAmbient(df){
   if(!soundOn || !audioCtx) return;
