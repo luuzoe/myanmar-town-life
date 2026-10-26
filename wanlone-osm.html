@@ -34,7 +34,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 <div id="list"><b id="listHead">ရှာရမယ့်နေရာများ ▼</b><div id="items"></div></div>
 <div id="msg"></div>
 <div id="joy"><div id="knob"></div></div>
-<button id="carBtn">🚗</button><button id="listBtn">📍</button><div id="rotBtns"><button id="rotL">↺</button><button id="rotR">↻</button><button id="landBtn">⤢</button></div>
+<button id="carBtn">🚗</button><button id="listBtn">📍</button><div id="rotBtns"><button id="rotL">↺</button><button id="rotR">↻</button><button id="landBtn">⤢</button><button id="charMinus">👤−</button><button id="charPlus">👤+</button></div>
 <div id="start"><div class="card">
 <h1>🗺️ Wan Lone OSM Explorer</h1>
 <p style="font-size:13px;color:#555">📍 Mong La · Wan Lone pin 21.674493, 100.019190<br>မြေပုံ © OpenStreetMap contributors</p>
@@ -346,17 +346,17 @@ box(0.42, 0.55, 0.16, 0xff9800, 0, 1.45, -0.30, fallback);
 { const sh = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false})); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; player.add(sh); }
 player.position.set(-12, 0, 14); scene.add(player);
 // USER'S REAL CHARACTER (GLB, walk animation) - replaces the fallback humanoid
-let charMixer = null;
+let charMixer = null, charModel = null, charScale = 0.5;
+function applyCharScale(){
+  if (charModel) charModel.scale.setScalar(charScale);
+}
 new GLTFLoader().load('human_character_walk_8.glb', gltf => {
   const model = gltf.scene;
-  // auto-scale to ~2.2m tall, base on the ground, centred
-  const bb = new THREE.Box3().setFromObject(model);
-  const sz = bb.getSize(new THREE.Vector3());
-  if (sz.y > 0){
-    const sc = 1.7 / sz.y;
-    model.scale.setScalar(sc);
-    model.position.set(-bb.min.x*sc, -bb.min.y*sc, -bb.min.z*sc);
-  }
+  // FIXED small scale: Box3 auto-scale made the character a giant (skinned height != geometry box).
+  // 0.5 is the new default; the +/- buttons below let the user tune it live.
+  charModel = model;
+  model.scale.setScalar(charScale);
+  model.position.set(0, 0, 0);
   player.add(model);
   fallback.visible = false;
   if (gltf.animations && gltf.animations.length){
@@ -441,6 +441,8 @@ async function lockLandscape(){
   try{ if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
 }
 document.getElementById('landBtn').addEventListener('click', lockLandscape);
+document.getElementById('charMinus').addEventListener('click', () => { charScale = Math.max(0.2, charScale - 0.2); applyCharScale(); toast('လူအရွယ် ' + charScale.toFixed(1)); });
+document.getElementById('charPlus').addEventListener('click', () => { charScale = Math.min(2.0, charScale + 0.2); applyCharScale(); toast('လူအရွယ် ' + charScale.toFixed(1)); });
 let camAngle = Math.PI, camAutoUntil = 0, camPitch = 0.38, camDist = 10;
 document.getElementById('rotL').addEventListener('click', () => { camAngle += 0.6; camAutoUntil = performance.now() + 8000; });
 document.getElementById('rotR').addEventListener('click', () => { camAngle -= 0.6; camAutoUntil = performance.now() + 8000; });
