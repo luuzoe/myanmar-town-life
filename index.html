@@ -81,10 +81,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=50">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=50">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=50">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=50">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=51">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=51">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=51">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=51">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -129,11 +129,11 @@ const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi)
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
 sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -200; sun.shadow.camera.right = 200;
-sun.shadow.camera.top = 200; sun.shadow.camera.bottom = -200;
+sun.shadow.mapSize.set(2048, 2048); // V51: sharper shadows, less banding on flat roads
+sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
+sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80; // V51: tighter shadow frustum around player
 sun.shadow.camera.near = 1; sun.shadow.camera.far = 250;
-sun.shadow.bias = -0.0005;
+sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05; // V51: normalBias fights surface acne/banding
 sun.shadow.camera.updateProjectionMatrix();
 const moon = new THREE.Mesh(new THREE.SphereGeometry(5,12,10), new THREE.MeshBasicMaterial({color:0xfffde7}));
 scene.add(moon);
