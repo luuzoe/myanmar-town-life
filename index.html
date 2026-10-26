@@ -143,6 +143,7 @@ const bikeG = new THREE.Group(); bikeG.visible = false; player.add(bikeG);
 const bikeBody = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.3,1.8), new THREE.MeshLambertMaterial({color:0xd32f2f}));
 bikeBody.position.y = 0.45; bikeG.add(bikeBody);
 player.position.set(0,0,10);
+player.scale.setScalar(1.5);
 // state
 let money = parseInt(localStorage.getItem('mtl_money')||'0',10) || 0;
 let fastBike = localStorage.getItem('mtl_fast')==='1';
@@ -255,8 +256,8 @@ function animate(now){
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
-  camera.position.lerp(new THREE.Vector3(player.position.x, 20, player.position.z+16), 0.12);
-  camera.lookAt(player.position.x, 0, player.position.z);
+  camera.position.lerp(new THREE.Vector3(player.position.x, 9, player.position.z+17), 0.12);
+  camera.lookAt(player.position.x, 1.5, player.position.z);
   renderer.render(scene,camera);
 }
 requestAnimationFrame(animate);
