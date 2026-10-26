@@ -128,6 +128,23 @@ function blobShadow(parent, rx, rz){
   b.rotation.x = -Math.PI/2; b.scale.set(rx, rz, 1); b.position.y = 0.02; parent.add(b);
 }
 function bx(w,h,d,color,x,y,z,parent){ return mesh(new THREE.BoxGeometry(w,h,d), color, x, y, z, parent); }
+// V28 glass windows: one shared transparent material, colour lerps day-blue -> night-warm in animate()
+const glassDay = new THREE.Color(0xaed6f1), glassNight = new THREE.Color(0xffd54f);
+const glassMat = new THREE.MeshLambertMaterial({color:0xaed6f1, transparent:true, opacity:0.7});
+function glassBx(w,h,d,x,y,z,parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), glassMat); m.position.set(x,y,z); (parent || scene).add(m); m.castShadow = !isMobile; m.receiveShadow = !isMobile; return m; }
+// V28 fenceRect: 4-sided yard fence, gate gap on the south (+z) side at gateX, posts every 3u block the player
+function fenceRect(cx,cz,hw,hd,gateW,gateX,color){
+  const c = color || 0xffffff, g = gateX === undefined ? cx : gateX;
+  const l0 = cx-hw, l1 = g-gateW/2, r0 = g+gateW/2, r1 = cx+hw;
+  bx(l1-l0,0.9,0.25,c,(l0+l1)/2,0.45,cz+hd); bx(r1-r0,0.9,0.25,c,(r0+r1)/2,0.45,cz+hd);
+  bx(2*hw,0.9,0.25,c,cx,0.45,cz-hd);
+  bx(0.25,0.9,2*hd,c,cx-hw,0.45,cz); bx(0.25,0.9,2*hd,c,cx+hw,0.45,cz);
+  for(let fx = cx-hw; fx <= cx+hw; fx += 3) colliders.push({x:fx, z:cz-hd, r:1.5, cam:false});
+  for(let fz = cz-hd; fz <= cz+hd; fz += 3){ colliders.push({x:cx-hw, z:fz, r:1.5, cam:false}); colliders.push({x:cx+hw, z:fz, r:1.5, cam:false}); }
+  for(let fx = cx-hw; fx <= g-gateW/2; fx += 3) colliders.push({x:fx, z:cz+hd, r:1.5, cam:false});
+  for(let fx = g+gateW/2; fx <= cx+hw; fx += 3) colliders.push({x:fx, z:cz+hd, r:1.5, cam:false});
+  colliders.push({x:g-gateW/2, z:cz+hd, r:1.5, cam:false}); colliders.push({x:g+gateW/2, z:cz+hd, r:1.5, cam:false});
+}
 function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,8,6), color, x, y, z, parent); }
 function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry(rt,rb,h,8), color, x, y, z, parent); }
 function cap(r,len,color,x,y,z,parent){
@@ -176,23 +193,27 @@ for(const r of [-160,160]){
 bx(20,0.1,2,0x8d6e63,-90,0.12,60);
 bx(20,0.1,2,0x8d6e63,90,0.12,80); bx(2,0.1,20,0x8d6e63,100,0.12,90);
 const colliders = [];
-function house(x,z,wall,roof){
-  // bigger, more real: 16 wide x 12 deep x 8 high (was 12x9x6), side windows + chimney
+function house(x,z,wall,roof,storeys){
+  // V28: storeys 1/2/3 - wall 8/12/16 high, one window row per floor, glass windows + glass door panel, 4-sided yard fence
+  storeys = storeys || 1;
+  const wallH = 4 + storeys*4, wallTop = 0.5 + wallH;
   bx(16.4,0.5,13,0x9e9e9e,x,0.25,z);
-  bx(16,8,12,wall,x,4.5,z);
-  const r = mesh(new THREE.ConeGeometry(12,4.5,4), roof, x, 10.75, z);
+  bx(16,wallH,12,wall,x,0.5+wallH/2,z);
+  const r = mesh(new THREE.ConeGeometry(12,4.5,4), roof, x, wallTop+2.25, z);
   r.rotation.y = Math.PI/4; r.scale.x = 1.3;
   bx(1.3,2.6,0.15,0x6d4c41,x,1.8,z+6.05);
-  for(const wx of [-4.5,4.5]){
-    bx(2.5,2.5,0.12,0x90caf9,wx+x,4.5,z+6.05);
+  glassBx(0.9,1.0,0.17,x,2.05,z+6.05);
+  for(let f = 0; f < storeys; f++){
+    const wy = 4.5 + f*4;
+    for(const wx of [-4.5,4.5]){
+      bx(2.7,2.7,0.10,0xffffff,wx+x,wy,z+6.05);
+      glassBx(2.5,2.5,0.12,wx+x,wy,z+6.05);
+    }
+    for(const sd of [-1,1]) glassBx(0.12,2.5,2.5,x+sd*8.05,wy,z);
   }
-  for(const sd of [-1,1]) bx(0.12,2.5,2.5,0x90caf9,x+sd*8.05,4.5,z);
-  bx(1,3,1,0x9e9e9e,x+5,10,z-3);
-  bx(6,0.9,0.25,0xffffff,x-5,0.45,z+9.5);
-  bx(6,0.9,0.25,0xffffff,x+5,0.45,z+9.5);
+  bx(1,3,1,0x9e9e9e,x+5,wallTop+1.5,z-3);
+  fenceRect(x,z,11,9,4);
   colliders.push({x,z,r:10});
-  colliders.push({x:x-5,z:z+9.5,r:3,cam:false});
-  colliders.push({x:x+5,z:z+9.5,r:3,cam:false});
 }
 const houseList = [
   [-18,-18,0xfff2cc,0xb3402a],[18,-18,0xddeeff,0x37474f],[-18,18,0xffe0e0,0xb3402a],[18,18,0xe0ffe0,0x6d4c41],
@@ -211,7 +232,7 @@ const houseList = [
   [140,-100,0xfff2cc,0x6d4c41],[140,100,0xddeeff,0xb3402a],
   [-140,60,0xfff2cc,0xb3402a],[140,60,0xddeeff,0x37474f],[-20,140,0xffe0e0,0x6d4c41]
 ];
-for(const h of houseList) house(h[0],h[1],h[2],h[3]);
+for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1)); }
 // ---- school (big, 2 floors), hospital (was clinic) ----
 bx(30,0.5,16,0x9e9e9e,-100,0.25,60);
 bx(28,10,14,0xfff9c4,-100,5.5,60);
@@ -220,18 +241,15 @@ bx(1.8,3.5,0.15,0x6d4c41,-100,2.25,67.05);
 bx(1.8,3.5,0.15,0x6d4c41,-100,2.25,52.95);
 for(const wy of [3.5,7.5]) for(const wx of [-12,-8,-4,4,8,12]){
   bx(2,2,0.1,0xffffff,wx-100,wy,67.03);
-  bx(1.8,1.8,0.12,0x90caf9,wx-100,wy,67.05);
+  glassBx(1.8,1.8,0.12,wx-100,wy,67.05);
   bx(2,2,0.1,0xffffff,wx-100,wy,52.97);
-  bx(1.8,1.8,0.12,0x90caf9,wx-100,wy,52.95);
+  glassBx(1.8,1.8,0.12,wx-100,wy,52.95);
 }
 signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 67.1, 12, 1.8);
 { const sN = signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 52.9, 12, 1.8); sN.rotation.y = Math.PI; }
 cyl(0.08,0.08,6,0x455a64,-118,3,70);
 bx(2,1.2,0.1,0xe53935,-117,5.5,70);
-bx(10,0.9,0.25,0xffffff,-110,0.45,72);
-bx(10,0.9,0.25,0xffffff,-90,0.45,72);
-colliders.push({x:-110,z:72,r:5,cam:false});
-colliders.push({x:-90,z:72,r:5,cam:false});
+fenceRect(-107,60,15,12,10,-100); // school compound: x -122..-92, z 48..72, gate at -100 (road at -80 limits east side)
 cyl(0.1,0.1,2,0x455a64,-94,1,72); cyl(0.1,0.1,2,0x455a64,-91,1,72);
 bx(0.1,0.1,3,0x455a64,-92.5,2,72);
 colliders.push({x:-100,z:60,r:16});
@@ -243,7 +261,7 @@ bx(1.8,3.5,0.15,0x6d4c41,100,2.25,-27.05);
 { const sN = signMesh('ဆေးရုံ', '#ffffff', '#e53935', 100, 8.5, -27.1, 12, 1.8); sN.rotation.y = Math.PI; }
 for(const wy of [3,7]) for(const wx of [-10,-5,5,10]){
   bx(2,2,0.1,0xffffff,wx+100,wy,-13.03);
-  bx(1.8,1.8,0.12,0x90caf9,wx+100,wy,-13.05);
+  glassBx(1.8,1.8,0.12,wx+100,wy,-13.05);
 }
 signMesh('ဆေးရုံ', '#ffffff', '#e53935', 100, 8.5, -12.9, 12, 1.8);
 bx(2,0.6,0.1,0xe53935,100,6,-13);
@@ -272,6 +290,7 @@ shopBuilding(-20,-100,12,6.5,8,0xffffff,0xffc107,'ဘုန်းကြီးက
 shopBuilding(60,-120,14,7,8,0xe3f2fd,0x1565c0,'ရဲစခန်း','#ffffff','#1565c0');
 shopBuilding(-60,-120,14,7,8,0xfff9c4,0x37474f,'စာကြည့်တိုက်','#ffeb3b','#1565c0');
 shopBuilding(60,120,12,6,7,0xffebee,0xe53935,'စာတိုက်','#ffffff','#e53935');
+fenceRect(-20,-100,15,15,4,-20); // monastery compound: 30x30, gate south at -20
 // park + playground at (-120,120): grass, cross paths, corner trees, benches, swings, slide, flowers
 bx(24,0.2,24,0x2e7d32,-120,0.1,120);
 bx(24,0.1,2,0x8d6e63,-120,0.06,120); bx(2,0.1,24,0x8d6e63,-120,0.06,120);
@@ -321,11 +340,29 @@ colliders.push({x:-100,z:-100,r:8});
 // ---- trees, lamps, power poles, grass, clouds ----
 const treeBlockers = [];
 function tree(x,z,detailed){
-  // trunk was thin (0.6 wide, 1.7 visible) and hidden under the canopy from above - now thick + tall so it reads from any angle
-  cyl(0.45,0.6,3.2,0x7a4a22,x,1.6,z);
-  cyl(0.7,0.7,0.3,0x5d4037,x,0.15,z); // root flare at base, visible even when canopy covers the trunk
-  sph(1.9,0x2e7d32,x,4.6,z);
-  if(detailed){ sph(1.2,0x388e3c,x+0.8,5.5,0.5); sph(1.0,0x2e7d32,x-0.8,5.2,-0.5); }
+  // V28: 4 shapes by position hash - 0 round (old), 1 pine (stacked cones), 2 palm (tall trunk + fronds), 3 bush (no trunk)
+  const t = ((Math.abs(Math.floor(x*31 + z*17)) % 4) + 4) % 4;
+  if(t === 3){
+    sph(1.4,0x388e3c,x,0.9,z); sph(0.9,0x2e7d32,x+0.7,1.3,0.4);
+  } else if(t === 1){
+    cyl(0.35,0.5,2.0,0x7a4a22,x,1.0,z);
+    mesh(new THREE.ConeGeometry(1.9,3.2,8), 0x1b5e20, x, 3.2, z);
+    mesh(new THREE.ConeGeometry(1.4,2.6,8), 0x2e7d32, x, 4.8, z);
+    mesh(new THREE.ConeGeometry(0.9,2.0,8), 0x388e3c, x, 6.2, z);
+  } else if(t === 2){
+    cyl(0.3,0.45,5.0,0x7a4a22,x,2.5,z);
+    for(let k = 0; k < 6; k++){
+      const a = k * Math.PI/3;
+      const fr = bx(0.25,0.25,2.6,0x2e7d32,x+Math.cos(a)*1.1,5.2,z+Math.sin(a)*1.1);
+      fr.rotation.y = -a; fr.rotation.x = 0.5;
+    }
+    sph(0.5,0x6d4c41,x,5.1,z);
+  } else {
+    cyl(0.45,0.6,3.2,0x7a4a22,x,1.6,z);
+    cyl(0.7,0.7,0.3,0x5d4037,x,0.15,z);
+    sph(1.9,0x2e7d32,x,4.6,z);
+    if(detailed){ sph(1.2,0x388e3c,x+0.8,5.5,0.5); sph(1.0,0x2e7d32,x-0.8,5.2,-0.5); }
+  }
   colliders.push({x,z,r:1.2});
   treeBlockers.push({x,z,r:2.0});
 }
@@ -477,9 +514,9 @@ bx(1.8,3.5,0.15,0x6d4c41,95,2.25,-67.95);
 bx(1.8,3.5,0.15,0x6d4c41,95,2.25,-76.05);
 for(const wx of [87,91,99,103]){
   bx(2,2,0.1,0xffffff,wx,4,-67.93);
-  bx(1.8,1.8,0.12,0x90caf9,wx,4,-67.95);
+  glassBx(1.8,1.8,0.12,wx,4,-67.95);
   bx(2,2,0.1,0xffffff,wx,4,-76.07);
-  bx(1.8,1.8,0.12,0x90caf9,wx,4,-76.05);
+  glassBx(1.8,1.8,0.12,wx,4,-76.05);
 }
 signMesh('ဈေးကြီး', '#ffeb3b', '#1565c0', 95, 6.5, -67.9, 10, 1.5);
 { const sN = signMesh('ဈေးကြီး', '#ffeb3b', '#1565c0', 95, 6.5, -76.1, 10, 1.5); sN.rotation.y = Math.PI; }
@@ -491,10 +528,10 @@ colliders.push({x:95,z:-72,r:11.5});
 bx(9,6.5,7,0xffe082,12,3.25,-32); bx(9.4,0.4,7.4,0x1565c0,12,6.7,-32);
 bx(1.4,2.6,0.15,0x6d4c41,12,1.8,-28.45);
 bx(1.4,2.6,0.15,0x6d4c41,12,1.8,-35.55);
-bx(2,2,0.1,0xffffff,9.5,3.5,-28.53); bx(1.8,1.8,0.12,0x90caf9,9.5,3.5,-28.55);
-bx(2,2,0.1,0xffffff,14.5,3.5,-28.53); bx(1.8,1.8,0.12,0x90caf9,14.5,3.5,-28.55);
-bx(2,2,0.1,0xffffff,9.5,3.5,-35.47); bx(1.8,1.8,0.12,0x90caf9,9.5,3.5,-35.45);
-bx(2,2,0.1,0xffffff,14.5,3.5,-35.47); bx(1.8,1.8,0.12,0x90caf9,14.5,3.5,-35.45);
+bx(2,2,0.1,0xffffff,9.5,3.5,-28.53); glassBx(1.8,1.8,0.12,9.5,3.5,-28.55);
+bx(2,2,0.1,0xffffff,14.5,3.5,-28.53); glassBx(1.8,1.8,0.12,14.5,3.5,-28.55);
+bx(2,2,0.1,0xffffff,9.5,3.5,-35.47); glassBx(1.8,1.8,0.12,9.5,3.5,-35.45);
+bx(2,2,0.1,0xffffff,14.5,3.5,-35.47); glassBx(1.8,1.8,0.12,14.5,3.5,-35.45);
 signMesh('မြို့လေးဆိုင်', '#ffeb3b', '#1565c0', 12, 5.9, -28.4, 6, 1.5);
 { const sN = signMesh('မြို့လေးဆိုင်', '#ffeb3b', '#1565c0', 12, 5.9, -35.6, 6, 1.5); sN.rotation.y = Math.PI; }
 colliders.push({x:12,z:-32,r:6});
@@ -698,26 +735,26 @@ for(let i=0;i<5;i++){
   const h = houseList[i];
   const p = makePerson(npcShirts[(i+3)%12], 0x37474f, {skin:skins[(i+1)%4], female:(i%2===0), longHair:(i%2===0)});
   p.g.scale.setScalar(0.85); scene.add(p.g);
-  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:8, dir:(i%2===0?1:-1)});
 }
 // yard walkers around 3 new outer houses too
 for(let i=0;i<3;i++){
   const h = houseList[31+i];
   const p = makePerson(npcShirts[(i+6)%12], 0x37474f, {skin:skins[(i+2)%4], female:(i%2===0), longHair:(i%2===0)});
   p.g.scale.setScalar(0.85); scene.add(p.g);
-  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:8, dir:(i%2===0?1:-1)});
 }
 for(let i=0;i<3;i++){
   const h = houseList[39+i];
   const p = makePerson(npcShirts[(i+9)%12], 0x37474f, {skin:skins[(i+3)%4], female:(i%2===1), longHair:(i%2===1)});
   p.g.scale.setScalar(0.85); scene.add(p.g);
-  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:8, dir:(i%2===0?1:-1)});
 }
 const schoolKids = [];
 for(let i=0;i<4;i++){
   const p = makePerson([0xe53935,0x1565c0,0x43a047,0xf9a825][i], 0x37474f, {skin:skins[i%4]});
   p.g.scale.setScalar(0.57); p.g.position.set(-105+i*3, 0, 70); scene.add(p.g);
-  schoolKids.push({p, target:{x:-108+Math.random()*16, z:68+Math.random()*3}});
+  schoolKids.push({p, target:{x:-108+Math.random()*12, z:68+Math.random()*3}});
 }
 const staticPeople = [];
 function staticPerson(shirt, x, z, rotY, opts){
@@ -1078,6 +1115,8 @@ function animate(now){
   stars.visible = dayF < 0.5;
   starMat.opacity = Math.max(0, 1 - dayF*2);
   sun.intensity = 0.25 + dayF * 1.0;
+  glassMat.color.lerpColors(glassNight, glassDay, dayF);
+  glassMat.emissive.setHex(0xffca28); glassMat.emissiveIntensity = Math.max(0, 0.9 - dayF*1.2); // windows glow warm at night
   sun.position.set(player.g.position.x + Math.cos(angle)*60, 10 + dayF*50, player.g.position.z + 20); sun.target.position.set(player.g.position.x, 0, player.g.position.z); sun.target.updateMatrixWorld(); // shadows follow the player, even at the mountains (old fixed origin shadow box ended at x=200)
   hemi.intensity = 0.3 + dayF * 0.8;
   moon.visible = dayF < 0.5;
@@ -1142,7 +1181,7 @@ function animate(now){
   }
   for(const k of schoolKids){
     const dx2 = k.target.x - k.p.g.position.x, dz2 = k.target.z - k.p.g.position.z, d2 = Math.hypot(dx2,dz2);
-    if(d2 < 1){ k.target = {x:-108+Math.random()*16, z:68+Math.random()*3}; }
+    if(d2 < 1){ k.target = {x:-108+Math.random()*12, z:68+Math.random()*3}; }
     else {
       k.p.g.position.x += dx2/d2*3.5*dt; k.p.g.position.z += dz2/d2*3.5*dt;
       turnTo(k.p.g, Math.atan2(dx2,dz2), dt, 8);
