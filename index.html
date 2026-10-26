@@ -81,10 +81,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=49">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=49">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=49">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=49">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=50">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=50">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=50">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=50">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -199,12 +199,10 @@ function noiseTex(base, speckles, rx, ry){
   c.globalAlpha = 1;
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.colorSpace = THREE.SRGBColorSpace; try{ t.anisotropy = renderer.capabilities.getMaxAnisotropy(); }catch(e){} return t; }
 const grassTex = noiseTex('#6fbf5a', ['#5da34a','#7ec96a','#8fd67e','#679f52'], 10, 8);
-const asphaltTex = noiseTex('#444444', ['#3a3a3a','#4e4e4e','#555555'], 4, 4);
-const sidewalkTex = noiseTex('#9e9e9e', ['#8f8f8f','#ababab'], 4, 4);
 const wallTex = noiseTex('#fdfdf5', ['#f0ead0','#e8e0c0'], 2, 1);
 const grassMat = new THREE.MeshLambertMaterial({map:grassTex});
-const asphaltMat = new THREE.MeshLambertMaterial({map:asphaltTex});
-const sidewalkMat = new THREE.MeshLambertMaterial({map:sidewalkTex});
+const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat, no texture (texture streaked on 400-long boxes)
+const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
 // ---- map ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(755,400), grassMat);
 ground.rotation.x = -Math.PI/2; ground.position.set(172.5,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
