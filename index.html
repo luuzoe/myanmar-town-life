@@ -804,8 +804,8 @@ document.getElementById('soundBtn').addEventListener('click', ()=>{
 });
 joyEl.addEventListener('touchstart', ()=>ensureAudio(), {passive:true});
 let targetCamYaw = Math.PI;
-document.getElementById('rotL').addEventListener('click', ()=>{ targetCamYaw -= Math.PI/4; });
-document.getElementById('rotR').addEventListener('click', ()=>{ targetCamYaw += Math.PI/4; });
+document.getElementById('rotL').addEventListener('click', ()=>{ targetCamYaw += Math.PI/4; });
+document.getElementById('rotR').addEventListener('click', ()=>{ targetCamYaw -= Math.PI/4; });
 let dragId = null, dragX = null, dragY = null;
 // camera pitch: drag up = camera higher (top-down view), drag down = camera lower (eye-level view)
 // default pitch = atan((6.5-2.2)/16) = 15 degrees
@@ -815,7 +815,9 @@ canvas.addEventListener('pointerdown', e=>{
 });
 addEventListener('pointermove', e=>{
   if(dragId !== null && e.pointerId === dragId){
-    camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
+    // drag direction = view direction: drag right -> view right, drag left -> view left
+    // (old sign was inverted: camYaw increase turns the view left, so drag must subtract)
+    camYaw -= (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
     camPitch += -(e.clientY - dragY)*0.005; dragY = e.clientY;
     camPitch = Math.max(0.09, Math.min(1.22, camPitch)); // 5 degrees to 70 degrees
   }
