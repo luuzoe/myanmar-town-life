@@ -65,6 +65,7 @@
   <button id="bikeBtn">🏍️</button>
   <div id="actWrap"><div id="actLabel"></div><button id="act">လုပ်</button></div>
   <button id="shopBtn">🛒</button>
+  <button id="hornBtn" style="display:none;background:#e53935;font-size:22px">📣</button>
 </div>
 <button id="rotL">↺</button><button id="rotR">↻</button>
 <button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
@@ -79,10 +80,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=43">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=43">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=43">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=43">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=44">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=44">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=44">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=44">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -930,6 +931,7 @@ let schoolLessons = parseInt(localStorage.getItem('mtl_lessons')||'0',10) || 0;
 let shirtIdx = parseInt(localStorage.getItem('mtl_shirt')||'0',10) || 0;
 const SHIRT_COLORS = [0x1565c0,0xe53935,0x43a047,0xf9a825,0x8e24aa,0xffffff];
 let musicOn = localStorage.getItem('mtl_music')==='1', musicTimer = 0;
+let carSpeed = 0, carHeading = 0, carEngineTimer = 0;
 let marketFactor = 1, drivingCar = false, trafficTimer = 15, trafficNSGreen = true, lightningTimer = 8, photoMode = false;
 let lowQuality = localStorage.getItem('mtl_quality')==='1', inHouse = false, returnPos = null;
 // parked driveable car
@@ -956,7 +958,11 @@ const carLights = [];
 function headCone(parent, z){ const cm = new THREE.Mesh(new THREE.ConeGeometry(1.2,4,8), new THREE.MeshBasicMaterial({color:0xffeb3b, transparent:true, opacity:0.15, depthWrite:false}));
   cm.rotation.x = Math.PI/2; cm.position.set(0,0.6,z); cm.visible = false; parent.add(cm); carLights.push(cm); return cm; }
 for(const c of cars) headCone(c.g, 4.5);
-headCone(bus, 8); headCone(bikeG, 2.5);
+headCone(bus, 8); headCone(bikeG, 2.5); headCone(parkedCar, 4.5);
+const parkedWheels = [], parkedBrakes = [];
+for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Group(); wg.position.set(wx,0.45,wz); parkedCar.add(wg);
+  bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); parkedWheels.push(wg); }
+for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; parkedCar.add(bm); parkedBrakes.push(bm); }
 // player vest (shirt colour, changeable in shop)
 const playerVest = cap(0.30,0.36,SHIRT_COLORS[shirtIdx],0,1.58,0,player.g); playerVest.scale.z = 0.68;
 // owned-house interior room at (500,150)
@@ -1043,7 +1049,7 @@ function nearest(){
     {d:dist(100,-140), label:'🏍️ ဆိုင်ကယ်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🏍️ ဆိုင်ကယ်ဆိုင် — ဆိုင်ကယ်ပြင်လို့ရတယ်'), r:7.5},
     {d:dist(-120,120), label: (dayCount % 3 === 0 && !festivalClaimed) ? '🎉 ပွဲတော် ဆုယူမယ် (+၅၀၀)' : '🌳 ပန်းခြံကြည့်မယ်', fn:()=>{ if(dayCount % 3 === 0 && !festivalClaimed){ festivalClaimed = true; money += 500; gainXP(30); save(); refresh(); showMsg('🎉 ပွဲတော် ဆု +၅၀၀ ကျပ်!'); } else showMsg('🌳 ပန်းခြံ — ကစားကွင်းနဲ့ အနားယူလို့ရတယ်'); }, r:12},
   ];
-  opts.push({d:dist(parkedCar.position.x, parkedCar.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ကားမောင်းမယ်', fn:()=>{ if(drivingCar){ drivingCar = false; player.g.visible = true; player.g.position.set(parkedCar.position.x + 4, 0, parkedCar.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ဆင်းချင် လုပ် နှိပ်'); } refresh(); }, r:5});
+  opts.push({d:dist(parkedCar.position.x, parkedCar.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ကားမောင်းမယ်', fn:()=>{ if(drivingCar){ drivingCar = false; carSpeed = 0; player.g.visible = true; player.g.position.set(parkedCar.position.x + 4, 0, parkedCar.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; carHeading = parkedCar.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်'); } refresh(); }, r:5});
   if(ownedHouses > 0 && !(delivery && delivery.x===-18 && delivery.z===-18)) opts.push({d:dist(-18,-18), label: inHouse ? '🏠 အိမ်ထဲ ရောက်နေပြီ' : '🏠 အိမ်ထဲ ဝင်မယ်', fn:()=>{ if(inHouse) return; inHouse = true; returnPos = {x:player.g.position.x, z:player.g.position.z}; player.g.position.set(500,0,150); showMsg('🏠 အိမ်ထဲ ရောက်ပြီ'); }, r:12});
   if(inHouse) opts.push({d:dist(500,150), label:'🚪 အိမ်က ပြန်ထွက်မယ်', fn:()=>{ inHouse = false; const rp = returnPos || {x:-18, z:-8}; player.g.position.set(rp.x, 0, rp.z); showMsg('🚪 အိမ်က ထွက်ပြီ'); }, r:12});
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
@@ -1147,6 +1153,7 @@ document.getElementById('closeTutorial').addEventListener('click', ()=>{ documen
 document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = !photoMode; const d = photoMode ? 'none' : '';
   for(const id of ['hud','job','joy','btns','rotL','rotR','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
   showMsg(photoMode ? '📸 ဓာတ်ပုံမုဒ် — ပြန်ထွက်ချင် 📸 နှိပ်' : '📸 ဓာတ်ပုံမုဒ် ပိတ်ပြီ'); });
+document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCar) return; tone(420,0.3,0.08,'square'); setTimeout(()=>tone(520,0.3,0.08,'square'),120); showMsg('📣 ဟွန်း!'); });
 document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality && !isMobile; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
 document.getElementById('musicBtn').addEventListener('click', ()=>{ musicOn = !musicOn; save(); refresh(); showMsg('🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်')); });
 document.getElementById('shirtBtn').addEventListener('click', ()=>{ shirtIdx = (shirtIdx + 1) % SHIRT_COLORS.length; playerVest.material = M(SHIRT_COLORS[shirtIdx]); save(); refresh(); showMsg('👕 အင်္ကျီအရောင် ပြောင်းပြီ'); });
@@ -1347,11 +1354,27 @@ function animate(now){
   if(ridingBus){ player.g.position.set(bus.position.x, 0, bus.position.z); }
   const camFwd = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   const camRight = {x: -Math.cos(camYaw), z: Math.sin(camYaw)};
-  if(drivingCar){ let cdx = camRight.x*inRight + camFwd.x*inUp, cdz = camRight.z*inRight + camFwd.z*inUp; const cl = Math.hypot(cdx,cdz);
-    if(cl > 0.1){ cdx/=Math.max(1,cl); cdz/=Math.max(1,cl); parkedCar.position.x += cdx*20*dt; parkedCar.position.z += cdz*20*dt; turnTo(parkedCar, Math.atan2(cdx,cdz), dt, 10);
-      parkedCar.position.x = Math.max(-195, Math.min(540, parkedCar.position.x)); parkedCar.position.z = Math.max(-195, Math.min(195, parkedCar.position.z));
-      for(const c of nearbyColliders(parkedCar.position.x, parkedCar.position.z)){ if(Math.abs(parkedCar.position.x-c.x) > c.r+1.5 || Math.abs(parkedCar.position.z-c.z) > c.r+1.5) continue; const ddx = parkedCar.position.x-c.x, ddz = parkedCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ parkedCar.position.x = c.x + ddx/dd*(c.r+1.5); parkedCar.position.z = c.z + ddz/dd*(c.r+1.5); } } }
-    player.g.position.set(parkedCar.position.x, 0, parkedCar.position.z); inRight = 0; inUp = 0; }
+  if(drivingCar){
+    // V44 real driving: accel / brake / reverse / steering (steers only while moving, like a real car)
+    const braking = inUp < -0.1 && carSpeed > 0.5;
+    if(inUp > 0.1) carSpeed = Math.min(30, carSpeed + 18*dt*inUp);
+    else if(inUp < -0.1){ if(carSpeed > 0.5) carSpeed = Math.max(0, carSpeed - 28*dt*(-inUp)); else carSpeed = Math.max(-8, carSpeed - 8*dt*(-inUp)); }
+    else { if(carSpeed > 0) carSpeed = Math.max(0, carSpeed - 6*dt); else if(carSpeed < 0) carSpeed = Math.min(0, carSpeed + 6*dt); }
+    if(Math.abs(carSpeed) > 0.5) carHeading += inRight * dt * 1.2 * Math.min(1, Math.abs(carSpeed)/10) * (carSpeed >= 0 ? 1 : -1);
+    parkedCar.position.x += Math.sin(carHeading)*carSpeed*dt; parkedCar.position.z += Math.cos(carHeading)*carSpeed*dt;
+    parkedCar.rotation.y = carHeading;
+    parkedCar.position.x = Math.max(-195, Math.min(540, parkedCar.position.x)); parkedCar.position.z = Math.max(-195, Math.min(195, parkedCar.position.z));
+    for(const c of nearbyColliders(parkedCar.position.x, parkedCar.position.z)){ if(Math.abs(parkedCar.position.x-c.x) > c.r+1.5 || Math.abs(parkedCar.position.z-c.z) > c.r+1.5) continue; const ddx = parkedCar.position.x-c.x, ddz = parkedCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ parkedCar.position.x = c.x + ddx/dd*(c.r+1.5); parkedCar.position.z = c.z + ddz/dd*(c.r+1.5); } }
+    // traffic collision: bounce back + health -10
+    for(const oc of [...cars.map(c=>c.g), bus]){ if(oc === parkedCar) continue; const od = Math.hypot(parkedCar.position.x-oc.position.x, parkedCar.position.z-oc.position.z); if(od < 3.5){ parkedCar.position.x -= Math.sin(carHeading)*2; parkedCar.position.z -= Math.cos(carHeading)*2; carSpeed = 0; health -= 10; if(health <= 0){ health = 100; money = Math.max(0, money-500); showMsg('🏥 ကားတိုက်ပြီး ဆေးရုံရောက်ပြီ — ၅၀၀'); } else showMsg('💥 ကားနဲ့ တိုက်မိပြီ! ကျန်းမာ ' + health); save(); refresh(); break; } }
+    for(const w of parkedWheels) w.rotation.x += carSpeed*dt/0.45;
+    for(const bm of parkedBrakes) bm.visible = braking;
+    if(Math.abs(carSpeed) > 1){ carEngineTimer -= dt; if(carEngineTimer <= 0){ tone(50 + Math.abs(carSpeed)*3, 0.25, 0.05, 'sawtooth'); carEngineTimer = 0.25; } }
+    speedEl.textContent = '🚗 ' + Math.round(Math.abs(carSpeed)*3.6) + ' km/h';
+    const hb = document.getElementById('hornBtn'); if(hb) hb.style.display = 'block';
+    targetCamYaw = carHeading;
+    player.g.position.set(parkedCar.position.x, 0, parkedCar.position.z); inRight = 0; inUp = 0;
+  } else { const hb = document.getElementById('hornBtn'); if(hb && hb.style.display !== 'none') hb.style.display = 'none'; }
   let dx = camRight.x*inRight + camFwd.x*inUp;
   let dz = camRight.z*inRight + camFwd.z*inUp;
   const len = Math.hypot(dx,dz);
@@ -1517,7 +1540,7 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = 16, targetH = 6.5;
+  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 16, targetH = 6.5;
   for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
@@ -1530,6 +1553,7 @@ function animate(now){
   // pitch: camera height follows pitch (drag up/down), default 15deg = smoothCamH
   const pitchH = smoothCamH + (Math.tan(camPitch) - Math.tan(Math.atan(4.3/16)))*smoothCamDist;
   camera.position.set(player.g.position.x - cf.x*smoothCamDist, pitchH, player.g.position.z - cf.z*smoothCamDist);
+  { const tf = drivingCar ? 55 + Math.abs(carSpeed)*0.4 : 55; if(Math.abs(camera.fov - tf) > 0.1){ camera.fov += (tf - camera.fov) * Math.min(1, dt*5); camera.updateProjectionMatrix(); } }
   camera.lookAt(player.g.position.x, player.g.position.y + 2.2, player.g.position.z);
   renderer.render(scene,camera);
 }
