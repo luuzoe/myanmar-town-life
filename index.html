@@ -711,8 +711,9 @@ function animate(now){
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
-  camera.position.lerp(new THREE.Vector3(player.g.position.x - cf.x*17, 9, player.g.position.z - cf.z*17), 0.15);
-  camera.lookAt(player.g.position.x, 1.5, player.g.position.z);
+  // locked camera: no lerp lag, so it never trails, drifts or shakes behind the player
+  camera.position.set(player.g.position.x - cf.x*19, 7.5, player.g.position.z - cf.z*19);
+  camera.lookAt(player.g.position.x, 2.2, player.g.position.z);
   renderer.render(scene,camera);
 }
 requestAnimationFrame(animate);
