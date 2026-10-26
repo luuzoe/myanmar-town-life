@@ -42,9 +42,8 @@
   @media(pointer:coarse){#hint{display:none}}
   @media(max-height:500px){#hint{display:none}}
   @media(pointer:fine){#joy{display:none}}
-  /* V40: minimap back on (was hidden 2026-10-26) */
-  #minimap{position:fixed;top:56px;right:12px;width:240px;height:120px;border-radius:12px;z-index:10;opacity:.92}
-  @media(max-width:700px){#minimap{width:160px;height:80px}}
+  /* MINIMAP HIDDEN per Zaw 2026-10-26 (V41: hidden again on his word) - code kept */
+  #minimap{position:fixed;top:56px;right:12px;width:240px;height:120px;border-radius:12px;z-index:10;opacity:.92;display:none}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -76,10 +75,10 @@
   <p style="font-size:13px">📖 မောင်မောင် မြို့ရောက် — အလုပ်လုပ်၊ အိမ်ဝယ်၊ ဆိုင်ဖွင့်</p>
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=40">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=40">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=40">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=40">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=41">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=41">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=41">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=41">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="shop"><div class="card">
   <h2 style="margin:0">🛒 ဆိုင်</h2>
@@ -1154,6 +1153,7 @@ function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
 const minimapEl = document.getElementById('minimap'), minimapCtx = minimapEl ? minimapEl.getContext('2d') : null;
 function drawMinimap(){
   if(!minimapCtx) return;
+  if(true) return; // MINIMAP HIDDEN per Zaw
   // expanded map: x -205..550 (755 wide), z -200..200 (400 high); S from height, centred horizontally
   const ctx = minimapCtx, S = 120/400, offX = (240 - 755*S)/2;
   const mx = x => (x+205)*S + offX, my = z => (z+200)*S;
