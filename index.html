@@ -380,6 +380,8 @@ for(const f of fieldCenters){
 for(let i=0;i<30;i++){
   const fx = 138 + ((i*29)%28), fz = -118 + ((i*47)%236);
   if(Math.abs(fz) < 8) continue;
+  // forest loop had NO road guard (grass loop below has one) - it planted trees on outer ring x=160 + sidewalks + road -80
+  if([-160,-80,-40,0,40,80,160].some(r=>Math.abs(fx-r)<9 || Math.abs(fz-r)<9)) continue;
   let nearField = false;
   for(const f of fieldCenters){ if(Math.hypot(fx-f[0], fz-f[1]) < 20){ nearField = true; break; } }
   if(nearField) continue;
