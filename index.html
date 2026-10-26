@@ -172,8 +172,8 @@ for(const r of [-160,160]){
   bx(2,0.12,400,0x9e9e9e,r+4.5,0.06,0); bx(2,0.12,400,0x9e9e9e,r-4.5,0.06,0);
 }
 // dirt footpaths: to school (west) and to pagoda (L-shaped, east)
-bx(20,0.1,2,0x8d6e63,-90,0.06,60);
-bx(20,0.1,2,0x8d6e63,90,0.06,80); bx(2,0.1,20,0x8d6e63,100,0.06,90);
+bx(20,0.1,2,0x8d6e63,-90,0.12,60);
+bx(20,0.1,2,0x8d6e63,90,0.12,80); bx(2,0.1,20,0x8d6e63,100,0.12,90);
 const colliders = [];
 function house(x,z,wall,roof){
   // bigger, more real: 16 wide x 12 deep x 8 high (was 12x9x6), side windows + chimney
@@ -203,11 +203,12 @@ const houseList = [
   [-95,-55,0xfff2cc,0xb3402a],[-95,25,0xddeeff,0x6d4c41],[95,-55,0xffe0e0,0xb3402a],[95,25,0xe0ffe0,0x37474f],
   [-55,-95,0xf5f5f5,0xb3402a],[25,-95,0xfff8dc,0x6d4c41],[-55,95,0xfff2cc,0x37474f],[25,95,0xddeeff,0xb3402a],
   [-95,-95,0xffe0e0,0x6d4c41],
-  [15,110,0xfff2cc,0xb3402a],[-15,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-10,0xe0ffe0,0xb3402a],
+  [15,110,0xfff2cc,0xb3402a],[-15,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-60,0xe0ffe0,0xb3402a],
   [-120,-120,0xfff2cc,0xb3402a],[120,-120,0xddeeff,0x37474f],
-  [-40,120,0xffe0e0,0xb3402a],[120,120,0xe0ffe0,0x6d4c41],
-  [-120,-40,0xf5f5f5,0xb3402a],[-120,40,0xfff8dc,0x37474f],
-  [120,-40,0xfff2cc,0x6d4c41],[120,40,0xddeeff,0xb3402a]
+  [-60,120,0xffe0e0,0xb3402a],[120,120,0xe0ffe0,0x6d4c41],
+  [-140,-100,0xf5f5f5,0xb3402a],[-140,100,0xfff8dc,0x37474f],
+  [140,-100,0xfff2cc,0x6d4c41],[140,100,0xddeeff,0xb3402a],
+  [-140,60,0xfff2cc,0xb3402a],[140,60,0xddeeff,0x37474f],[-20,140,0xffe0e0,0x6d4c41]
 ];
 for(const h of houseList) house(h[0],h[1],h[2],h[3]);
 // ---- school (big, 2 floors), hospital (was clinic) ----
@@ -267,9 +268,9 @@ shopBuilding(-20,100,10,6.5,7,0xffe0b2,0xef6c00,'လက်ဖက်ရည်ဆ�
 shopBuilding(100,60,10,6.5,7,0xe3f2fd,0x1565c0,'ကုန်စုံဆိုင်','#ffffff','#1565c0');
 shopBuilding(60,-100,12,7,8,0xfff9c4,0x37474f,'မြို့အုပ်ချုပ်ရေးရုံး','#ffeb3b','#1565c0',52);
 shopBuilding(-20,-100,12,6.5,8,0xffffff,0xffc107,'ဘုန်းကြီးကျောင်း','#fff8e1','#6d4c41',56);
-shopBuilding(40,-120,14,7,8,0xe3f2fd,0x1565c0,'ရဲစခန်း','#ffffff','#1565c0');
-shopBuilding(-40,-120,14,7,8,0xfff9c4,0x37474f,'စာကြည့်တိုက်','#ffeb3b','#1565c0');
-shopBuilding(40,120,12,6,7,0xffebee,0xe53935,'စာတိုက်','#ffffff','#e53935');
+shopBuilding(60,-120,14,7,8,0xe3f2fd,0x1565c0,'ရဲစခန်း','#ffffff','#1565c0');
+shopBuilding(-60,-120,14,7,8,0xfff9c4,0x37474f,'စာကြည့်တိုက်','#ffeb3b','#1565c0');
+shopBuilding(60,120,12,6,7,0xffebee,0xe53935,'စာတိုက်','#ffffff','#e53935');
 // park + playground at (-120,120): grass, cross paths, corner trees, benches, swings, slide, flowers
 bx(24,0.2,24,0x2e7d32,-120,0.1,120);
 bx(24,0.1,2,0x8d6e63,-120,0.06,120); bx(2,0.1,24,0x8d6e63,-120,0.06,120);
@@ -318,9 +319,11 @@ colliders.push({x:-100,z:-100,r:8});
 // ---- trees, lamps, power poles, grass, clouds ----
 const treeBlockers = [];
 function tree(x,z,detailed){
-  cyl(0.3,0.45,2.2,0x7a4a22,x,1.1,z);
-  sph(1.9,0x2e7d32,x,3.6,z);
-  if(detailed){ sph(1.2,0x388e3c,x+0.8,4.5,0.5); sph(1.0,0x2e7d32,x-0.8,4.2,-0.5); }
+  // trunk was thin (0.6 wide, 1.7 visible) and hidden under the canopy from above - now thick + tall so it reads from any angle
+  cyl(0.45,0.6,3.2,0x7a4a22,x,1.6,z);
+  cyl(0.7,0.7,0.3,0x5d4037,x,0.15,z); // root flare at base, visible even when canopy covers the trunk
+  sph(1.9,0x2e7d32,x,4.6,z);
+  if(detailed){ sph(1.2,0x388e3c,x+0.8,5.5,0.5); sph(1.0,0x2e7d32,x-0.8,5.2,-0.5); }
   colliders.push({x,z,r:1.2});
   treeBlockers.push({x,z,r:2.0});
 }
@@ -368,7 +371,7 @@ for(let i=0;i<5;i++){
   birds.push({g:bg, wl, wr, cx:-50+i*25, cz:-50+i*20, r:20+i*5, h:22+i*2, sp:0.25+i*0.05, ph:i*1.3});
 }
 // ---- EAST: fields + forest belt, north-south stream, bridge, mountain range ----
-bx(60,0.1,7,0x8d6e63,160,0.05,0); // east road is dirt, not town asphalt
+bx(60,0.1,7,0x8d6e63,160,0.12,0); // east road is dirt, raised above main road so it does not z-fight
 const fieldCenters = [[148,-90],[148,-45],[148,45],[148,90]];
 for(const f of fieldCenters){
   bx(22,0.3,28,0x8d5a2b,f[0],0.15,f[1]);
@@ -418,8 +421,8 @@ for(const mp of mountainPeaks){
     let dx = -(0.75+0.1*k)*mr, dz = (k-1)*0.4*mr, dd = Math.hypot(dx,dz);
     if(dd >= mr){ dx = -0.8*mr; dz = 0; dd = 0.8*mr; }
     const slopeY = mh*0.7*(1 - dd/mr);
-    cyl(0.25,0.35,1.8,0x7a4a22,mx2+dx,slopeY+0.9,mz2+dz);
-    sph(1.3,0x1b5e20,mx2+dx,slopeY+2.8,mz2+dz);
+    cyl(0.4,0.5,2.4,0x7a4a22,mx2+dx,slopeY+1.2,mz2+dz);
+    sph(1.3,0x1b5e20,mx2+dx,slopeY+3.6,mz2+dz);
   }
 }
 for(let i=0;i<20;i++){
@@ -508,8 +511,10 @@ const targets = [
   {x:-18,z:-18,label:'အိမ်အဝါ',r:10},{x:18,z:-18,label:'အိမ်အပြာ',r:10},{x:-18,z:18,label:'အိမ်ပန်းရောင်',r:10},{x:18,z:18,label:'အိမ်အစိမ်း',r:10},{x:-100,z:-20,label:'အိမ်အဖြူ',r:10},
   {x:-65,z:-65,label:'မြောက်အနောက်အိမ်',r:10},{x:-65,z:55,label:'တောင်အနောက်အိမ်',r:10},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်',r:10},{x:55,z:55,label:'တောင်အရှေ့အိမ်',r:10},
   {x:-95,z:25,label:'အနောက်အိမ်',r:10},{x:95,z:-55,label:'အရှေ့အိမ်',r:10},{x:-55,z:95,label:'တောင်အိမ်',r:10},
-  {x:15,z:110,label:'တောင်အိမ်သစ်',r:10},{x:-15,z:-105,label:'မြောက်အိမ်သစ်',r:10},{x:112,z:20,label:'အရှေ့အိမ်သစ်',r:10},{x:-110,z:-10,label:'အနောက်အိမ်သစ်',r:10},
-  {x:-120,z:-120,label:'အနောက်မြောက်အိမ်သစ်',r:10},{x:120,z:-120,label:'အရှေ့မြောက်အိမ်သစ်',r:10},{x:-40,z:120,label:'တောင်အနောက်အိမ်သစ်',r:10},{x:120,z:120,label:'တောင်အရှေ့အိမ်သစ်',r:10},
+  {x:15,z:110,label:'တောင်အိမ်သစ်',r:10},{x:-15,z:-105,label:'မြောက်အိမ်သစ်',r:10},{x:112,z:20,label:'အရှေ့အိမ်သစ်',r:10},{x:-110,z:-60,label:'အနောက်အိမ်သစ်',r:10},
+  {x:-120,z:-120,label:'အနောက်မြောက်အိမ်သစ်',r:10},{x:120,z:-120,label:'အရှေ့မြောက်အိမ်သစ်',r:10},{x:-60,z:120,label:'တောင်အနောက်အိမ်သစ်',r:10},{x:120,z:120,label:'တောင်အရှေ့အိမ်သစ်',r:10},
+  {x:-140,z:-100,label:'အနောက်မြောက်အိမ်သစ် ၂',r:10},{x:-140,z:100,label:'အနောက်တောင်အိမ်သစ် ၂',r:10},{x:140,z:-100,label:'အရှေ့မြောက်အိမ်သစ် ၂',r:10},{x:140,z:100,label:'အရှေ့တောင်အိမ်သစ် ၂',r:10},
+  {x:-140,z:60,label:'အနောက်အိမ်သစ် ၂',r:10},{x:140,z:60,label:'အရှေ့အိမ်သစ် ၂',r:10},{x:-20,z:140,label:'တောင်အိမ်သစ် ၂',r:10},
   {x:-120,z:-40,label:'အနောက်အိမ်သစ်2',r:10},{x:-120,z:40,label:'အနောက်အိမ်သစ်3',r:10},{x:120,z:-40,label:'အရှေ့အိမ်သစ်2',r:10},{x:120,z:40,label:'အရှေ့အိမ်သစ်3',r:10},
   {x:-100,z:60,label:'ကျောင်း',r:16},{x:100,z:-20,label:'ဆေးရုံ',r:14},{x:-20,z:100,label:'လက်ဖက်ရည်ဆိုင်',r:6.5},{x:100,z:60,label:'ကုန်စုံဆိုင်',r:6.5}
 ];
@@ -520,10 +525,9 @@ function makePerson(shirt, pants, opts){
   const skin = opts.skin || 0xffcc99, shoe = opts.shoe || 0x212121;
   const g = new THREE.Group();
   bx(0.5,0.25,0.32,pants,0,1.12,0,g);
-  bx(0.52,0.08,0.34,0x212121,0,1.27,0,g);
+  if(opts.detailed) bx(0.52,0.08,0.34,0x212121,0,1.27,0,g);
   const torso = cap(0.28,0.35,shirt,0,1.58,0,g); torso.scale.z = 0.65;
-  sph(0.12,shirt,-0.32,1.80,0,g); sph(0.12,shirt,0.32,1.80,0,g);
-  cyl(0.09,0.09,0.18,skin,0,1.92,0,g);
+  if(opts.detailed){ sph(0.12,shirt,-0.32,1.80,0,g); sph(0.12,shirt,0.32,1.80,0,g); cyl(0.09,0.09,0.18,skin,0,1.92,0,g); }
   if(opts.female){
     const skirt = mesh(new THREE.CylinderGeometry(0.30,0.42,1.0,12), pants, 0, 0.60, 0, g);
     skirt.material = M(pants);
@@ -557,7 +561,8 @@ function makePerson(shirt, pants, opts){
   const armL = arm(-1), armR = arm(1);
   const head = new THREE.Group(); head.position.set(0,2.18,0); g.add(head);
   sph(0.22,skin,0,0,0,head);
-  if(opts.detailed){
+  if(!opts.detailed){ /* mouth is invisible at NPC distance - skip it */ }
+  else if(opts.detailed){
     sph(0.06,skin,-0.22,0,0,head); sph(0.06,skin,0.22,0,0,head);
     sph(0.04,skin,0,-0.02,0.21,head);
     bx(0.12,0.03,0.02,0x212121,-0.09,0.10,0.21,head); bx(0.12,0.03,0.02,0x212121,0.09,0.10,0.21,head);
@@ -698,6 +703,12 @@ for(let i=0;i<3;i++){
   p.g.scale.setScalar(0.85); scene.add(p.g);
   yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
 }
+for(let i=0;i<3;i++){
+  const h = houseList[39+i];
+  const p = makePerson(npcShirts[(i+9)%12], 0x37474f, {skin:skins[(i+3)%4], female:(i%2===1), longHair:(i%2===1)});
+  p.g.scale.setScalar(0.85); scene.add(p.g);
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
+}
 const schoolKids = [];
 for(let i=0;i<4;i++){
   const p = makePerson([0xe53935,0x1565c0,0x43a047,0xf9a825][i], 0x37474f, {skin:skins[i%4]});
@@ -712,9 +723,9 @@ function staticPerson(shirt, x, z, rotY, opts){
 }
 staticPerson(0x43a047, 21, 32, 0, {female:true, longHair:true});
 staticPerson(0x8d6e63, -14, -32, 0, {hat:true});
-staticPerson(0x1565c0, 36, -114, 0, {hat:true});
-staticPerson(0x43a047, -44, -114, 0, {female:true, longHair:true});
-staticPerson(0xe53935, 36, 126, Math.PI, {beard:true});
+staticPerson(0x1565c0, 56, -114, 0, {hat:true});
+staticPerson(0x43a047, -64, -114, 0, {female:true, longHair:true});
+staticPerson(0xe53935, 56, 126, Math.PI, {beard:true});
 staticPerson(0xef6c00, 15, -28, Math.PI, {beard:true});
 staticPerson(0xffffff, -17, 106, Math.PI, {});
 staticPerson(0x1565c0, 97, 66, Math.PI, {});
@@ -832,9 +843,9 @@ function nearest(){
     {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်'), r:6},
     {d:dist(100,100), label:'🙏 ဘုရားကြည့်မယ်', fn:()=>showMsg('🙏 ဘုရား — ဘုရားဖူးလို့ရတယ်'), r:6},
     {d:dist(-100,-100), label:'🌊 ကန်ကြည့်မယ်', fn:()=>showMsg('🌊 ကန် — ကန်နားမှာ အနားယူလို့ရတယ်'), r:8},
-    {d:dist(40,-120), label:'👮 ရဲစခန်းကြည့်မယ်', fn:()=>showMsg('👮 ရဲစခန်း — မြို့လုံခြုံရေးအတွက် တာဝန်ယူတယ်'), r:8.5},
-    {d:dist(-40,-120), label:'📚 စာကြည့်တိုက်ကြည့်မယ်', fn:()=>showMsg('📚 စာကြည့်တိုက် — စာဖတ်လို့ရတယ်'), r:8.5},
-    {d:dist(40,120), label:'📮 စာတိုက်ကြည့်မယ်', fn:()=>showMsg('📮 စာတိုက် — စာပို့လို့ရတယ်'), r:7.5},
+    {d:dist(60,-120), label:'👮 ရဲစခန်းကြည့်မယ်', fn:()=>showMsg('👮 ရဲစခန်း — မြို့လုံခြုံရေးအတွက် တာဝန်ယူတယ်'), r:8.5},
+    {d:dist(-60,-120), label:'📚 စာကြည့်တိုက်ကြည့်မယ်', fn:()=>showMsg('📚 စာကြည့်တိုက် — စာဖတ်လို့ရတယ်'), r:8.5},
+    {d:dist(60,120), label:'📮 စာတိုက်ကြည့်မယ်', fn:()=>showMsg('📮 စာတိုက် — စာပို့လို့ရတယ်'), r:7.5},
     {d:dist(-120,120), label:'🌳 ပန်းခြံကြည့်မယ်', fn:()=>showMsg('🌳 ပန်းခြံ — ကစားကွင်းနဲ့ အနားယူလို့ရတယ်'), r:12},
   ];
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
@@ -887,18 +898,32 @@ addEventListener('keydown', e=>{
   if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike();
 });
 addEventListener('keyup', e=>keys[e.code]=false);
-let joy = {x:0,y:0};
+let joy = {x:0,y:0}, joyTouchId = null;
 const joyEl = document.getElementById('joy'), knob = document.getElementById('knob');
 function joyMove(e){
-  const r = joyEl.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+  const r = joyEl.getBoundingClientRect();
+  let t = null;
+  if(e.touches){
+    for(const tc of e.touches) if(tc.identifier === joyTouchId){ t = tc; break; }
+    if(!t) return; // another finger (camera) must not hijack the joystick
+  } else t = e;
   let dx = (t.clientX - (r.left+r.width/2)) / (r.width/2), dy = (t.clientY - (r.top+r.height/2)) / (r.height/2);
   const len = Math.hypot(dx,dy); if(len > 1){ dx/=len; dy/=len; }
   joy = {x:dx, y:dy}; knob.style.left = (35+dx*28)+'px'; knob.style.top = (35+dy*28)+'px';
 }
-function joyEnd(){ joy = {x:0,y:0}; knob.style.left='35px'; knob.style.top='35px'; }
-joyEl.addEventListener('touchstart', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
+function joyEnd(e){
+  if(e && e.changedTouches){
+    for(const tc of e.changedTouches) if(tc.identifier === joyTouchId){ joyTouchId = null; break; }
+    if(joyTouchId !== null) return; // a different finger lifted, joystick finger still down
+  } else joyTouchId = null;
+  joy = {x:0,y:0}; knob.style.left='35px'; knob.style.top='35px';
+}
+joyEl.addEventListener('touchstart', e=>{e.preventDefault(); joyTouchId = e.changedTouches[0].identifier; joyMove(e);}, {passive:false});
 joyEl.addEventListener('touchmove', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
 joyEl.addEventListener('touchend', joyEnd);
+joyEl.addEventListener('touchcancel', joyEnd); // system-cancelled touch used to leave the player walking forever
+addEventListener('blur', ()=>{ joy = {x:0,y:0}; joyTouchId = null; knob.style.left='35px'; knob.style.top='35px'; for(const k in keys) keys[k]=false; });
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ joy = {x:0,y:0}; joyTouchId = null; for(const k in keys) keys[k]=false; } });
 function doAction(){ const n = nearest(); if(n) n.fn(); else showMsg('အနီးမှာ လုပ်စရာမရှိဘူး — လယ် / ဈေး / ဆိုင် / ရွာသား ဆီ သွားပါ'); }
 function toggleBike(){ riding = !riding; bikeG.visible = riding; refresh(); }
 actBtn.addEventListener('click', doAction);
@@ -1008,8 +1033,10 @@ function drawMinimap(){
   ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, py);
   ctx.lineTo(px + Math.sin(player.g.rotation.y)*10, py + Math.cos(player.g.rotation.y)*10); ctx.stroke();
 }
+let _blockerCache = null;
 function camBlocked(camX, camZ, px, pz){
-  for(const c of [...colliders, ...treeBlockers]){
+  if(!_blockerCache) _blockerCache = [...colliders, ...treeBlockers];
+  for(const c of _blockerCache){
     if(c.cam === false) continue;
     if(c.r < 2 && !treeBlockers.includes(c)) continue;
     const dx = px - camX, dz = pz - camZ, len2 = dx*dx + dz*dz;
@@ -1069,8 +1096,10 @@ function animate(now){
     player.g.position.x = Math.max(-195, Math.min(200, player.g.position.x));
     player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
     for(const c of colliders){
+      if(Math.abs(player.g.position.x-c.x) > c.r+0.8 || Math.abs(player.g.position.z-c.z) > c.r+0.8) continue;
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
       if(d < c.r+0.8 && d > 0.01){ player.g.position.x = c.x + ddx/d*(c.r+0.8); player.g.position.z = c.z + ddz/d*(c.r+0.8); }
+      else if(d <= 0.01){ player.g.position.x = c.x + c.r+0.8; player.g.position.z = c.z; } // never stay stuck at a collider centre
     }
     player.g.position.y = (Math.abs(player.g.position.x-175) < 13 && Math.abs(player.g.position.z) < 4) ? 0.35 : 0;
     walkT += sp*dt;
@@ -1121,6 +1150,7 @@ function animate(now){
     }
     // animals no longer walk through houses, pond, trees, fences or stream
     for(const c of colliders){
+      if(Math.abs(a.g.position.x-c.x) > c.r+0.5 || Math.abs(a.g.position.z-c.z) > c.r+0.5) continue;
       const adx = a.g.position.x-c.x, adz = a.g.position.z-c.z, ad = Math.hypot(adx,adz);
       if(ad < c.r+0.5 && ad > 0.01){ a.g.position.x = c.x + adx/ad*(c.r+0.5); a.g.position.z = c.z + adz/ad*(c.r+0.5); }
     }
