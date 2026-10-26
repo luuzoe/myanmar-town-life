@@ -81,10 +81,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=52">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=52">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=52">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=52">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=53">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=53">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=53">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=53">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -267,12 +267,12 @@ const houseList = [
   [-100,-20,0xf5f5f5,0xb3402a],[60,100,0xfff8dc,0x37474f],
   [-65,-65,0xfff2cc,0xb3402a],[-65,-25,0xddeeff,0x6d4c41],[-65,15,0xffe0e0,0x37474f],[-65,55,0xe0ffe0,0xb3402a],
   [-25,-65,0xf5f5f5,0x37474f],[-25,55,0xfff8dc,0xb3402a],
-  [15,-65,0xfff2cc,0x6d4c41],[15,55,0xddeeff,0xb3402a],
+  [20,-65,0xfff2cc,0x6d4c41],[20,55,0xddeeff,0xb3402a],
   [55,-65,0xffe0e0,0x37474f],[55,-25,0xe0ffe0,0xb3402a],[55,15,0xf5f5f5,0x6d4c41],[55,55,0xfff8dc,0x37474f],
   [-95,-55,0xfff2cc,0xb3402a],[-95,25,0xddeeff,0x6d4c41],[95,-55,0xffe0e0,0xb3402a],[95,25,0xe0ffe0,0x37474f],
   [-55,-95,0xf5f5f5,0xb3402a],[25,-95,0xfff8dc,0x6d4c41],[-55,95,0xfff2cc,0x37474f],[25,95,0xddeeff,0xb3402a],
   [-95,-95,0xffe0e0,0x6d4c41],
-  [15,110,0xfff2cc,0xb3402a],[-15,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-60,0xe0ffe0,0xb3402a],
+  [20,110,0xfff2cc,0xb3402a],[-20,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-60,0xe0ffe0,0xb3402a],
   [-120,-120,0xfff2cc,0xb3402a],[120,-120,0xddeeff,0x37474f],
   [-60,120,0xffe0e0,0xb3402a],[120,120,0xe0ffe0,0x6d4c41],
   [-140,-100,0xf5f5f5,0xb3402a],[-140,100,0xfff8dc,0x37474f],
@@ -611,7 +611,7 @@ const targets = [
   {x:-18,z:-18,label:'အိမ်အဝါ',r:10},{x:18,z:-18,label:'အိမ်အပြာ',r:10},{x:-18,z:18,label:'အိမ်ပန်းရောင်',r:10},{x:18,z:18,label:'အိမ်အစိမ်း',r:10},{x:-100,z:-20,label:'အိမ်အဖြူ',r:10},
   {x:-65,z:-65,label:'မြောက်အနောက်အိမ်',r:10},{x:-65,z:55,label:'တောင်အနောက်အိမ်',r:10},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်',r:10},{x:55,z:55,label:'တောင်အရှေ့အိမ်',r:10},
   {x:-95,z:25,label:'အနောက်အိမ်',r:10},{x:95,z:-55,label:'အရှေ့အိမ်',r:10},{x:-55,z:95,label:'တောင်အိမ်',r:10},
-  {x:15,z:110,label:'တောင်အိမ်သစ်',r:10},{x:-15,z:-105,label:'မြောက်အိမ်သစ်',r:10},{x:112,z:20,label:'အရှေ့အိမ်သစ်',r:10},{x:-110,z:-60,label:'အနောက်အိမ်သစ်',r:10},
+  {x:20,z:110,label:'တောင်အိမ်သစ်',r:10},{x:-20,z:-105,label:'မြောက်အိမ်သစ်',r:10},{x:112,z:20,label:'အရှေ့အိမ်သစ်',r:10},{x:-110,z:-60,label:'အနောက်အိမ်သစ်',r:10},
   {x:-120,z:-120,label:'အနောက်မြောက်အိမ်သစ်',r:10},{x:120,z:-120,label:'အရှေ့မြောက်အိမ်သစ်',r:10},{x:-60,z:120,label:'တောင်အနောက်အိမ်သစ်',r:10},{x:120,z:120,label:'တောင်အရှေ့အိမ်သစ်',r:10},
   {x:-140,z:-100,label:'အနောက်မြောက်အိမ်သစ် ၂',r:10},{x:-140,z:100,label:'အနောက်တောင်အိမ်သစ် ၂',r:10},{x:140,z:-100,label:'အရှေ့မြောက်အိမ်သစ် ၂',r:10},{x:140,z:100,label:'အရှေ့တောင်အိမ်သစ် ၂',r:10},
   {x:-140,z:60,label:'အနောက်အိမ်သစ် ၂',r:10},{x:140,z:60,label:'အရှေ့အိမ်သစ် ၂',r:10},{x:-20,z:140,label:'တောင်အိမ်သစ် ၂',r:10},
