@@ -57,6 +57,7 @@
   <button id="shopBtn">🛒 ဆိုင်</button>
 </div>
 <button id="rotL">↺</button><button id="rotR">↻</button>
+<button id="soundBtn" style="position:fixed;right:16px;top:64px;width:48px;height:48px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:22px;z-index:10">🔊</button>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p><b>အပြင်ကမြို့ရွာလို ပြည့်စုံတဲ့ မြို့ — အိမ်၊ ကျောင်း၊ ဆေးခန်း၊ လက်ဖက်ရည်ဆိုင်၊ ဘုန်းကြီးကျောင်း၊ ဘောလုံးကွင်း၊ ကားဂိတ်၊ တိရစ္ဆာန်တွေ၊ ကားတွေ။</b></p>
@@ -78,6 +79,8 @@ const canvas = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const skyColor = new THREE.Color(0x87ceeb);
 scene.background = skyColor;
@@ -86,21 +89,30 @@ const nightColor = new THREE.Color(0x0b1026), dayColor = new THREE.Color(0x87cee
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-sun.position.set(30, 50, 20); scene.add(sun);
+sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.left = -130; sun.shadow.camera.right = 130;
+sun.shadow.camera.top = 130; sun.shadow.camera.bottom = -130;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 250;
+sun.shadow.bias = -0.0005;
+sun.shadow.camera.updateProjectionMatrix();
 const moon = new THREE.Mesh(new THREE.SphereGeometry(5,12,10), new THREE.MeshBasicMaterial({color:0xfffde7}));
 scene.add(moon);
 const mats = {};
 function M(c){ if(!mats[c]) mats[c] = new THREE.MeshLambertMaterial({color:c}); return mats[c]; }
 function mesh(geo, color, x, y, z, parent){
   const m = new THREE.Mesh(geo, M(color));
-  m.position.set(x, y, z); (parent || scene).add(m); return m;
+  m.position.set(x, y, z); (parent || scene).add(m);
+  m.castShadow = true; m.receiveShadow = true; return m;
 }
 function bx(w,h,d,color,x,y,z,parent){ return mesh(new THREE.BoxGeometry(w,h,d), color, x, y, z, parent); }
 function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,10,8), color, x, y, z, parent); }
 function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry(rt,rb,h,10), color, x, y, z, parent); }
 function cap(r,len,color,x,y,z,parent){
   const m = new THREE.Mesh(new THREE.CapsuleGeometry(r,len,4,10), M(color));
-  m.position.set(x,y,z); (parent || scene).add(m); return m;
+  m.position.set(x,y,z); (parent || scene).add(m);
+  m.castShadow = true; m.receiveShadow = true; return m;
 }
 function signMesh(text, bg, fg, x, y, z, w, h, fs){
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
@@ -112,7 +124,7 @@ function signMesh(text, bg, fg, x, y, z, w, h, fs){
 }
 // ---- map ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(260,260), M(0x6fbf5a));
-ground.rotation.x = -Math.PI/2; scene.add(ground);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
 const roadLines = [-80,-40,0,40,80];
 for(const r of roadLines){
   bx(260,0.1,7,0x444444,0,0.05,r);
@@ -255,6 +267,7 @@ for(let i=0;i<5;i++){
   const g = new THREE.Group();
   sph(2.2,0xffffff,0,0,0,g); sph(1.6,0xffffff,2,0.4,0.5,g); sph(1.6,0xffffff,-2,0.3,-0.5,g);
   g.position.set(-100+i*50, 26, -60+i*25); scene.add(g); clouds.push(g);
+  g.traverse(o=>{ o.castShadow = false; });
 }
 // ---- farm, market (2 stalls) ----
 bx(10,0.3,7,0x8d5a2b,-18,0.15,-32);
@@ -384,6 +397,48 @@ function animatePerson(p, moving, walkPhase, globalTime, riding){
   }
   const blink = (globalTime % 3.7 < 0.12) ? 0.15 : 1;
   for(const e of p.eyes) e.scale.y = blink;
+}
+// ---- smooth turning + sound helpers ----
+function turnTo(obj, target, dt, rate){
+  let diff = target - obj.rotation.y;
+  while(diff > Math.PI) diff -= Math.PI*2;
+  while(diff < -Math.PI) diff += Math.PI*2;
+  const step = Math.max(-rate*dt, Math.min(rate*dt, diff));
+  obj.rotation.y += step;
+}
+let audioCtx = null, soundOn = true;
+function ensureAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }catch(e){}
+}
+function tone(freq, dur, vol, type){
+  if(!soundOn || !audioCtx) return;
+  try{
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+function playStep(){ tone(70, 0.12, 0.06, 'triangle'); }
+function playCoin(){ tone(1200, 0.12, 0.08, 'square'); setTimeout(()=>tone(1600, 0.15, 0.08, 'square'), 80); }
+function playChime(){ tone(660, 0.15, 0.07); setTimeout(()=>tone(880, 0.2, 0.07), 120); }
+function playBird(){
+  if(!soundOn || !audioCtx) return;
+  try{
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(2000, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(3000, audioCtx.currentTime + 0.15);
+    g.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.25);
+  }catch(e){}
 }
 // player
 const player = makePerson(0x1565c0, 0x37474f, {skin:0xe8b88a});
@@ -543,11 +598,11 @@ function nearest(){
 function harvest(){
   if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
   cropReady = false; crops.visible = false; cropTimer = 10;
-  money += 500; save(); refresh(); showMsg('🌾 ရိတ်ပြီးပြီ +၅၀၀ ကျပ်');
+  money += 500; save(); refresh(); playCoin(); showMsg('🌾 ရိတ်ပြီးပြီ +၅၀၀ ကျပ်');
 }
 function sell(){
   if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
-  marketTimer = 8; money += 800; save(); refresh(); showMsg('🏪 ရောင်းပြီးပြီ +၈၀၀ ကျပ်');
+  marketTimer = 8; money += 800; save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +၈၀၀ ကျပ်');
 }
 function accept(){
   if(delivery) return;
@@ -559,7 +614,7 @@ function accept(){
 function deliver(){
   if(!delivery) return;
   let pay = bigBasket ? 1500 : 1000;
-  money += pay; save();
+  money += pay; save(); playCoin();
   showMsg('📦 ပို့ပြီးပြီ +'+pay+' ကျပ်');
   delivery = null; beacon.position.set(0,-20,0); refresh();
 }
@@ -583,11 +638,17 @@ function doAction(){ const n = nearest(); if(n) n.fn(); else showMsg('အနီ�
 function toggleBike(){ riding = !riding; bikeG.visible = riding; refresh(); }
 actBtn.addEventListener('click', doAction);
 document.getElementById('bikeBtn').addEventListener('click', toggleBike);
-document.getElementById('shopBtn').addEventListener('click', ()=>{ refresh(); document.getElementById('shop').style.display='flex'; });
+document.getElementById('shopBtn').addEventListener('click', ()=>{ ensureAudio(); playChime(); refresh(); document.getElementById('shop').style.display='flex'; });
 document.getElementById('closeShop').addEventListener('click', ()=>document.getElementById('shop').style.display='none');
 document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
 document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
-document.getElementById('playBtn').addEventListener('click', ()=>document.getElementById('start').style.display='none');
+document.getElementById('playBtn').addEventListener('click', ()=>{ ensureAudio(); document.getElementById('start').style.display='none'; });
+document.getElementById('soundBtn').addEventListener('click', ()=>{
+  ensureAudio(); soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) playChime();
+});
+joyEl.addEventListener('touchstart', ()=>ensureAudio(), {passive:true});
 document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
   try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
   try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
@@ -600,7 +661,19 @@ canvas.addEventListener('pointerdown', e=>{ dragX = e.clientX; });
 addEventListener('pointermove', e=>{ if(dragX !== null){ camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; } });
 addEventListener('pointerup', ()=>{ dragX = null; });
 refresh();
-let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI;
+let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 19, smoothCamH = 7.5, lastStep = -1, birdTimer = 10;
+function camBlocked(camX, camZ, px, pz){
+  for(const c of colliders){
+    if(c.r < 3) continue;
+    const dx = px - camX, dz = pz - camZ, len2 = dx*dx + dz*dz;
+    if(len2 < 0.01) continue;
+    let t = ((c.x - camX)*dx + (c.z - camZ)*dz) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const qx = camX + dx*t, qz = camZ + dz*t;
+    if(Math.hypot(c.x - qx, c.z - qz) < c.r + 0.3) return true;
+  }
+  return false;
+}
 function animate(now){
   requestAnimationFrame(animate);
   const dt = Math.min((now-last)/1000, 0.05); last = now;
@@ -635,7 +708,7 @@ function animate(now){
     dx/=Math.max(1,len); dz/=Math.max(1,len);
     const sp = riding ? (fastBike?26:18) : 10.5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
-    player.g.rotation.y = Math.atan2(dx,dz);
+    turnTo(player.g, Math.atan2(dx,dz), dt, 10);
     player.g.position.x = Math.max(-122, Math.min(122, player.g.position.x));
     player.g.position.z = Math.max(-122, Math.min(122, player.g.position.z));
     for(const c of colliders){
@@ -645,6 +718,12 @@ function animate(now){
     walkT += sp*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
+  if(moving && !riding){
+    const stepIdx = Math.floor(walkT / 0.8);
+    if(stepIdx !== lastStep){ lastStep = stepIdx; playStep(); }
+  }
+  birdTimer -= dt;
+  if(birdTimer <= 0){ if(dayF > 0.5) playBird(); birdTimer = 8 + Math.random()*10; }
   for(const n of npcs){
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
@@ -653,7 +732,7 @@ function animate(now){
     else if(Math.abs(tz-pz) > 0.6) mz = Math.sign(tz-pz);
     else { n.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     n.p.g.position.x += mx*n.speed*dt; n.p.g.position.z += mz*n.speed*dt;
-    n.p.g.rotation.y = Math.atan2(mx,mz);
+    turnTo(n.p.g, Math.atan2(mx,mz), dt, 8);
     animatePerson(n.p, true, gt*n.speed + px, gt, false);
   }
   for(const y of yardPeople){
@@ -661,7 +740,7 @@ function animate(now){
     const px = y.house.x + Math.cos(y.angle)*y.radius, pz = y.house.z + Math.sin(y.angle)*y.radius;
     const dx2 = -Math.sin(y.angle)*y.dir, dz2 = Math.cos(y.angle)*y.dir;
     y.p.g.position.set(px, 0, pz);
-    y.p.g.rotation.y = Math.atan2(dx2,dz2);
+    turnTo(y.p.g, Math.atan2(dx2,dz2), dt, 8);
     animatePerson(y.p, true, gt*3.15 + px, gt, false);
   }
   for(const k of schoolKids){
@@ -669,7 +748,7 @@ function animate(now){
     if(d2 < 1){ k.target = {x:-108+Math.random()*16, z:67+Math.random()*8}; }
     else {
       k.p.g.position.x += dx2/d2*3.5*dt; k.p.g.position.z += dz2/d2*3.5*dt;
-      k.p.g.rotation.y = Math.atan2(dx2,dz2);
+      turnTo(k.p.g, Math.atan2(dx2,dz2), dt, 8);
       animatePerson(k.p, true, gt*3.5, gt, false);
     }
   }
@@ -679,7 +758,7 @@ function animate(now){
     if(d2 < 1){ a.target = {x:a.area.xmin+Math.random()*(a.area.xmax-a.area.xmin), z:a.area.zmin+Math.random()*(a.area.zmax-a.area.zmin)}; }
     else {
       a.g.position.x += dx2/d2*a.speed*dt; a.g.position.z += dz2/d2*a.speed*dt;
-      a.g.rotation.y = Math.atan2(dx2,dz2);
+      turnTo(a.g, Math.atan2(dx2,dz2), dt, 8);
       a.g.position.y = Math.abs(Math.sin(gt*6))*0.05;
     }
   }
@@ -691,7 +770,7 @@ function animate(now){
     else if(Math.abs(tz-pz) > 0.8) mz = Math.sign(tz-pz);
     else { car.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     car.g.position.x += mx*car.speed*dt; car.g.position.z += mz*car.speed*dt;
-    car.g.rotation.y = Math.atan2(mx,mz);
+    turnTo(car.g, Math.atan2(mx,mz), dt, 6);
   }
   {
     const bt = busRoute[busIdx];
@@ -701,7 +780,7 @@ function animate(now){
       let mx = 0, mz = 0;
       if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
       bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
-      bus.rotation.y = Math.atan2(mx,mz);
+      turnTo(bus, Math.atan2(mx,mz), dt, 5);
     }
   }
   for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
@@ -711,8 +790,18 @@ function animate(now){
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
-  // locked camera: no lerp lag, so it never trails, drifts or shakes behind the player
-  camera.position.set(player.g.position.x - cf.x*19, 7.5, player.g.position.z - cf.z*19);
+  // camera occlusion: pull camera in / raise it until no big building blocks the view
+  let targetDist = 19, targetH = 7.5;
+  for(let a=0; a<10; a++){
+    const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
+    if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
+    targetDist = Math.max(6, targetDist - 1.5);
+    targetH = Math.min(13, targetH + 0.8);
+    if(targetDist <= 6) break;
+  }
+  smoothCamDist += (targetDist - smoothCamDist) * Math.min(1, dt*8);
+  smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*8);
+  camera.position.set(player.g.position.x - cf.x*smoothCamDist, smoothCamH, player.g.position.z - cf.z*smoothCamDist);
   camera.lookAt(player.g.position.x, 2.2, player.g.position.z);
   renderer.render(scene,camera);
 }
