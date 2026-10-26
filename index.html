@@ -85,7 +85,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const skyColor = new THREE.Color(0x87ceeb);
 scene.background = skyColor;
-scene.fog = new THREE.Fog(0x87ceeb, 90, 240);
+scene.fog = new THREE.Fog(0x87ceeb, 120, 420);
 const nightColor = new THREE.Color(0x0b1026), dayColor = new THREE.Color(0x87ceeb);
 const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
@@ -129,8 +129,8 @@ function signMesh(text, bg, fg, x, y, z, w, h, fs){
   sign.position.set(x,y,z); scene.add(sign); return sign;
 }
 // ---- map ----
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(260,260), M(0x6fbf5a));
-ground.rotation.x = -Math.PI/2; ground.receiveShadow = !isMobile; scene.add(ground);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400,260), M(0x6fbf5a));
+ground.rotation.x = -Math.PI/2; ground.position.set(70,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
 const roadLines = [-80,-40,0,40,80];
 for(const r of roadLines){
   bx(260,0.1,7,0x444444,0,0.05,r);
@@ -266,6 +266,50 @@ for(let i=0;i<5;i++){
   g.position.set(-100+i*50, 26, -60+i*25); scene.add(g); clouds.push(g);
   g.traverse(o=>{ o.castShadow = false; });
 }
+// ---- EAST: fields + forest belt, north-south stream, bridge, mountain range ----
+bx(60,0.1,7,0x444444,160,0.05,0);
+const fieldCenters = [[148,-90],[148,-45],[148,45],[148,90]];
+for(const f of fieldCenters){
+  bx(22,0.3,28,0x8d5a2b,f[0],0.15,f[1]);
+  for(const rz of [-8,0,8]) bx(18,0.4,1,0x2e7d32,f[0],0.4,f[1]+rz);
+}
+for(let i=0;i<30;i++){
+  const fx = 138 + ((i*29)%28), fz = -118 + ((i*47)%236);
+  if(Math.abs(fz) < 8) continue;
+  let nearField = false;
+  for(const f of fieldCenters){ if(Math.hypot(fx-f[0], fz-f[1]) < 20){ nearField = true; break; } }
+  if(nearField) continue;
+  if(fx > 166) continue;
+  tree(fx, fz);
+}
+bx(12,0.3,260,0x2196f3,175,0.15,0);
+bx(2,0.4,260,0xd7ccc8,167,0.2,0); bx(2,0.4,260,0xd7ccc8,183,0.2,0);
+bx(16,0.4,8,0x8d6e63,175,0.35,0);
+bx(16,0.5,0.3,0x6d4c41,175,0.8,4); bx(16,0.5,0.3,0x6d4c41,175,0.8,-4);
+for(const sz of [-110,-70,-30,30,70,110]) colliders.push({x:175,z:sz,r:11,cam:false});
+const foam = [];
+for(let i=0;i<10;i++){
+  const fm = bx(1.5,0.2,0.5,0xffffff,175,0.35,-120+i*26);
+  foam.push(fm);
+}
+function mountain(x,z,r,h,color){
+  mesh(new THREE.ConeGeometry(r,h,8), color, x, h/2, z);
+  if(h >= 34) mesh(new THREE.ConeGeometry(r*0.28,h*0.25,8), 0xffffff, x, h - h*0.12, z);
+  colliders.push({x,z,r:r*0.7});
+}
+mountain(225,0,35,48,0x607d8b);
+mountain(205,-75,26,34,0x78909c);
+mountain(205,75,28,36,0x78909c);
+mountain(245,-45,20,28,0x607d8b);
+mountain(245,45,22,30,0x607d8b);
+mountain(230,110,18,24,0x78909c);
+mountain(230,-110,18,24,0x78909c);
+sph(1.5,0x9e9e9e,195,0.8,-20); sph(1.2,0x9e9e9e,198,0.6,25); sph(1.8,0x9e9e9e,192,0.9,60);
+const streamSign = signMesh('ရေချောင်း', '#4fc3f7', '#ffffff', 168, 2.5, 12, 6, 1.2);
+streamSign.rotation.y = -Math.PI/2;
+const mountainSign = signMesh('တောင်တန်း', '#607d8b', '#ffffff', 190, 3, -12, 6, 1.2);
+mountainSign.rotation.y = -Math.PI/2;
+cyl(0.1,0.1,2,0x455a64,168,1,12); cyl(0.1,0.1,2.4,0x455a64,190,1.2,-12);
 // ---- farm, market (2 stalls) ----
 bx(10,0.3,7,0x8d5a2b,-18,0.15,-32);
 for(let r=0;r<4;r++) bx(9,0.15,0.8,0x6d4c41,-18,0.35,-34.5+r*2);
@@ -676,6 +720,7 @@ refresh();
 let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10;
 function camBlocked(camX, camZ, px, pz){
   for(const c of [...colliders, ...treeBlockers]){
+    if(c.cam === false) continue;
     if(c.r < 2 && !treeBlockers.includes(c)) continue;
     const dx = px - camX, dz = pz - camZ, len2 = dx*dx + dz*dz;
     if(len2 < 0.01) continue;
@@ -721,7 +766,7 @@ function animate(now){
     const sp = riding ? (fastBike?26:18) : 10.5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     turnTo(player.g, Math.atan2(dx,dz), dt, 10);
-    player.g.position.x = Math.max(-122, Math.min(122, player.g.position.x));
+    player.g.position.x = Math.max(-122, Math.min(250, player.g.position.x));
     player.g.position.z = Math.max(-122, Math.min(122, player.g.position.z));
     for(const c of colliders){
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
@@ -795,6 +840,7 @@ function animate(now){
       turnTo(bus, Math.atan2(mx,mz), dt, 5);
     }
   }
+  for(const f of foam){ f.position.z += dt*4; if(f.position.z > 130) f.position.z = -130; }
   for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
   const n = nearest();
   document.getElementById('actLabel').textContent = n ? n.label : '';
