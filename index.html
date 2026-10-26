@@ -230,7 +230,9 @@ const houseList = [
   [-60,120,0xffe0e0,0xb3402a],[120,120,0xe0ffe0,0x6d4c41],
   [-140,-100,0xf5f5f5,0xb3402a],[-140,100,0xfff8dc,0x37474f],
   [140,-100,0xfff2cc,0x6d4c41],[140,100,0xddeeff,0xb3402a],
-  [-140,60,0xfff2cc,0xb3402a],[140,60,0xddeeff,0x37474f],[-20,140,0xffe0e0,0x6d4c41]
+  [-140,60,0xfff2cc,0xb3402a],[140,60,0xddeeff,0x37474f],[-20,140,0xffe0e0,0x6d4c41],
+  [-140,-140,0xfff2cc,0xb3402a],[-140,-60,0xddeeff,0x37474f],[-140,20,0xffe0e0,0x6d4c41],[-140,140,0xf5f5f5,0xb3402a],
+  [140,-140,0xfff8dc,0x37474f],[140,-60,0xfff2cc,0x6d4c41],[140,20,0xddeeff,0xb3402a],[140,140,0xffe0e0,0x37474f]
 ];
 for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1)); }
 // ---- school (big, 2 floors), hospital (was clinic) ----
@@ -291,6 +293,8 @@ shopBuilding(60,-120,14,7,8,0xe3f2fd,0x1565c0,'ရဲစခန်း','#ffffff',
 shopBuilding(-60,-120,14,7,8,0xfff9c4,0x37474f,'စာကြည့်တိုက်','#ffeb3b','#1565c0');
 shopBuilding(60,120,12,6,7,0xffebee,0xe53935,'စာတိုက်','#ffffff','#e53935');
 fenceRect(-20,-100,15,15,4,-20); // monastery compound: 30x30, gate south at -20
+shopBuilding(-100,-140,12,6.5,8,0xe8f5e9,0x2e7d32,'ဆေးဆိုင်','#ffffff','#2e7d32');
+shopBuilding(100,-140,12,6.5,8,0xfff3e0,0xef6c00,'ဆိုင်ကယ်ဆိုင်','#ffeb3b','#6d4c41');
 // park + playground at (-120,120): grass, cross paths, corner trees, benches, swings, slide, flowers
 bx(24,0.2,24,0x2e7d32,-120,0.1,120);
 bx(24,0.1,2,0x8d6e63,-120,0.06,120); bx(2,0.1,24,0x8d6e63,-120,0.06,120);
@@ -557,6 +561,7 @@ const targets = [
   {x:-140,z:-100,label:'အနောက်မြောက်အိမ်သစ် ၂',r:10},{x:-140,z:100,label:'အနောက်တောင်အိမ်သစ် ၂',r:10},{x:140,z:-100,label:'အရှေ့မြောက်အိမ်သစ် ၂',r:10},{x:140,z:100,label:'အရှေ့တောင်အိမ်သစ် ၂',r:10},
   {x:-140,z:60,label:'အနောက်အိမ်သစ် ၂',r:10},{x:140,z:60,label:'အရှေ့အိမ်သစ် ၂',r:10},{x:-20,z:140,label:'တောင်အိမ်သစ် ၂',r:10},
   {x:-120,z:-40,label:'အနောက်အိမ်သစ်2',r:10},{x:-120,z:40,label:'အနောက်အိမ်သစ်3',r:10},{x:120,z:-40,label:'အရှေ့အိမ်သစ်2',r:10},{x:120,z:40,label:'အရှေ့အိမ်သစ်3',r:10},
+  {x:-140,z:-140,label:'အနောက်မြောက်အိမ်သစ်၃',r:10},{x:140,z:140,label:'တောင်အရှေ့အိမ်သစ်၃',r:10},{x:-140,z:20,label:'အနောက်အိမ်သစ်၃',r:10},{x:140,z:-60,label:'အရှေ့မြောက်အိမ်သစ်၃',r:10},
   {x:-100,z:60,label:'ကျောင်း',r:16},{x:100,z:-20,label:'ဆေးရုံ',r:14},{x:-20,z:100,label:'လက်ဖက်ရည်ဆိုင်',r:6.5},{x:100,z:60,label:'ကုန်စုံဆိုင်',r:6.5}
 ];
 let delivery = null;
@@ -721,7 +726,7 @@ for(const x of allRoadLines) for(const z of allRoadLines) intersections.push({x,
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
 const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
-for(let i=0;i<16;i++){
+for(let i=0;i<24;i++){
   const female = i % 3 === 0;
   const p = makePerson(npcShirts[i%12], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
   p.g.scale.setScalar(0.85);
@@ -830,11 +835,11 @@ function makeCar(color){
   return g;
 }
 const cars = [];
-for(let i=0;i<4;i++){
-  const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b][i]);
+for(let i=0;i<8;i++){
+  const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a][i]);
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
-  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 9});
+  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 8 + (i % 3)});
 }
 const bus = new THREE.Group();
 bx(3.0,3.0,12,0xffc107,0,1.6,0,bus);
@@ -888,6 +893,8 @@ function nearest(){
     {d:dist(60,-120), label:'👮 ရဲစခန်းကြည့်မယ်', fn:()=>showMsg('👮 ရဲစခန်း — မြို့လုံခြုံရေးအတွက် တာဝန်ယူတယ်'), r:8.5},
     {d:dist(-60,-120), label:'📚 စာကြည့်တိုက်ကြည့်မယ်', fn:()=>showMsg('📚 စာကြည့်တိုက် — စာဖတ်လို့ရတယ်'), r:8.5},
     {d:dist(60,120), label:'📮 စာတိုက်ကြည့်မယ်', fn:()=>showMsg('📮 စာတိုက် — စာပို့လို့ရတယ်'), r:7.5},
+    {d:dist(-100,-140), label:'💊 ဆေးဆိုင်ကြည့်မယ်', fn:()=>showMsg('💊 ဆေးဆိုင် — ဆေးဝါးစုံတယ်'), r:7.5},
+    {d:dist(100,-140), label:'🏍️ ဆိုင်ကယ်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🏍️ ဆိုင်ကယ်ဆိုင် — ဆိုင်ကယ်ပြင်လို့ရတယ်'), r:7.5},
     {d:dist(-120,120), label:'🌳 ပန်းခြံကြည့်မယ်', fn:()=>showMsg('🌳 ပန်းခြံ — ကစားကွင်းနဲ့ အနားယူလို့ရတယ်'), r:12},
   ];
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
@@ -1017,7 +1024,18 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
+function playTownAmbient(df){
+  if(!soundOn || !audioCtx) return;
+  const px = player.g.position.x, pz = player.g.position.z;
+  let nearestCar = 999;
+  for(const car of cars) nearestCar = Math.min(nearestCar, Math.hypot(car.g.position.x-px, car.g.position.z-pz));
+  const nearMarket = Math.min(Math.hypot(px-95, pz+72), Math.hypot(px-12, pz+32));
+  if(nearestCar < 30){ tone(70 + Math.random()*40, 0.7, 0.05, 'sawtooth'); if(Math.random() < 0.25){ tone(420, 0.15, 0.04, 'square'); setTimeout(()=>tone(520, 0.15, 0.04, 'square'), 120); } }
+  else if(nearMarket < 30){ for(let k = 0; k < 4; k++) setTimeout(()=>tone(350 + Math.random()*450, 0.06, 0.03, 'sine'), k*110); }
+  else if(df > 0.5){ playBird(); setTimeout(playBird, 300); }
+  else { for(let k = 0; k < 3; k++) setTimeout(()=>tone(4200, 0.03, 0.02, 'sine'), k*90); }
+}
 function playThud(){
   if(!soundOn || !audioCtx) return;
   try{
@@ -1079,12 +1097,35 @@ function drawMinimap(){
   ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, py);
   ctx.lineTo(px + Math.sin(player.g.rotation.y)*10, py + Math.cos(player.g.rotation.y)*10); ctx.stroke();
 }
-let _blockerCache = null;
+// V29 collider grid: V28 fences added ~1200 post colliders, so per-frame O(N) scans (player + animals + camera x12)
+// stuttered on phones. Grid cells 20u: each collider stored in every cell its (r+1) box overlaps,
+// so a point query only checks its own cell and a camera segment only its sampled cells.
+const GRID = 20, colliderGrid = new Map();
+function gridAdd(c, tb){
+  const r = c.r + 1;
+  for(let gx = Math.floor((c.x-r)/GRID); gx <= Math.floor((c.x+r)/GRID); gx++)
+    for(let gz = Math.floor((c.z-r)/GRID); gz <= Math.floor((c.z+r)/GRID); gz++){
+      const k = gx+','+gz, o = tb ? {x:c.x, z:c.z, r:c.r, cam:c.cam, tb:true} : c, arr = colliderGrid.get(k);
+      if(arr) arr.push(o); else colliderGrid.set(k, [o]);
+    }
+}
+colliders.forEach(c=>gridAdd(c,false));
+treeBlockers.forEach(c=>gridAdd(c,true));
+function nearbyColliders(x, z){
+  const arr = colliderGrid.get(Math.floor(x/GRID)+','+Math.floor(z/GRID)) || [];
+  return arr.filter(c=>!c.tb);
+}
 function camBlocked(camX, camZ, px, pz){
-  if(!_blockerCache) _blockerCache = [...colliders, ...treeBlockers];
-  for(const c of _blockerCache){
+  const seen = new Set(), list = [];
+  const steps = Math.max(1, Math.ceil(Math.hypot(px-camX, pz-camZ)/10));
+  for(let i = 0; i <= steps; i++){
+    const sx = camX + (px-camX)*i/steps, sz = camZ + (pz-camZ)*i/steps;
+    for(const c of (colliderGrid.get(Math.floor(sx/GRID)+','+Math.floor(sz/GRID)) || []))
+      if(!seen.has(c)){ seen.add(c); list.push(c); }
+  }
+  for(const c of list){
     if(c.cam === false) continue;
-    if(c.r < 2 && !treeBlockers.includes(c)) continue;
+    if(c.r < 2 && !c.tb) continue;
     const dx = px - camX, dz = pz - camZ, len2 = dx*dx + dz*dz;
     if(len2 < 0.01) continue;
     let t = ((c.x - camX)*dx + (c.z - camZ)*dz) / len2;
@@ -1144,7 +1185,7 @@ function animate(now){
     turnTo(player.g, Math.atan2(dx,dz), dt, 10);
     player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x));
     player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
-    for(const c of colliders){
+    for(const c of nearbyColliders(player.g.position.x, player.g.position.z)){
       if(Math.abs(player.g.position.x-c.x) > c.r+0.8 || Math.abs(player.g.position.z-c.z) > c.r+0.8) continue;
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
       if(d < c.r+0.8 && d > 0.01){ player.g.position.x = c.x + ddx/d*(c.r+0.8); player.g.position.z = c.z + ddz/d*(c.r+0.8); }
@@ -1160,6 +1201,9 @@ function animate(now){
   }
   birdTimer -= dt;
   if(birdTimer <= 0){ if(dayF > 0.5) playBird(); birdTimer = 8 + Math.random()*10; }
+  townTimer -= dt;
+  if(townTimer <= 0){ playTownAmbient(dayF); townTimer = 6 + Math.random()*8; }
+  if(riding && moving){ bikeTimer -= dt; if(bikeTimer <= 0){ tone(55 + (fastBike ? 20 : 0), 0.3, 0.04, 'triangle'); bikeTimer = 0.4; } }
   for(const n of npcs){
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
@@ -1169,7 +1213,7 @@ function animate(now){
     else { n.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     n.p.g.position.x += mx*n.speed*dt; n.p.g.position.z += mz*n.speed*dt;
     turnTo(n.p.g, Math.atan2(mx,mz), dt, 8);
-    animatePerson(n.p, true, gt*n.speed + px, gt, false);
+    if(Math.hypot(n.p.g.position.x-player.g.position.x, n.p.g.position.z-player.g.position.z) < 120) animatePerson(n.p, true, gt*n.speed + px, gt, false);
   }
   for(const y of yardPeople){
     y.angle += dt*0.35*y.dir;
@@ -1197,8 +1241,8 @@ function animate(now){
       turnTo(a.g, Math.atan2(dx2,dz2), dt, 8);
       a.g.position.y = Math.abs(Math.sin(gt*6))*0.05;
     }
-    // animals no longer walk through houses, pond, trees, fences or stream
-    for(const c of colliders){
+    // animals no longer walk through houses, pond, trees, fences or stream (grid query, not full scan)
+    for(const c of nearbyColliders(a.g.position.x, a.g.position.z)){
       if(Math.abs(a.g.position.x-c.x) > c.r+0.5 || Math.abs(a.g.position.z-c.z) > c.r+0.5) continue;
       const adx = a.g.position.x-c.x, adz = a.g.position.z-c.z, ad = Math.hypot(adx,adz);
       if(ad < c.r+0.5 && ad > 0.01){ a.g.position.x = c.x + adx/ad*(c.r+0.5); a.g.position.z = c.z + adz/ad*(c.r+0.5); }
