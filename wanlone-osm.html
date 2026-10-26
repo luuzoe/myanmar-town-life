@@ -333,7 +333,7 @@ for (const nm of Object.keys(named).slice(0, 14)){
 // player: humanoid fallback (head with face/hair, jointed arms/legs, longyi, backpack on the BACK)
 // replaced by the user's real GLB character when it loads (see GLB loader below)
 const player = new THREE.Group();
-const fallback = new THREE.Group(); player.add(fallback);
+const fallback = new THREE.Group(); /* OLD CHARACTER DELETED per user - fallback NOT added to scene, GLB only */
 function limbGroup(x, y, z, parent){ const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; }
 // torso (capsule, shirt blue)
 { const tor = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.55, 4, 12), mat(0x1565c0)); tor.position.set(0, 1.45, 0); fallback.add(tor); }
@@ -376,8 +376,10 @@ new GLTFLoader().load('human_character_walk_8.glb', gltf => {
   // 0.5 is the new default; the +/- buttons below let the user tune it live.
   charModel = model;
   model.scale.setScalar(charScale);
+  model.rotation.y = -Math.PI/2; // face +Z (player forward), was +X = sideways walk
   const bb0 = new THREE.Box3().setFromObject(model);
-  model.position.set(-bb0.min.x*charScale, -bb0.min.y*charScale, -bb0.min.z*charScale);
+  const c0 = bb0.getCenter(new THREE.Vector3());
+  model.position.set(-c0.x, -bb0.min.y, -c0.z);
   player.add(model);
   fallback.visible = false;
   if (gltf.animations && gltf.animations.length){
@@ -522,7 +524,7 @@ function animate(now){
     car.rotation.y = heading;
   } else if (ml > 0.1){
     mx /= Math.max(1, ml); mz /= Math.max(1, ml);
-    const sp = (keys['shift'] || ml > 0.92 ? 14 : 7) * Math.min(1, ml);
+    const sp = (keys['shift'] || ml > 0.92 ? 8 : 4) * Math.min(1, ml);
     walkPhase += dt * sp * 1.4;
     const obj = player;
     tryMove(obj, obj.position.x + mx*sp*dt, obj.position.z);
@@ -587,7 +589,7 @@ function animate(now){
     tc.g.position.set(px, 0, pz);
     tc.g.rotation.y = Math.atan2((bb[0]-aa[0])*tc.dir, (bb[1]-aa[1])*tc.dir);
   }
-  if (charMixer) charMixer.update(ml > 0.1 ? dt * ((keys['shift'] || ml > 0.92) ? 2.2 : 1.4) : 0);
+  if (charMixer) charMixer.update(ml > 0.1 ? dt * ((keys['shift'] || ml > 0.92) ? 1.6 : 1.0) : 0);
   renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
