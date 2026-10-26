@@ -386,13 +386,13 @@ async function lockLandscape(){
 }
 document.getElementById('landBtn').addEventListener('click', lockLandscape);
 let camAngle = Math.PI, camAutoUntil = 0, camPitch = 0.45, camDist = 16;
-document.getElementById('rotL').addEventListener('click', () => { camAngle -= 0.6; camAutoUntil = performance.now() + 8000; });
-document.getElementById('rotR').addEventListener('click', () => { camAngle += 0.6; camAutoUntil = performance.now() + 8000; });
+document.getElementById('rotL').addEventListener('click', () => { camAngle += 0.6; camAutoUntil = performance.now() + 8000; });
+document.getElementById('rotR').addEventListener('click', () => { camAngle -= 0.6; camAutoUntil = performance.now() + 8000; });
 let dragX = null;
 canvas.addEventListener('pointerdown', e => { dragX = e.clientX; });
 let dragY = null;
 canvas.addEventListener('pointerdown', e => { dragY = e.clientY; });
-canvas.addEventListener('pointermove', e => { if (dragX !== null){ camAngle += (e.clientX - dragX) * 0.01; camPitch = Math.max(0.15, Math.min(1.1, camPitch + (e.clientY - (dragY ?? e.clientY)) * 0.005)); dragX = e.clientX; dragY = e.clientY; camAutoUntil = performance.now() + 8000; } });
+canvas.addEventListener('pointermove', e => { if (dragX !== null){ camAngle -= (e.clientX - dragX) * 0.01; camPitch = Math.max(0.15, Math.min(1.1, camPitch - (e.clientY - (dragY ?? e.clientY)) * 0.005)); dragX = e.clientX; dragY = e.clientY; camAutoUntil = performance.now() + 8000; } });
 addEventListener('pointerup', () => { dragY = null; });
 addEventListener('pointerup', () => { dragX = null; });
 document.getElementById('playBtn').addEventListener('click', () => {
@@ -419,13 +419,17 @@ function animate(now){
     const curD = inCar ? car.position : player.position;
     if (dbg) dbg.textContent = 'scene=' + scene.children.length + ' cam=' + camera.position.x.toFixed(0) + ',' + camera.position.y.toFixed(0) + ',' + camera.position.z.toFixed(0) + ' player=' + curD.x.toFixed(0) + ',' + curD.z.toFixed(0) + ' renderer=' + (renderer.getContext() ? 'webgl-ok' : 'NO-WEBGL');
   }
-  // movement input (world axes: up = north = -z)
-  let mx = 0, mz = 0;
-  if (keys['w'] || keys['arrowup']) mz -= 1;
-  if (keys['s'] || keys['arrowdown']) mz += 1;
-  if (keys['a'] || keys['arrowleft']) mx -= 1;
-  if (keys['d'] || keys['arrowright']) mx += 1;
-  if (joyActive){ mx += joyX; mz += joyY; }
+  // movement input: CAMERA-relative (up = away from camera, left = screen left)
+  // camera offset is (sin(camAngle), cos(camAngle)), so camera->player forward is (-sin, -cos)
+  const fwdX = -Math.sin(camAngle), fwdZ = -Math.cos(camAngle);
+  const rightX = -fwdZ, rightZ = fwdX;
+  let fwdAmt = 0, rightAmt = 0;
+  if (keys['w'] || keys['arrowup']) fwdAmt += 1;
+  if (keys['s'] || keys['arrowdown']) fwdAmt -= 1;
+  if (keys['a'] || keys['arrowleft']) rightAmt -= 1;
+  if (keys['d'] || keys['arrowright']) rightAmt += 1;
+  if (joyActive){ fwdAmt += -joyY; rightAmt += joyX; }
+  let mx = fwdX*fwdAmt + rightX*rightAmt, mz = fwdZ*fwdAmt + rightZ*rightAmt;
   const ml = Math.hypot(mx, mz);
   if (inCar){
     const steer = (keys['a'] || keys['arrowleft'] ? 1 : 0) - (keys['d'] || keys['arrowright'] ? 1 : 0);
