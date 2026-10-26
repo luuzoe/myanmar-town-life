@@ -105,7 +105,7 @@ function flatShape(pts, color, y){
   const g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI/2);
   const m = new THREE.Mesh(g, mat(color)); m.position.y = y; scene.add(m); return m;
 }
-const LU = {residential: 0xdcdcdc, park: 0x7fbf6a, pitch: 0x5da85a, sports_centre: 0x8fbf7a, forest: 0x4e8f4e, meadow: 0x9ccb7d, grass: 0x8fbf6a, industrial: 0xc9c9c9, commercial: 0xd8c8b0};
+const LU = {residential: 0x9dbb7d, park: 0x7fbf6a, pitch: 0x5da85a, sports_centre: 0x8fbf7a, forest: 0x4e8f4e, meadow: 0x9ccb7d, grass: 0x8fbf6a, industrial: 0xb0bec5, commercial: 0xc2b49a};
 for (const l of DATA.landuse) flatShape(l.pts, LU[l.kind] || 0xd0d0d0, 0.06);
 for (const w of DATA.waters) if (w.kind === 'poly') flatShape(w.pts, 0x4fc3f7, 0.1);
 // roads as one merged coloured quad mesh
@@ -252,7 +252,7 @@ if (DATA.trees && DATA.trees.length){
   const dm = new THREE.Object3D();
   DATA.trees.forEach((tr, i) => {
     dm.position.set(tr.x, 1.25, tr.z); dm.scale.set(1, tr.h/5, 1); dm.rotation.set(0, 0, 0); dm.updateMatrix(); trunks.setMatrixAt(i, dm.matrix);
-    dm.position.set(tr.x, tr.h + 1.5, tr.z); dm.scale.set(1, 1.2, 1); dm.updateMatrix(); tops.setMatrixAt(i, dm.matrix);
+    dm.position.set(tr.x, 4.0, tr.z); dm.scale.set(1, 1.2, 1); dm.updateMatrix(); tops.setMatrixAt(i, dm.matrix);
   });
   scene.add(trunks); scene.add(tops);
 }
@@ -266,7 +266,27 @@ if (DATA.lamps && DATA.lamps.length){
   });
   scene.add(poles); scene.add(heads);
 }
+function onRoad(x, z){
+  for (const r of DATA.roads){
+    for (let i = 0; i + 1 < r.pts.length; i++){
+      const a = r.pts[i], b = r.pts[i+1], dx = b[0]-a[0], dz = b[1]-a[1], L2 = dx*dx+dz*dz;
+      const t = L2 === 0 ? 0 : Math.max(0, Math.min(1, ((x-a[0])*dx + (z-a[1])*dz)/L2));
+      if (Math.hypot(x-(a[0]+dx*t), z-(a[1]+dz*t)) < 6) return true;
+    }
+  }
+  return false;
+}
 function blocked(x, z){
+  if (!onRoad(x, z)){
+    for (const w of DATA.waters){
+      if (w.kind !== 'line') continue;
+      for (let i = 0; i + 1 < w.pts.length; i++){
+        const a = w.pts[i], b = w.pts[i+1], dx = b[0]-a[0], dz = b[1]-a[1], L2 = dx*dx+dz*dz;
+        const t = L2 === 0 ? 0 : Math.max(0, Math.min(1, ((x-a[0])*dx + (z-a[1])*dz)/L2));
+        if (Math.hypot(x-(a[0]+dx*t), z-(a[1]+dz*t)) < 3.5) return true;
+      }
+    }
+  }
   for (const s of solids){
     if (x < s.minx-1 || x > s.maxx+1 || z < s.minz-1 || z > s.maxz+1) continue;
     if (inPoly(x, z, s.pts)) return true;
@@ -346,7 +366,7 @@ box(0.42, 0.55, 0.16, 0xff9800, 0, 1.45, -0.30, fallback);
 { const sh = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false})); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; player.add(sh); }
 player.position.set(-8.1, 0, 6.4); scene.add(player); camera.position.set(-8.1, 4.7, -2.9);
 // USER'S REAL CHARACTER (GLB, walk animation) - replaces the fallback humanoid
-let charMixer = null, charModel = null, charScale = 0.5;
+let charMixer = null, charModel = null, charScale = 1.0;
 function applyCharScale(){
   if (charModel) charModel.scale.setScalar(charScale);
 }
