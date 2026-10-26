@@ -344,7 +344,7 @@ const legL = makeLeg(-0.20), legR = makeLeg(0.20);
 // backpack on the BACK (-z), not the chest
 box(0.42, 0.55, 0.16, 0xff9800, 0, 1.45, -0.30, fallback);
 { const sh = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false})); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; player.add(sh); }
-player.position.set(-12, 0, 14); scene.add(player);
+player.position.set(-8.1, 0, 6.4); scene.add(player); camera.position.set(-8.1, 4.7, -2.9);
 // USER'S REAL CHARACTER (GLB, walk animation) - replaces the fallback humanoid
 let charMixer = null, charModel = null, charScale = 0.5;
 function applyCharScale(){
@@ -356,7 +356,8 @@ new GLTFLoader().load('human_character_walk_8.glb', gltf => {
   // 0.5 is the new default; the +/- buttons below let the user tune it live.
   charModel = model;
   model.scale.setScalar(charScale);
-  model.position.set(0, 0, 0);
+  const bb0 = new THREE.Box3().setFromObject(model);
+  model.position.set(-bb0.min.x*charScale, -bb0.min.y*charScale, -bb0.min.z*charScale);
   player.add(model);
   fallback.visible = false;
   if (gltf.animations && gltf.animations.length){
