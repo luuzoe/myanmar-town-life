@@ -59,9 +59,9 @@
 <button id="rotL">↺</button><button id="rotR">↻</button>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <p><b>မြို့ကြီးထဲမှာ ဘဝ စပါ — အိမ်ကြီး ၂၇ လုံး၊ ကျောင်း၊ ဆေးခန်း၊ နေ့/ည ရှိတယ်။</b></p>
+  <p><b>အပြင်ကမြို့ရွာလို ပြည့်စုံတဲ့ မြို့ — အိမ်၊ ကျောင်း၊ ဆေးခန်း၊ လက်ဖက်ရည်ဆိုင်၊ ဘုန်းကြီးကျောင်း၊ ဘောလုံးကွင်း၊ ကားဂိတ်၊ တိရစ္ဆာန်တွေ၊ ကားတွေ။</b></p>
   <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (ခြင်းကြီးရင် ၁၅၀၀)</p>
-  <p>နေ့/ည တစ်ပတ် ၃ မိနစ် — ညမှာ လမ်းမီးတွေ လင်းတယ်။<br>ကင်မရာ အလိုလို မလှည့်တော့ဘူး — လှည့်ချင်ရင် မျက်နှာပြင်ကို ဆွဲပါ၊ ဒါမှမဟုတ် ↺ ↻ ခလုတ်နှိပ်ပါ။<br>ဖုန်းဆို ဘယ်ဘက် စက်ဝိုင်းနဲ့ ရွှေ့ပါ၊ ညာဘက် ခလုတ်နဲ့ လုပ်ပါ။</p>
+  <p>လမ်းလျှောက်မြန်သွားပြီ။ ကင်မရာ အလိုလို မလှည့်ဘူး — ↺ ↻ နဲ့ မျက်နှာပြင်ဆွဲပြီး လှည့်ပါ။<br>နေ့/ည ၃ မိနစ်တစ်ပတ်။</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="landscapeBtn" style="background:#1565c0">⤢ Landscape နဲ့ ဆော့မယ်</button>
 </div></div>
@@ -98,15 +98,19 @@ function mesh(geo, color, x, y, z, parent){
 function bx(w,h,d,color,x,y,z,parent){ return mesh(new THREE.BoxGeometry(w,h,d), color, x, y, z, parent); }
 function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,10,8), color, x, y, z, parent); }
 function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry(rt,rb,h,10), color, x, y, z, parent); }
-function signMesh(text, bg, fg, x, y, z, w, h){
+function cap(r,len,color,x,y,z,parent){
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r,len,4,10), M(color));
+  m.position.set(x,y,z); (parent || scene).add(m); return m;
+}
+function signMesh(text, bg, fg, x, y, z, w, h, fs){
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
   const ctx = cv.getContext('2d'); ctx.fillStyle = bg; ctx.fillRect(0,0,512,128);
-  ctx.fillStyle = fg; ctx.font = 'bold 68px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = fg; ctx.font = 'bold ' + (fs || 68) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, 256, 64);
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(cv)}));
   sign.position.set(x,y,z); scene.add(sign); return sign;
 }
-// ---- big map: ground 260 x 260, road grid every 40 ----
+// ---- map ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(260,260), M(0x6fbf5a));
 ground.rotation.x = -Math.PI/2; scene.add(ground);
 const roadLines = [-80,-40,0,40,80];
@@ -119,7 +123,6 @@ for(let d=-110; d<=110; d+=20){
   bx(3,0.12,0.4,0xffffff,d,0.12,0);
 }
 const colliders = [];
-// ---- bigger house: walls 8 x 4.2, hip roof, door, windows, chimney, steps, FRONT FENCE with gate gap ----
 function house(x,z,wall,roof){
   bx(8.4,0.5,7,0x9e9e9e,x,0.25,z);
   bx(8,4.2,6,wall,x,2.6,z);
@@ -136,7 +139,6 @@ function house(x,z,wall,roof){
   bx(0.1,1.5,1.5,0xffffff,x+4.03,2.9,z);
   bx(0.12,1.3,1.3,0x90caf9,x+4.05,2.9,z);
   bx(0.8,1.8,0.8,0xb71c1c,x+2.5,6.8,z-1);
-  // front fence: two walls + gate posts, gate gap in the middle (door path)
   bx(3.4,0.9,0.25,0xffffff,x-2.7,0.45,z+5.5);
   bx(3.4,0.9,0.25,0xffffff,x+2.7,0.45,z+5.5);
   bx(0.3,1.1,0.3,0x8d6e63,x-1.0,0.55,z+5.5);
@@ -157,7 +159,7 @@ const houseList = [
   [-95,-95,0xffe0e0,0x6d4c41]
 ];
 for(const h of houseList) house(h[0],h[1],h[2],h[3]);
-// ---- school at (-100,60), clinic at (100,-20) ----
+// ---- school, clinic ----
 bx(16,0.5,10,0x9e9e9e,-100,0.25,60);
 bx(15,5,9,0xfff9c4,-100,3.0,60);
 bx(16,0.4,10,0x1565c0,-100,5.7,60);
@@ -186,27 +188,63 @@ signMesh('ဆေးခန်း', '#ffffff', '#e53935', 100, 4.3, -16.4, 6, 1.2)
 bx(5,0.9,0.25,0xffffff,96.5,0.45,-13);
 bx(5,0.9,0.25,0xffffff,103.5,0.45,-13);
 colliders.push({x:100,z:-20,r:7});
+// ---- NEW: tea shop, grocery, town hall, monastery, football field, bus station ----
+function shopBuilding(x,z,w,h,d,wall,roof,sign,signBg,signFg,fs){
+  bx(w+0.4,0.5,d+1,0x9e9e9e,x,0.25,z);
+  bx(w,h,d,wall,x,0.5+h/2,z);
+  bx(w+0.4,0.4,d+0.4,roof,x,0.5+h+0.2,z);
+  bx(1.4,2.6,0.15,0x6d4c41,x,1.8,z+d/2+0.05);
+  signMesh(sign, signBg, signFg, x, 0.5+h-0.7, z+d/2+0.1, Math.min(w-1,8), 1.3, fs);
+  colliders.push({x,z,r:Math.max(w,d)/2+1.5});
+}
+shopBuilding(-20,100,10,4.5,7,0xffe0b2,0xef6c00,'လက်ဖက်ရည်ဆိုင်','#ffeb3b','#6d4c41',56);
+shopBuilding(100,60,10,4.5,7,0xe3f2fd,0x1565c0,'ကုန်စုံဆိုင်','#ffffff','#1565c0');
+shopBuilding(60,-100,12,5,8,0xfff9c4,0x37474f,'မြို့အုပ်ချုပ်ရေးရုံး','#ffeb3b','#1565c0',52);
+shopBuilding(-20,-100,12,4.5,8,0xffffff,0xffc107,'ဘုန်းကြီးကျောင်း','#fff8e1','#6d4c41',56);
+mesh(new THREE.ConeGeometry(2.5,5,10), 0xffc107, -12, 2.5, -100);
+bx(30,0.2,20,0x2e7d32,-100,0.1,100);
+bx(30,0.25,0.4,0xffffff,-100,0.22,90.2); bx(30,0.25,0.4,0xffffff,-100,0.22,109.8);
+bx(0.4,0.25,20,0xffffff,-115,0.22,100); bx(0.4,0.25,20,0xffffff,-85,0.22,100);
+cyl(0.1,0.1,2,0xffffff,-113,1,92); cyl(0.1,0.1,2,0xffffff,-113,1,108);
+bx(0.1,0.1,16,0xffffff,-113,2,100);
+cyl(0.1,0.1,2,0xffffff,-87,1,92); cyl(0.1,0.1,2,0xffffff,-87,1,108);
+bx(0.1,0.1,16,0xffffff,-87,2,100);
+bx(2.5,2.2,8,0xffc107,100,1.3,-100);
+bx(2.6,0.8,8,0x90caf9,100,1.6,-100);
+for(const wz of [-103,-97]){
+  const w1 = cyl(0.55,0.55,0.3,0x212121,97.4,0.55,wz); w1.rotation.z = Math.PI/2;
+  const w2 = cyl(0.55,0.55,0.3,0x212121,102.6,0.55,wz); w2.rotation.z = Math.PI/2;
+}
+colliders.push({x:100,z:-100,r:6});
+signMesh('ကားဂိတ်', '#ffffff', '#1565c0', 100, 3.2, -95.5, 6, 1.2);
+// tea shop tables + chairs
+for(const tx of [-24,-16]){
+  cyl(0.5,0.5,0.1,0x8d6e63,tx,0.8,106); cyl(0.08,0.08,0.8,0x8d6e63,tx,0.4,106);
+  bx(0.5,0.5,0.5,0x6d4c41,tx-1,0.25,106); bx(0.5,0.5,0.5,0x6d4c41,tx+1,0.25,106);
+}
 // ---- pagoda, pond ----
 bx(10,1,10,0xffe082,100,0.5,100); bx(7,1.5,7,0xffd54f,100,1.75,100);
 mesh(new THREE.ConeGeometry(3.2,7,12), 0xffc107, 100, 6, 100);
 sph(0.7,0xffc107,100,9.6,100); colliders.push({x:100,z:100,r:6});
 mesh(new THREE.CylinderGeometry(8,8,0.3,20), 0x4fc3f7, -100, 0.15, -100);
 colliders.push({x:-100,z:-100,r:8});
-// ---- trees ----
+// ---- trees, lamps, power poles, grass, clouds ----
 function tree(x,z){
   cyl(0.3,0.45,2.2,0x7a4a22,x,1.1,z);
   sph(1.9,0x2e7d32,x,3.6,z); sph(1.3,0x388e3c,x+0.6,4.8,z-0.4);
   colliders.push({x,z,r:1.2});
 }
 [[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-36,-20],[36,20],[-70,-40],[70,40],[-40,70],[40,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1]));
-// ---- street lamps (basic-material bulbs glow at night) ----
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.45,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
   bulb.position.set(x,4.7,z); scene.add(bulb); colliders.push({x,z,r:0.5});
 }
 [[-80,5],[-40,5],[40,5],[80,5],[5,-80],[5,-40],[5,40],[5,80]].forEach(p=>lamp(p[0],p[1]));
-// ---- grass, clouds ----
+for(const pz of [-80,-40,40,80]){
+  cyl(0.1,0.1,6,0x795548,-5,3,pz); bx(1.4,0.15,0.15,0x795548,-5,5.8,pz); colliders.push({x:-5,z:pz,r:0.5});
+  cyl(0.1,0.1,6,0x795548,5,3,pz); bx(1.4,0.15,0.15,0x795548,5,5.8,pz);
+}
 for(let i=0;i<36;i++){
   const x = -115 + ((i*53)%230), z = -115 + ((i*89)%230);
   const nearRoad = roadLines.some(r=>Math.abs(x-r)<6 || Math.abs(z-r)<6);
@@ -218,7 +256,7 @@ for(let i=0;i<5;i++){
   sph(2.2,0xffffff,0,0,0,g); sph(1.6,0xffffff,2,0.4,0.5,g); sph(1.6,0xffffff,-2,0.3,-0.5,g);
   g.position.set(-100+i*50, 26, -60+i*25); scene.add(g); clouds.push(g);
 }
-// ---- farm ----
+// ---- farm, market (2 stalls) ----
 bx(10,0.3,7,0x8d5a2b,-18,0.15,-32);
 for(let r=0;r<4;r++) bx(9,0.15,0.8,0x6d4c41,-18,0.35,-34.5+r*2);
 const crops = new THREE.Group(); scene.add(crops);
@@ -232,22 +270,24 @@ bx(1.4,0.15,0.15,0x7a4a22,-23,1.9,-36);
 bx(0.7,0.7,0.2,0x1565c0,-23,1.6,-36);
 mesh(new THREE.ConeGeometry(0.6,0.6,8), 0xffd54f, -23, 2.3, -36);
 let cropReady = true, cropTimer = 0;
-// ---- market stall ----
-bx(7,0.3,4,0x8d5a2b,18,0.9,32);
-bx(0.3,2.2,0.3,0x7a4a22,15.2,1.1,32); bx(0.3,2.2,0.3,0x7a4a22,20.8,1.1,32);
-bx(0.3,2.2,0.3,0x7a4a22,15.2,1.1,28); bx(0.3,2.2,0.3,0x7a4a22,20.8,1.1,28);
-bx(8,0.3,5.5,0xe53935,18,2.5,30);
-for(let i=0;i<6;i++) sph(0.35,0xff9800,15.5+(i%3)*1.2,1.3,31+Math.floor(i/3)*1.2);
-for(let i=0;i<4;i++) sph(0.35,0x66bb6a,19.5+(i%2)*1.2,1.3,31+Math.floor(i/2)*1.2);
+function marketStall(cx){
+  bx(7,0.3,4,0x8d5a2b,cx,0.9,32);
+  bx(0.3,2.2,0.3,0x7a4a22,cx-2.8,1.1,32); bx(0.3,2.2,0.3,0x7a4a22,cx+2.8,1.1,32);
+  bx(0.3,2.2,0.3,0x7a4a22,cx-2.8,1.1,28); bx(0.3,2.2,0.3,0x7a4a22,cx+2.8,1.1,28);
+  bx(8,0.3,5.5,0xe53935,cx,2.5,30);
+  for(let i=0;i<6;i++) sph(0.35,0xff9800,cx-2.5+(i%3)*1.2,1.3,31+Math.floor(i/3)*1.2);
+  for(let i=0;i<4;i++) sph(0.35,0x66bb6a,cx+1.5+(i%2)*1.2,1.3,31+Math.floor(i/2)*1.2);
+}
+marketStall(18); marketStall(27);
 let marketTimer = 0;
-// ---- shop moved OFF the road: now at (12,-32), not on x=0 road ----
+// ---- shop ----
 bx(9,4.5,7,0xffe082,12,2.25,-32); bx(9.4,0.4,7.4,0x1565c0,12,4.7,-32);
 bx(1.4,2.6,0.15,0x6d4c41,12,1.8,-28.45);
 bx(1.5,1.5,0.1,0xffffff,9.5,2.9,-28.53); bx(1.3,1.3,0.12,0x90caf9,9.5,2.9,-28.55);
 bx(1.5,1.5,0.1,0xffffff,14.5,2.9,-28.53); bx(1.3,1.3,0.12,0x90caf9,14.5,2.9,-28.55);
 signMesh('မြို့လေးဆိုင်', '#ffeb3b', '#1565c0', 12, 3.9, -28.4, 6, 1.5);
 colliders.push({x:12,z:-32,r:6});
-// ---- delivery beacon ----
+// ---- beacon ----
 const beacon = new THREE.Group();
 const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.MeshBasicMaterial({color:0xffeb3b}));
 bm.position.y = 6; beacon.add(bm);
@@ -256,38 +296,97 @@ bs.position.y = 12.5; beacon.add(bs); scene.add(beacon);
 const targets = [
   {x:-18,z:-18,label:'အိမ်အဝါ'},{x:18,z:-18,label:'အိမ်အပြာ'},{x:-18,z:18,label:'အိမ်ပန်းရောင်'},{x:18,z:18,label:'အိမ်အစိမ်း'},{x:-100,z:-20,label:'အိမ်အဖြူ'},
   {x:-65,z:-65,label:'မြောက်အနောက်အိမ်'},{x:-65,z:55,label:'တောင်အနောက်အိမ်'},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်'},{x:55,z:55,label:'တောင်အရှေ့အိမ်'},
-  {x:-95,z:25,label:'အနောက်အိမ်'},{x:95,z:-55,label:'အရှေ့အိမ်'},{x:-55,z:95,label:'တောင်အိမ်'}
+  {x:-95,z:25,label:'အနောက်အိမ်'},{x:95,z:-55,label:'အရှေ့အိမ်'},{x:-55,z:95,label:'တောင်အိမ်'},
+  {x:-100,z:60,label:'ကျောင်း'},{x:100,z:-20,label:'ဆေးခန်း'},{x:-20,z:100,label:'လက်ဖက်ရည်ဆိုင်'},{x:100,z:60,label:'ကုန်စုံဆိုင်'}
 ];
 let delivery = null;
-// ---- humanoid person ----
-function makePerson(shirt, pants){
+// ---- CHARACTER V2: capsule limbs, knees/elbows, fingers, feet, face, hair/beard, longyi ----
+function makePerson(shirt, pants, opts){
+  opts = opts || {};
+  const skin = opts.skin || 0xffcc99, shoe = opts.shoe || 0x212121;
   const g = new THREE.Group();
-  function limb(x, y, w, h, color, parent){
-    const grp = new THREE.Group(); grp.position.set(x, y, 0); parent.add(grp);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,0.32), M(color));
-    m.position.y = -h/2; grp.add(m); return grp;
+  bx(0.5,0.25,0.32,pants,0,1.12,0,g);
+  bx(0.52,0.08,0.34,0x212121,0,1.27,0,g);
+  bx(0.55,0.6,0.34,shirt,0,1.58,0,g);
+  sph(0.12,shirt,-0.32,1.80,0,g); sph(0.12,shirt,0.32,1.80,0,g);
+  cyl(0.09,0.09,0.18,skin,0,1.92,0,g);
+  if(opts.female){
+    const skirt = mesh(new THREE.CylinderGeometry(0.30,0.42,1.0,12), pants, 0, 0.60, 0, g);
+    skirt.material = M(pants);
   }
-  const legL = limb(-0.22, 0.85, 0.3, 0.85, pants, g);
-  const legR = limb(0.22, 0.85, 0.3, 0.85, pants, g);
-  bx(0.95,1.0,0.5,shirt,0,1.35,0,g);
-  const armL = limb(-0.62, 1.8, 0.26, 0.8, shirt, g);
-  const armR = limb(0.62, 1.8, 0.26, 0.8, shirt, g);
-  sph(0.14,0xffcc99,-0.62,0.95,0,g); sph(0.14,0xffcc99,0.62,0.95,0,g);
-  const head = new THREE.Group(); head.position.set(0,2.15,0); g.add(head);
-  sph(0.42,0xffcc99,0,0,0,head);
-  const hair = sph(0.44,0x212121,0,0.18,-0.05,head); hair.scale.set(1,0.65,1);
-  sph(0.06,0x111111,-0.15,0.05,0.38,head); sph(0.06,0x111111,0.15,0.05,0.38,head);
-  sph(0.07,0xe8a87c,0,-0.08,0.4,head);
-  return {g, legL, legR, armL, armR};
+  function leg(side){
+    const hip = new THREE.Group(); hip.position.set(side*0.22, 1.05, 0); g.add(hip);
+    cap(0.13,0.35,pants,0,-0.28,0,hip);
+    const knee = new THREE.Group(); knee.position.set(0,-0.55,0); hip.add(knee);
+    cap(0.11,0.30,skin,0,-0.24,0,knee);
+    const foot = new THREE.Group(); foot.position.set(0,-0.50,0); knee.add(foot);
+    bx(0.22,0.14,0.42,shoe,0,0.07,0.08,foot);
+    bx(0.23,0.04,0.44,0xffffff,0,0.02,0.08,foot);
+    return {hip, knee};
+  }
+  const legL = leg(-1), legR = leg(1);
+  function arm(side){
+    const shoulder = new THREE.Group(); shoulder.position.set(side*0.48, 1.78, 0); g.add(shoulder);
+    cap(0.09,0.28,shirt,0,-0.20,0,shoulder);
+    const elbow = new THREE.Group(); elbow.position.set(0,-0.38,0); shoulder.add(elbow);
+    cap(0.08,0.25,skin,0,-0.18,0,elbow);
+    const hand = new THREE.Group(); hand.position.set(0,-0.38,0); elbow.add(hand);
+    bx(0.16,0.18,0.07,skin,0,-0.07,0,hand);
+    for(const fx of [-0.06,-0.02,0.02,0.06]) bx(0.035,0.12,0.04,skin,fx,-0.20,0,hand);
+    const thumb = bx(0.04,0.10,0.04,skin,side*0.10,-0.05,0,hand); thumb.rotation.z = -side*0.6;
+    return {shoulder, elbow};
+  }
+  const armL = arm(-1), armR = arm(1);
+  const head = new THREE.Group(); head.position.set(0,2.12,0); g.add(head);
+  sph(0.28,skin,0,0,0,head);
+  sph(0.07,skin,-0.28,0,0,head); sph(0.07,skin,0.28,0,0,head);
+  sph(0.05,skin,0,-0.02,0.27,head);
+  bx(0.12,0.03,0.02,0x8d3b3b,0,-0.13,0.27,head);
+  bx(0.11,0.02,0.02,0x212121,-0.11,0.13,0.27,head); bx(0.11,0.02,0.02,0x212121,0.11,0.13,0.27,head);
+  const eyes = [];
+  for(const ex of [-0.11,0.11]){
+    eyes.push(sph(0.05,0xffffff,ex,0.05,0.25,head));
+    eyes.push(sph(0.025,0x111111,ex,0.05,0.295,head));
+  }
+  if(!opts.bald){
+    const hair = sph(0.30,opts.hair || 0x212121,0,0.18,-0.03,head); hair.scale.set(1,0.65,1);
+    if(opts.longHair) bx(0.34,0.55,0.10,opts.hair || 0x212121,0,-0.25,-0.26,head);
+  }
+  if(opts.beard){
+    const beard = sph(0.20,0x212121,0,-0.20,0.18,head); beard.scale.set(1,0.7,0.6);
+  }
+  if(opts.hat) mesh(new THREE.ConeGeometry(0.45,0.25,12), 0xffd54f, 0, 0.38, 0, head);
+  return {g, thighL:legL.hip, thighR:legR.hip, shinL:legL.knee, shinR:legR.knee, upperL:armL.shoulder, upperR:armR.shoulder, foreL:armL.elbow, foreR:armR.elbow, head, eyes};
 }
-function animatePerson(p, moving, t){
-  const s = moving ? Math.sin(t*9)*0.7 : 0;
-  p.legL.rotation.x = s; p.legR.rotation.x = -s;
-  p.armL.rotation.x = -s; p.armR.rotation.x = s;
+function animatePerson(p, moving, walkPhase, globalTime, riding){
+  if(riding){
+    p.thighL.rotation.x = -0.7; p.thighR.rotation.x = -0.7;
+    p.shinL.rotation.x = 1.1; p.shinR.rotation.x = 1.1;
+    p.upperL.rotation.x = -0.6; p.upperR.rotation.x = -0.6;
+    p.foreL.rotation.x = -0.4; p.foreR.rotation.x = -0.4;
+  } else if(moving){
+    const s = Math.sin(walkPhase*9)*0.6;
+    p.thighL.rotation.x = s; p.thighR.rotation.x = -s;
+    p.shinL.rotation.x = Math.max(0, -s)*1.1; p.shinR.rotation.x = Math.max(0, s)*1.1;
+    p.upperL.rotation.x = -s*0.8; p.upperR.rotation.x = s*0.8;
+    p.foreL.rotation.x = -0.4; p.foreR.rotation.x = -0.4;
+    p.head.position.y = 2.12 + Math.abs(Math.sin(walkPhase*9))*0.03;
+    p.head.rotation.y = 0;
+  } else {
+    p.thighL.rotation.x = 0; p.thighR.rotation.x = 0;
+    p.shinL.rotation.x = 0; p.shinR.rotation.x = 0;
+    p.upperL.rotation.x = 0; p.upperR.rotation.x = 0;
+    p.foreL.rotation.x = 0; p.foreR.rotation.x = 0;
+    p.head.rotation.y = Math.sin(globalTime*0.8)*0.15;
+    p.head.position.y = 2.12 + Math.sin(globalTime*2)*0.01;
+  }
+  const blink = (globalTime % 3.7 < 0.12) ? 0.15 : 1;
+  for(const e of p.eyes) e.scale.y = blink;
 }
-const player = makePerson(0x1565c0, 0x37474f);
+// player
+const player = makePerson(0x1565c0, 0x37474f, {skin:0xe8b88a});
 scene.add(player.g);
-player.g.position.set(0,0,10); player.g.scale.setScalar(1.05); player.g.rotation.y = Math.PI;
+player.g.position.set(0,0,10); player.g.scale.setScalar(1.15); player.g.rotation.y = Math.PI;
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 bx(0.35,0.25,1.7,0xd32f2f,0,0.5,0,bikeG);
 bx(0.5,0.15,0.5,0x212121,0,0.7,-0.3,bikeG);
@@ -299,26 +398,106 @@ bx(0.5,0.15,0.5,0x212121,0,0.7,-0.3,bikeG);
   const hb = cyl(0.05,0.05,0.9,0x9e9e9e,0,0.95,0.85,bikeG); hb.rotation.z = Math.PI/2;
   bx(0.5,0.4,0.4,0x8d6e63,0,0.75,1.05,bikeG);
 })();
-// ---- NPCs ----
+// ---- people: road walkers, yard orbiters, school kids, workers ----
 const intersections = [];
 for(const x of roadLines) for(const z of roadLines) intersections.push({x,z});
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
+const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
 for(let i=0;i<12;i++){
-  const p = makePerson(npcShirts[i], 0x37474f);
-  p.g.scale.setScalar(1.0);
+  const female = i % 3 === 0;
+  const p = makePerson(npcShirts[i], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
+  p.g.scale.setScalar(1.05);
   const start = intersections[i*2 % intersections.length];
   p.g.position.set(start.x, 0, start.z);
   scene.add(p.g);
-  npcs.push({p, target: intersections[(i*2+5) % intersections.length], speed: 2.2});
+  npcs.push({p, target: intersections[(i*2+5) % intersections.length], speed: 3.5});
 }
-function staticPerson(shirt, x, z, rotY){
-  const p = makePerson(shirt, 0x37474f);
-  p.g.scale.setScalar(1.0); p.g.position.set(x,0,z); p.g.rotation.y = rotY; scene.add(p.g);
+const yardPeople = [];
+for(let i=0;i<6;i++){
+  const h = houseList[i];
+  const p = makePerson(npcShirts[(i+3)%12], 0x37474f, {skin:skins[(i+1)%4], female:(i%2===0), longHair:(i%2===0)});
+  p.g.scale.setScalar(1.05); scene.add(p.g);
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:9, dir:(i%2===0?1:-1)});
 }
-staticPerson(0x43a047, 21, 32, 0);
-staticPerson(0x8d6e63, -14, -32, 0);
-staticPerson(0xef6c00, 15, -28, Math.PI);
+const schoolKids = [];
+for(let i=0;i<4;i++){
+  const p = makePerson([0xe53935,0x1565c0,0x43a047,0xf9a825][i], 0x37474f, {skin:skins[i%4]});
+  p.g.scale.setScalar(0.7); p.g.position.set(-105+i*3, 0, 70); scene.add(p.g);
+  schoolKids.push({p, target:{x:-108+Math.random()*16, z:67+Math.random()*8}});
+}
+const staticPeople = [];
+function staticPerson(shirt, x, z, rotY, opts){
+  const p = makePerson(shirt, 0x37474f, opts || {});
+  p.g.scale.setScalar(1.05); p.g.position.set(x,0,z); p.g.rotation.y = rotY; scene.add(p.g);
+  staticPeople.push(p); return p;
+}
+staticPerson(0x43a047, 21, 32, 0, {female:true, longHair:true});
+staticPerson(0x8d6e63, -14, -32, 0, {hat:true});
+staticPerson(0xef6c00, 15, -28, Math.PI, {beard:true});
+staticPerson(0xffffff, -17, 106, Math.PI, {});
+staticPerson(0x1565c0, 97, 66, Math.PI, {});
+staticPerson(0xff9800, -17, -94, 0, {bald:true});
+// ---- animals: dogs, chickens, cows ----
+function makeDog(color){
+  const g = new THREE.Group();
+  bx(0.55,0.25,0.32,color,0,0.28,0,g);
+  bx(0.24,0.22,0.24,color,0,0.38,0.30,g);
+  bx(0.06,0.10,0.06,color,-0.08,0.52,0.30,g); bx(0.06,0.10,0.06,color,0.08,0.52,0.30,g);
+  bx(0.28,0.06,0.06,color,0,0.35,-0.32,g);
+  for(const lx of [-0.18,0.18]) for(const lz of [-0.12,0.12]) cyl(0.05,0.05,0.25,color,lx,0.12,lz,g);
+  return g;
+}
+function makeChicken(color){
+  const g = new THREE.Group();
+  sph(0.20,color,0,0.28,0,g);
+  sph(0.11,color,0,0.48,0.12,g);
+  mesh(new THREE.ConeGeometry(0.05,0.12,6), 0xff9800, 0, 0.48, 0.26, g).rotation.x = Math.PI/2;
+  return g;
+}
+function makeCow(){
+  const g = new THREE.Group();
+  bx(1.2,0.7,0.6,0xffffff,0,0.75,0,g);
+  bx(0.3,0.3,0.3,0x212121,0.3,0.9,0.2,g); bx(0.3,0.3,0.3,0x212121,-0.4,0.7,-0.1,g);
+  bx(0.45,0.45,0.45,0xffffff,0,0.75,0.75,g);
+  for(const lx of [-0.4,0.4]) for(const lz of [-0.25,0.25]) cyl(0.09,0.09,0.45,0xffffff,lx,0.22,lz,g);
+  return g;
+}
+const animals = [];
+function addAnimal(g, area, speed){
+  scene.add(g);
+  animals.push({g, area, speed, target:{x:area.xmin+Math.random()*(area.xmax-area.xmin), z:area.zmin+Math.random()*(area.zmax-area.zmin)}});
+}
+for(let i=0;i<3;i++){ const d = makeDog(0x8d6e63); d.position.set(-20+i*4,0,24); addAnimal(d, {xmin:-28,xmax:-8,zmin:14,zmax:30}, 2.0); }
+for(let i=0;i<4;i++){ const c = makeChicken(i%2?0xffffff:0x8d6e63); c.position.set(-22+i*2,0,-30); addAnimal(c, {xmin:-26,xmax:-10,zmin:-38,zmax:-26}, 1.5); }
+for(let i=0;i<2;i++){ const cow = makeCow(); cow.position.set(-95+i*6,0,-92); addAnimal(cow, {xmin:-108,xmax:-88,zmin:-108,zmax:-88}, 1.2); }
+// ---- vehicles: cars on roads, bus loop, parked bikes ----
+function makeCar(color){
+  const g = new THREE.Group();
+  bx(1.8,0.5,3.2,color,0,0.45,0,g);
+  bx(1.6,0.5,1.6,color,0,0.95,-0.2,g);
+  bx(1.65,0.4,1.4,0x90caf9,0,0.95,-0.2,g);
+  for(const wx of [-0.95,0.95]) for(const wz of [-1.0,1.0]){
+    const w = cyl(0.32,0.32,0.25,0x212121,wx,0.32,wz,g); w.rotation.z = Math.PI/2;
+  }
+  return g;
+}
+const cars = [];
+for(let i=0;i<3;i++){
+  const car = makeCar([0xe53935,0x1565c0,0xffffff][i]);
+  const start = intersections[i*7 % intersections.length];
+  car.position.set(start.x, 0, start.z); scene.add(car);
+  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 7});
+}
+const bus = new THREE.Group();
+bx(2.5,2.2,8,0xffc107,0,1.3,0,bus);
+bx(2.6,0.7,7.5,0x90caf9,0,1.7,0,bus);
+for(const wx of [-1.3,1.3]) for(const wz of [-3,-1,1,3]){
+  const w = cyl(0.5,0.5,0.3,0x212121,wx,0.5,wz,bus); w.rotation.z = Math.PI/2;
+}
+bus.position.set(0,0,-80); scene.add(bus);
+const busRoute = [{x:0,z:-80},{x:80,z:-80},{x:80,z:80},{x:-80,z:80},{x:-80,z:-80},{x:0,z:-80}];
+let busIdx = 1;
 // state
 let money = parseInt(localStorage.getItem('mtl_money')||'0',10) || 0;
 let fastBike = localStorage.getItem('mtl_fast')==='1';
@@ -348,10 +527,16 @@ function nearest(){
     {d:dist(12,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept},
     {d:dist(-100,60), label:'🏫 ကျောင်းကြည့်မယ်', fn:()=>showMsg('🏫 စာသင်ကျောင်းရောက်ပြီ — ကလေးတွေ စာသင်နေတယ်')},
     {d:dist(100,-20), label:'🏥 ဆေးခန်းကြည့်မယ်', fn:()=>showMsg('🏥 ဆေးခန်းရောက်ပြီ — ဆရာဝန်ရှိတယ်')},
+    {d:dist(-20,100), label:'🍵 လက်ဖက်ရည်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🍵 လက်ဖက်ရည်ဆိုင် — လက်ဖက်ရည်သောက်လို့ရတယ်')},
+    {d:dist(100,60), label:'🛒 ကုန်စုံဆိုင်ကြည့်မယ်', fn:()=>showMsg('🛒 ကုန်စုံဆိုင် — ပစ္စည်းစုံတယ်')},
+    {d:dist(60,-100), label:'🏛️ မြို့အုပ်ချုပ်ရေးရုံးကြည့်မယ်', fn:()=>showMsg('🏛️ မြို့အုပ်ချုပ်ရေးရုံး')},
+    {d:dist(-20,-100), label:'🙏 ဘုန်းကြီးကျောင်းကြည့်မယ်', fn:()=>showMsg('🙏 ဘုန်းကြီးကျောင်း')},
+    {d:dist(-100,100), label:'⚽ ဘောလုံးကွင်းကြည့်မယ်', fn:()=>showMsg('⚽ ဘောလုံးကွင်း — ကန်လို့ရတယ်')},
+    {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်')},
   ];
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver});
   opts.sort((a,b)=>a.d-b.d);
-  return opts[0].d < 9 ? opts[0] : null;
+  return opts[0].d < 10 ? opts[0] : null;
 }
 function harvest(){
   if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
@@ -401,25 +586,25 @@ document.getElementById('closeShop').addEventListener('click', ()=>document.getE
 document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
 document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
 document.getElementById('playBtn').addEventListener('click', ()=>document.getElementById('start').style.display='none');
+document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
+  try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
+  try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
+  document.getElementById('start').style.display='none';
+});
 document.getElementById('rotL').addEventListener('click', ()=>{ camYaw -= Math.PI/4; });
 document.getElementById('rotR').addEventListener('click', ()=>{ camYaw += Math.PI/4; });
 let dragX = null;
 canvas.addEventListener('pointerdown', e=>{ dragX = e.clientX; });
 addEventListener('pointermove', e=>{ if(dragX !== null){ camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; } });
 addEventListener('pointerup', ()=>{ dragX = null; });
-document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
-  try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
-  try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
-  document.getElementById('start').style.display='none';
-});
 refresh();
 let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI;
 function animate(now){
   requestAnimationFrame(animate);
   const dt = Math.min((now-last)/1000, 0.05); last = now;
+  const gt = now/1000;
   if(cropTimer > 0){ cropTimer -= dt; if(cropTimer <= 0){ cropReady = true; crops.visible = true; } }
   if(marketTimer > 0) marketTimer -= dt;
-  // ---- day/night: full cycle 180 seconds ----
   dayT += dt;
   const phase = (dayT % 180) / 180, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
   const dayF = Math.max(0, Math.min(1, sunH + 0.25));
@@ -428,12 +613,10 @@ function animate(now){
   sun.intensity = 0.25 + dayF * 1.0;
   sun.position.set(Math.cos(angle)*60, 10 + dayF*50, 20);
   hemi.intensity = 0.3 + dayF * 0.8;
-  // moon: night only, far up in the sky relative to the player (never a low ball in daytime)
   moon.visible = dayF < 0.5;
   moon.position.set(player.g.position.x - Math.cos(angle)*120, 70, player.g.position.z - 60);
   const timeText = phase < 0.5 ? (dayF > 0.7 ? '🌞 နေ့' : '🌅 နံနက်/ညနေ') : '🌙 ည';
   if(timeText !== lastTimeText){ lastTimeText = timeText; timeEl.textContent = timeText; }
-  // camera-relative input: joystick/keyboard up = away from camera, right = screen right
   let inRight = 0, inUp = 0;
   if(keys.KeyD || keys.ArrowRight) inRight += 1;
   if(keys.KeyA || keys.ArrowLeft) inRight -= 1;
@@ -448,8 +631,7 @@ function animate(now){
   const moving = len > 0.1;
   if(moving){
     dx/=Math.max(1,len); dz/=Math.max(1,len);
-    // camera does NOT auto-rotate: camYaw only changes via rotate buttons / screen drag
-    const sp = riding ? (fastBike?18:12) : 5;
+    const sp = riding ? (fastBike?24:16) : 8.5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     player.g.rotation.y = Math.atan2(dx,dz);
     player.g.position.x = Math.max(-122, Math.min(122, player.g.position.x));
@@ -460,12 +642,7 @@ function animate(now){
     }
     walkT += dt;
   }
-  if(riding){
-    player.legL.rotation.x = -1.0; player.legR.rotation.x = -1.0;
-    player.armL.rotation.x = -0.7; player.armR.rotation.x = -0.7;
-  } else {
-    animatePerson(player, moving, walkT);
-  }
+  animatePerson(player, moving, walkT, gt, riding);
   for(const n of npcs){
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
@@ -475,7 +652,55 @@ function animate(now){
     else { n.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     n.p.g.position.x += mx*n.speed*dt; n.p.g.position.z += mz*n.speed*dt;
     n.p.g.rotation.y = Math.atan2(mx,mz);
-    animatePerson(n.p, true, now/1000 + px);
+    animatePerson(n.p, true, gt + px, gt, false);
+  }
+  for(const y of yardPeople){
+    y.angle += dt*0.25*y.dir;
+    const px = y.house.x + Math.cos(y.angle)*y.radius, pz = y.house.z + Math.sin(y.angle)*y.radius;
+    const dx2 = -Math.sin(y.angle)*y.dir, dz2 = Math.cos(y.angle)*y.dir;
+    y.p.g.position.set(px, 0, pz);
+    y.p.g.rotation.y = Math.atan2(dx2,dz2);
+    animatePerson(y.p, true, gt + px, gt, false);
+  }
+  for(const k of schoolKids){
+    const dx2 = k.target.x - k.p.g.position.x, dz2 = k.target.z - k.p.g.position.z, d2 = Math.hypot(dx2,dz2);
+    if(d2 < 1){ k.target = {x:-108+Math.random()*16, z:67+Math.random()*8}; }
+    else {
+      k.p.g.position.x += dx2/d2*2.8*dt; k.p.g.position.z += dz2/d2*2.8*dt;
+      k.p.g.rotation.y = Math.atan2(dx2,dz2);
+      animatePerson(k.p, true, gt, gt, false);
+    }
+  }
+  for(const p of staticPeople) animatePerson(p, false, 0, gt, false);
+  for(const a of animals){
+    const dx2 = a.target.x - a.g.position.x, dz2 = a.target.z - a.g.position.z, d2 = Math.hypot(dx2,dz2);
+    if(d2 < 1){ a.target = {x:a.area.xmin+Math.random()*(a.area.xmax-a.area.xmin), z:a.area.zmin+Math.random()*(a.area.zmax-a.area.zmin)}; }
+    else {
+      a.g.position.x += dx2/d2*a.speed*dt; a.g.position.z += dz2/d2*a.speed*dt;
+      a.g.rotation.y = Math.atan2(dx2,dz2);
+      a.g.position.y = Math.abs(Math.sin(gt*6))*0.05;
+    }
+  }
+  for(const car of cars){
+    const tx = car.target.x, tz = car.target.z;
+    const px = car.g.position.x, pz = car.g.position.z;
+    let mx = 0, mz = 0;
+    if(Math.abs(tx-px) > 0.8) mx = Math.sign(tx-px);
+    else if(Math.abs(tz-pz) > 0.8) mz = Math.sign(tz-pz);
+    else { car.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
+    car.g.position.x += mx*car.speed*dt; car.g.position.z += mz*car.speed*dt;
+    car.g.rotation.y = Math.atan2(mx,mz);
+  }
+  {
+    const bt = busRoute[busIdx];
+    const dx2 = bt.x - bus.position.x, dz2 = bt.z - bus.position.z, d2 = Math.hypot(dx2,dz2);
+    if(d2 < 1.5){ busIdx = (busIdx+1) % busRoute.length; }
+    else {
+      let mx = 0, mz = 0;
+      if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
+      bus.position.x += mx*8*dt; bus.position.z += mz*8*dt;
+      bus.rotation.y = Math.atan2(mx,mz);
+    }
   }
   for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
   const n = nearest();
