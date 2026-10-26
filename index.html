@@ -69,6 +69,7 @@
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p>🌾 ၅၀၀ · 🏪 ၈၀၀ · 🛵 ၁၀၀၀ ကျပ်</p>
+  <p style="font-size:13px;color:#555">📱 ဘယ် joystick = ရွေ့ · ညာ ခလုပ် = လုပ်/ဆိုင်ကယ်/ဆိုင် · မျက်နှာပြင်ဆွဲ = ကင်မရာ · တံတား (z=0) ကနေ ရေချောင်းဖြတ်၊ တောင်တန်းဘက် သွားလို့ရတယ်</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
 </div></div>
 <div id="shop"><div class="card">
@@ -299,6 +300,7 @@ for(const wz of [-104,-96]){
 }
 colliders.push({x:100,z:-100,r:6});
 signMesh('ကားဂိတ်', '#ffffff', '#1565c0', 100, 3.2, -95.5, 6, 1.2);
+{ const bs = signMesh('🚌 ကားမှတ်တိုင်', '#1565c0', '#ffffff', 100, 2.5, -74, 6, 1.2); bs.rotation.y = Math.PI; cyl(0.1,0.1,2.5,0x455a64,100,1.25,-74); }
 { const sN = signMesh('ကားဂိတ်', '#ffffff', '#1565c0', 100, 3.2, -104.5, 6, 1.2); sN.rotation.y = Math.PI; }
 // tea shop tables + chairs
 for(const tx of [-24,-16]){
@@ -394,7 +396,7 @@ bx(26,0.4,8,0x8d6e63,175,0.35,0);
 bx(26,0.5,0.3,0x6d4c41,175,0.8,4); bx(26,0.5,0.3,0x6d4c41,175,0.8,-4);
 // continuous stream barrier except the bridge gap (z -1..+1, bridge is z -4..+4):
 // old circles spaced 40 apart left 18-unit wading gaps everywhere
-for(const sz of [-120,-100,-80,-60,-40,-20,-12,12,20,40,60,80,100,120]) colliders.push({x:175,z:sz,r:11,cam:false});
+for(const sz of [-120,-100,-80,-60,-40,-20,-16,16,20,40,60,80,100,120]) colliders.push({x:175,z:sz,r:11,cam:false}); // bridge gap -5..5 matches 8-wide bridge deck (old -12/12 left only 0.4m, joystick could not hit it)
 const foam = [];
 for(let i=0;i<10;i++){
   foam.push(bx(1.5,0.2,0.5,0xffffff,175,0.35,-120+i*26));
@@ -466,7 +468,7 @@ function marketStall(cx){
   for(let i=0;i<3;i++) sph(0.35,0x66bb6a,cx+1.5+i*1.2,1.3,31);
 }
 marketStall(18); marketStall(27);
-let marketTimer = 0;
+let marketTimer = 0, fishTimer = 0, mountainRewarded = false;
 // ---- big market hall (proper market building) ----
 bx(20.4,0.5,8.4,0x9e9e9e,95,0.25,-72);
 bx(20,7,8,0xfff3e0,95,4,-72);
@@ -805,7 +807,7 @@ for(const wx of [-1.5,1.5]) for(const wz of [-4.5,-1.5,1.5,4.5]){
 }
 blobShadow(bus, 2.0, 6.5);
 bus.position.set(0,0,-160); scene.add(bus);
-const busRoute = [{x:0,z:-160},{x:160,z:-160},{x:160,z:160},{x:-160,z:160},{x:-160,z:-160},{x:0,z:-160}];
+const busRoute = [{x:0,z:-160},{x:160,z:-160},{x:160,z:160},{x:-160,z:160},{x:-160,z:-160},{x:-160,z:-80},{x:160,z:-80},{x:160,z:-160},{x:0,z:-160}]; // -80 leg passes (100,-80), 20 south of bus station (100,-100)
 let busIdx = 1;
 // state
 let money = parseInt(localStorage.getItem('mtl_money')||'0',10) || 0;
@@ -842,9 +844,10 @@ function nearest(){
     {d:dist(60,-100), label:'🏛️ မြို့အုပ်ချုပ်ရေးရုံးကြည့်မယ်', fn:()=>showMsg('🏛️ မြို့အုပ်ချုပ်ရေးရုံး'), r:7.5},
     {d:dist(-20,-100), label:'🙏 ဘုန်းကြီးကျောင်းကြည့်မယ်', fn:()=>showMsg('🙏 ဘုန်းကြီးကျောင်း'), r:7.5},
     {d:dist(-100,100), label:'⚽ ဘောလုံးကွင်းကြည့်မယ်', fn:()=>showMsg('⚽ ဘောလုံးကွင်း — ကန်လို့ရတယ်')},
-    {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်'), r:6},
+    {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကား -80 လမ်းမှာ (တောင်ဘက် 20m) ဖြတ်သွားတယ်'), r:6},
     {d:dist(100,100), label:'🙏 ဘုရားကြည့်မယ်', fn:()=>showMsg('🙏 ဘုရား — ဘုရားဖူးလို့ရတယ်'), r:6},
-    {d:dist(-100,-100), label:'🌊 ကန်ကြည့်မယ်', fn:()=>showMsg('🌊 ကန် — ကန်နားမှာ အနားယူလို့ရတယ်'), r:8},
+    {d:dist(-100,-100), label:'🎣 ကန်မှာ ငါးမျှားမယ် (+၃၀၀)', fn:fish, r:8},
+    {d:dist(175,0), label:'🎣 တံတားပေါ်က ငါးမျှားမယ် (+၃၀၀)', fn:fish, r:6},
     {d:dist(60,-120), label:'👮 ရဲစခန်းကြည့်မယ်', fn:()=>showMsg('👮 ရဲစခန်း — မြို့လုံခြုံရေးအတွက် တာဝန်ယူတယ်'), r:8.5},
     {d:dist(-60,-120), label:'📚 စာကြည့်တိုက်ကြည့်မယ်', fn:()=>showMsg('📚 စာကြည့်တိုက် — စာဖတ်လို့ရတယ်'), r:8.5},
     {d:dist(60,120), label:'📮 စာတိုက်ကြည့်မယ်', fn:()=>showMsg('📮 စာတိုက် — စာပို့လို့ရတယ်'), r:7.5},
@@ -875,6 +878,10 @@ function harvest(){
 function sell(){
   if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
   marketTimer = 8; money += 800; save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +၈၀၀ ကျပ်');
+}
+function fish(){
+  if(fishTimer > 0){ showMsg('ငါးမလာသေးဘူး၊ '+Math.ceil(fishTimer)+' စက္ကန့်စောင့်'); return; }
+  fishTimer = 10; money += 300; save(); refresh(); playCoin(); showMsg('🎣 ငါးရပြီ +၃၀၀ ကျပ်');
 }
 function accept(){
   if(delivery){ showMsg('📦 အမှာပို့နေဆဲ — '+delivery.label+' ကို ပို့ပါ'); return; }
@@ -997,7 +1004,7 @@ function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
   if(r.dist < threshold){
     const dx = player.g.position.x - r.qx, dz = player.g.position.z - r.qz, d = Math.hypot(dx,dz) || 1;
     player.g.position.x += dx/d*4; player.g.position.z += dz/d*4;
-    player.g.position.x = Math.max(-195, Math.min(200, player.g.position.x));
+    player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x)); // ground east edge 550, mountains at 380-480 must be reachable
     player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
     ensureAudio(); playThud();
     showMsg('🚗 ကားတိုက်မိပြီ! လမ်းပေါ် သတိထားပါ');
@@ -1056,6 +1063,7 @@ function animate(now){
   const gt = now/1000;
   if(cropTimer > 0){ cropTimer -= dt; if(cropTimer <= 0){ cropReady = true; crops.visible = true; } }
   if(marketTimer > 0) marketTimer -= dt;
+  if(fishTimer > 0) fishTimer -= dt;
   dayT += dt;
   // day 5 min + night 5 min = 600s cycle, day = sun above horizon (180 deg), night = below
   const phase = (dayT % 600) / 600, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
@@ -1070,7 +1078,7 @@ function animate(now){
   stars.visible = dayF < 0.5;
   starMat.opacity = Math.max(0, 1 - dayF*2);
   sun.intensity = 0.25 + dayF * 1.0;
-  sun.position.set(Math.cos(angle)*60, 10 + dayF*50, 20);
+  sun.position.set(player.g.position.x + Math.cos(angle)*60, 10 + dayF*50, player.g.position.z + 20); sun.target.position.set(player.g.position.x, 0, player.g.position.z); sun.target.updateMatrixWorld(); // shadows follow the player, even at the mountains (old fixed origin shadow box ended at x=200)
   hemi.intensity = 0.3 + dayF * 0.8;
   moon.visible = dayF < 0.5;
   moon.position.set(player.g.position.x - Math.cos(angle)*120, 70, player.g.position.z - 60);
@@ -1095,7 +1103,7 @@ function animate(now){
     const sp = riding ? (fastBike?26:18) : 10.5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     turnTo(player.g, Math.atan2(dx,dz), dt, 10);
-    player.g.position.x = Math.max(-195, Math.min(200, player.g.position.x));
+    player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x));
     player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
     for(const c of colliders){
       if(Math.abs(player.g.position.x-c.x) > c.r+0.8 || Math.abs(player.g.position.z-c.z) > c.r+0.8) continue;
@@ -1201,6 +1209,12 @@ function animate(now){
   actLabelEl.style.display = n ? 'block' : 'none';
   actBtn.textContent = 'လုပ်';
   actBtn.disabled = !n;
+  // mountain reward: first time reaching the mountain base each trip (reset on return to town)
+  if(player.g.position.x > 340 && !mountainRewarded){ mountainRewarded = true; money += 500; save(); refresh(); playCoin(); showMsg('⛰️ တောင်တန်းရောက်ပြီ! +၅၀၀ ကျပ်'); }
+  if(player.g.position.x < 200) mountainRewarded = false;
+  // objective distance in job text so the player always knows how far the shop / delivery is
+  if(delivery) jobEl.textContent = '📦 '+delivery.label+' ကို ပို့ပါ — '+Math.round(dist(delivery.x,delivery.z))+'m';
+  else jobEl.textContent = 'ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ — '+Math.round(dist(12,-32))+'m';
   beacon.rotation.y += dt*2;
   if(delivery) beacon.position.y = Math.sin(now/300)*0.6;
   shopBeacon.rotation.y += dt*2;
