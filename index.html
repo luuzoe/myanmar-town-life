@@ -98,13 +98,22 @@ const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
 sun.castShadow = !isMobile;
 sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -130; sun.shadow.camera.right = 130;
-sun.shadow.camera.top = 130; sun.shadow.camera.bottom = -130;
+sun.shadow.camera.left = -200; sun.shadow.camera.right = 200;
+sun.shadow.camera.top = 200; sun.shadow.camera.bottom = -200;
 sun.shadow.camera.near = 1; sun.shadow.camera.far = 250;
 sun.shadow.bias = -0.0005;
 sun.shadow.camera.updateProjectionMatrix();
 const moon = new THREE.Mesh(new THREE.SphereGeometry(5,12,10), new THREE.MeshBasicMaterial({color:0xfffde7}));
 scene.add(moon);
+const sunDisc = new THREE.Mesh(new THREE.SphereGeometry(8,16,12), new THREE.MeshBasicMaterial({color:0xffeb3b}));
+scene.add(sunDisc);
+const sunsetColor = new THREE.Color(0xff8c42);
+const _starPos = new Float32Array(150*3);
+for(let i=0;i<150;i++){ _starPos[i*3] = (Math.random()-0.5)*600; _starPos[i*3+1] = 80+Math.random()*80; _starPos[i*3+2] = (Math.random()-0.5)*600; }
+const _starGeo = new THREE.BufferGeometry();
+_starGeo.setAttribute('position', new THREE.BufferAttribute(_starPos, 3));
+const starMat = new THREE.PointsMaterial({color:0xffffff, size:2, sizeAttenuation:false, fog:false, transparent:true, opacity:0});
+const stars = new THREE.Points(_starGeo, starMat); scene.add(stars);
 const mats = {};
 function M(c){ if(!mats[c]) mats[c] = new THREE.MeshLambertMaterial({color:c}); return mats[c]; }
 function mesh(geo, color, x, y, z, parent){
@@ -134,20 +143,37 @@ function signMesh(text, bg, fg, x, y, z, w, h, fs){
   sign.position.set(x,y,z); scene.add(sign); return sign;
 }
 // ---- map ----
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(560,260), M(0x6fbf5a));
-ground.rotation.x = -Math.PI/2; ground.position.set(145,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(755,400), M(0x6fbf5a));
+ground.rotation.x = -Math.PI/2; ground.position.set(172.5,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
 const roadLines = [-80,-40,0,40,80];
+// road variety: main avenue (x=0, z=0) is wider (10) with a yellow centre line,
+// side streets are narrower (7) and plain; sidewalks follow each road's width
 for(const r of roadLines){
-  bx(260,0.1,7,0x444444,0,0.05,r);
-  bx(7,0.1,260,0x444444,r,0.05,0);
-  // sidewalks on both sides of every road
-  bx(260,0.12,3,0xbdbdbd,0,0.06,r+5); bx(260,0.12,3,0xbdbdbd,0,0.06,r-5);
-  bx(3,0.12,260,0xbdbdbd,r+5,0.06,0); bx(3,0.12,260,0xbdbdbd,r-5,0.06,0);
+  const w = (r===0 ? 10 : 7), sw = w/2 + 1.5;
+  bx(400,0.1,w,0x444444,0,0.05,r);
+  bx(w,0.1,400,0x444444,r,0.05,0);
+  bx(400,0.12,3,0xbdbdbd,0,0.06,r+sw); bx(400,0.12,3,0xbdbdbd,0,0.06,r-sw);
+  bx(3,0.12,400,0xbdbdbd,r+sw,0.06,0); bx(3,0.12,400,0xbdbdbd,r-sw,0.06,0);
 }
-for(let d=-110; d<=110; d+=20){
-  bx(0.4,0.12,3,0xffffff,0,0.12,d);
-  bx(3,0.12,0.4,0xffffff,d,0.12,0);
+for(let d=-190; d<=190; d+=20){
+  bx(0.4,0.12,3,0xffeb3b,0,0.12,d);
+  bx(3,0.12,0.4,0xffeb3b,d,0.12,0);
 }
+// zebra crosswalks across the main avenue at every side-road intersection
+for(const r of [-160,-80,-40,40,80,160]){
+  for(const sx of [-4,-2,0,2,4]) bx(0.8,0.12,3,0xffffff,sx,0.12,r);
+  for(const sz of [-4,-2,0,2,4]) bx(3,0.12,0.8,0xffffff,r,0.12,sz);
+}
+// outer ring roads at x/z = +-160 (new districts, 80-wide outer blocks)
+for(const r of [-160,160]){
+  bx(400,0.1,7,0x444444,0,0.05,r);
+  bx(7,0.1,400,0x444444,r,0.05,0);
+  bx(400,0.12,3,0xbdbdbd,0,0.06,r+5); bx(400,0.12,3,0xbdbdbd,0,0.06,r-5);
+  bx(3,0.12,400,0xbdbdbd,r+5,0.06,0); bx(3,0.12,400,0xbdbdbd,r-5,0.06,0);
+}
+// dirt footpaths: to school (west) and to pagoda (L-shaped, east)
+bx(20,0.1,2,0x8d6e63,-90,0.06,60);
+bx(20,0.1,2,0x8d6e63,90,0.06,80); bx(2,0.1,20,0x8d6e63,100,0.06,90);
 const colliders = [];
 function house(x,z,wall,roof){
   // bigger, more real: 16 wide x 12 deep x 8 high (was 12x9x6), side windows + chimney
@@ -177,7 +203,11 @@ const houseList = [
   [-95,-55,0xfff2cc,0xb3402a],[-95,25,0xddeeff,0x6d4c41],[95,-55,0xffe0e0,0xb3402a],[95,25,0xe0ffe0,0x37474f],
   [-55,-95,0xf5f5f5,0xb3402a],[25,-95,0xfff8dc,0x6d4c41],[-55,95,0xfff2cc,0x37474f],[25,95,0xddeeff,0xb3402a],
   [-95,-95,0xffe0e0,0x6d4c41],
-  [15,110,0xfff2cc,0xb3402a],[-15,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-10,0xe0ffe0,0xb3402a]
+  [15,110,0xfff2cc,0xb3402a],[-15,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-10,0xe0ffe0,0xb3402a],
+  [-120,-120,0xfff2cc,0xb3402a],[120,-120,0xddeeff,0x37474f],
+  [-40,120,0xffe0e0,0xb3402a],[120,120,0xe0ffe0,0x6d4c41],
+  [-120,-40,0xf5f5f5,0xb3402a],[-120,40,0xfff8dc,0x37474f],
+  [120,-40,0xfff2cc,0x6d4c41],[120,40,0xddeeff,0xb3402a]
 ];
 for(const h of houseList) house(h[0],h[1],h[2],h[3]);
 // ---- school (big, 2 floors), hospital (was clinic) ----
@@ -228,6 +258,21 @@ shopBuilding(-20,100,10,6.5,7,0xffe0b2,0xef6c00,'လက်ဖက်ရည်ဆ�
 shopBuilding(100,60,10,6.5,7,0xe3f2fd,0x1565c0,'ကုန်စုံဆိုင်','#ffffff','#1565c0');
 shopBuilding(60,-100,12,7,8,0xfff9c4,0x37474f,'မြို့အုပ်ချုပ်ရေးရုံး','#ffeb3b','#1565c0',52);
 shopBuilding(-20,-100,12,6.5,8,0xffffff,0xffc107,'ဘုန်းကြီးကျောင်း','#fff8e1','#6d4c41',56);
+shopBuilding(40,-120,14,7,8,0xe3f2fd,0x1565c0,'ရဲစခန်း','#ffffff','#1565c0');
+shopBuilding(-40,-120,14,7,8,0xfff9c4,0x37474f,'စာကြည့်တိုက်','#ffeb3b','#1565c0');
+shopBuilding(40,120,12,6,7,0xffebee,0xe53935,'စာတိုက်','#ffffff','#e53935');
+// park + playground at (-120,120): grass, cross paths, corner trees, benches, swings, slide, flowers
+bx(24,0.2,24,0x2e7d32,-120,0.1,120);
+bx(24,0.1,2,0x8d6e63,-120,0.06,120); bx(2,0.1,24,0x8d6e63,-120,0.06,120);
+colliders.push({x:-125,z:118,r:1,cam:false}); colliders.push({x:-115,z:122,r:1,cam:false});
+bx(2,0.5,0.5,0x6d4c41,-125,0.25,118); bx(2,0.5,0.5,0x6d4c41,-115,0.25,122);
+cyl(0.08,0.08,2.5,0x455a64,-125,1.25,125); cyl(0.08,0.08,2.5,0x455a64,-123,1.25,125);
+bx(2.5,0.1,0.1,0x455a64,-124,2.5,125);
+bx(0.6,0.1,0.4,0xe53935,-124.5,0.8,125); bx(0.6,0.1,0.4,0x1565c0,-123.5,0.8,125);
+colliders.push({x:-124,z:125,r:1.5,cam:false});
+{ const slide = bx(0.8,3,0.1,0xffeb3b,-115,1.2,125); slide.rotation.x = 0.6; }
+colliders.push({x:-115,z:125,r:1.5,cam:false});
+for(let i=0;i<6;i++) bx(1,0.3,1,[0xec407a,0xffeb3b,0xe53935][i%3],-128+i*3,0.15,112);
 mesh(new THREE.ConeGeometry(2.5,5,10), 0xffc107, -12, 2.5, -100);
 bx(30,0.2,20,0x2e7d32,-100,0.1,100);
 bx(30,0.25,0.4,0xffffff,-100,0.22,90.2); bx(30,0.25,0.4,0xffffff,-100,0.22,109.8);
@@ -249,6 +294,11 @@ for(const tx of [-24,-16]){
   cyl(0.5,0.5,0.1,0x8d6e63,tx,0.8,106); cyl(0.08,0.08,0.8,0x8d6e63,tx,0.4,106);
   bx(0.5,0.5,0.5,0x6d4c41,tx-1,0.25,106); bx(0.5,0.5,0.5,0x6d4c41,tx+1,0.25,106);
 }
+tree(-130,110,true); tree(-110,110,true); tree(-130,130,true); tree(-110,130,true);
+// benches + bins + flower beds along the main avenue
+for(const bx2 of [[-20,6.5],[20,6.5],[-20,-6.5],[20,-6.5]]){ bx(2,0.5,0.5,0x6d4c41,bx2[0],0.25,bx2[1]); colliders.push({x:bx2[0],z:bx2[1],r:1,cam:false}); }
+for(const bn of [[6.5,6.5],[-6.5,6.5],[6.5,-6.5],[-6.5,-6.5]]){ cyl(0.3,0.25,0.8,0x2e7d32,bn[0],0.4,bn[1]); colliders.push({x:bn[0],z:bn[1],r:0.5,cam:false}); }
+for(const fb of [[-10,10],[10,10],[-30,10],[30,10],[-10,-10],[10,-10]]) bx(3,0.3,1.5,[0xec407a,0xffeb3b,0xe53935][Math.abs(fb[0])%3],fb[0],0.15,fb[1]);
 // ---- pagoda, pond ----
 bx(10,1,10,0xffe082,100,0.5,100); bx(7,1.5,7,0xffd54f,100,1.75,100);
 mesh(new THREE.ConeGeometry(3.2,7,12), 0xffc107, 100, 6, 100);
@@ -265,34 +315,49 @@ function tree(x,z,detailed){
   treeBlockers.push({x,z,r:2.0});
 }
 [[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-36,-20],[36,20],[-70,-40],[70,40],[-40,70],[40,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1],true));
+[[-140,-140],[-20,-140],[140,-140],[-140,140],[20,140],[140,140],[-140,-20],[140,20]].forEach(p=>tree(p[0],p[1],true));
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3,8,6), new THREE.MeshBasicMaterial({color:0xffeb3b}));
   bulb.position.set(x,4.7,z); scene.add(bulb); colliders.push({x,z,r:0.5});
 }
-[[-80,5],[-40,5],[40,5],[80,5],[5,-80],[5,-40],[5,40],[5,80]].forEach(p=>lamp(p[0],p[1]));
-for(const pz of [-80,-40,40,80]){
+// lamps on sidewalks at mid-block, never on a road (old list put them on road centres)
+[[-75,-60],[-35,20],[45,-20],[85,60],[-60,-75],[20,-35],[-20,45],[60,85]].forEach(p=>lamp(p[0],p[1]));
+// poles on the x=0 road's sidewalks at mid-block (old: at intersections, standing on the cross road)
+for(const pz of [-60,-20,20,60]){
   cyl(0.1,0.1,6,0x795548,-5,3,pz); bx(1.4,0.15,0.15,0x795548,-5,5.8,pz); colliders.push({x:-5,z:pz,r:0.5});
   cyl(0.1,0.1,6,0x795548,5,3,pz); bx(1.4,0.15,0.15,0x795548,5,5.8,pz);
 }
-// wires between poles along both pole lines (was: poles with no wires)
-for(const px of [-5,5]) for(const pair of [[-80,-40],[-40,40],[40,80]]){
+for(const px of [-5,5]) for(const pair of [[-60,-20],[-20,20],[20,60]]){
   bx(0.08,0.08,pair[1]-pair[0],0x212121,px,5.8,(pair[0]+pair[1])/2);
 }
 for(let i=0;i<24;i++){
   const x = -115 + ((i*53)%230), z = -115 + ((i*89)%230);
-  const nearRoad = roadLines.some(r=>Math.abs(x-r)<6 || Math.abs(z-r)<6);
+  const nearRoad = roadLines.some(r=>Math.abs(x-r)<9 || Math.abs(z-r)<9);
   if(!nearRoad) mesh(new THREE.ConeGeometry(0.35,0.9,5), 0x388e3c, x, 0.45, z);
 }
 const clouds = [];
-for(let i=0;i<5;i++){
+for(let i=0;i<10;i++){
   const g = new THREE.Group();
-  sph(2.2,0xffffff,0,0,0,g); sph(1.6,0xffffff,2,0.4,0.5,g); sph(1.6,0xffffff,-2,0.3,-0.5,g);
-  g.position.set(-100+i*50, 26, -60+i*25); scene.add(g); clouds.push(g);
+  sph(2.2,0xffffff,0,0,0,g); sph(1.6,0xffffff,2,0.4,0.5,g); sph(1.6,0xffffff,-2,0.3,-0.5,g); sph(1.4,0xffffff,0,0.8,0,g);
+  const sc = 0.8 + (i%3)*0.6; g.scale.setScalar(sc);
+  g.position.set(-200+i*45, 30+(i%4)*5, -150+i*30); scene.add(g);
+  g.userData.speed = 1 + (i%3)*0.7; clouds.push(g);
   g.traverse(o=>{ o.castShadow = false; });
 }
+// birds: 5 birds circling above town, visible in daytime only, wings flap
+const birds = [];
+for(let i=0;i<5;i++){
+  const bg = new THREE.Group();
+  bx(0.3,0.2,0.7,0x212121,0,0,0,bg);
+  const wl = new THREE.Group(); bg.add(wl); bx(1.0,0.05,0.4,0x212121,-0.5,0,0,wl);
+  const wr = new THREE.Group(); bg.add(wr); bx(1.0,0.05,0.4,0x212121,0.5,0,0,wr);
+  bg.traverse(o=>{ o.castShadow = false; });
+  scene.add(bg);
+  birds.push({g:bg, wl, wr, cx:-50+i*25, cz:-50+i*20, r:20+i*5, h:22+i*2, sp:0.25+i*0.05, ph:i*1.3});
+}
 // ---- EAST: fields + forest belt, north-south stream, bridge, mountain range ----
-bx(60,0.1,7,0x444444,160,0.05,0);
+bx(60,0.1,7,0x8d6e63,160,0.05,0); // east road is dirt, not town asphalt
 const fieldCenters = [[148,-90],[148,-45],[148,45],[148,90]];
 for(const f of fieldCenters){
   bx(22,0.3,28,0x8d5a2b,f[0],0.15,f[1]);
@@ -307,24 +372,24 @@ for(let i=0;i<30;i++){
   if(fx > 166) continue;
   tree(fx, fz);
 }
-bx(12,0.3,260,0x2196f3,175,0.15,0);
-bx(2,0.4,260,0xd7ccc8,167,0.2,0); bx(2,0.4,260,0xd7ccc8,183,0.2,0);
-bx(16,0.4,8,0x8d6e63,175,0.35,0);
-bx(16,0.5,0.3,0x6d4c41,175,0.8,4); bx(16,0.5,0.3,0x6d4c41,175,0.8,-4);
+bx(20,0.3,260,0x2196f3,175,0.15,0);
+bx(2,0.4,260,0xd7ccc8,163,0.2,0); bx(2,0.4,260,0xd7ccc8,187,0.2,0);
+bx(26,0.4,8,0x8d6e63,175,0.35,0);
+bx(26,0.5,0.3,0x6d4c41,175,0.8,4); bx(26,0.5,0.3,0x6d4c41,175,0.8,-4);
 // continuous stream barrier except the bridge gap (z -1..+1, bridge is z -4..+4):
 // old circles spaced 40 apart left 18-unit wading gaps everywhere
 for(const sz of [-120,-100,-80,-60,-40,-20,-12,12,20,40,60,80,100,120]) colliders.push({x:175,z:sz,r:11,cam:false});
 const foam = [];
 for(let i=0;i<10;i++){
-  const fm = bx(1.5,0.2,0.5,0xffffff,175,0.35,-120+i*26);
-  foam.push(fm);
+  foam.push(bx(1.5,0.2,0.5,0xffffff,175,0.35,-120+i*26));
+  foam.push(bx(1.5,0.2,0.5,0xffffff,170,0.35,-107+i*26));
 }
 // real range: 15 overlapping peaks on an irregular ridge line (x 280-380),
 // smoother 12-segment cones, varied green/grey/brown slopes, snow only on high peaks
 const mountainPeaks = [
-  [310,-120,40,55],[320,-90,50,75],[300,-60,45,65],[330,-30,55,85],[310,0,60,90],
-  [340,30,50,70],[300,60,45,65],[330,90,55,80],[310,120,40,55],
-  [360,-60,35,50],[360,0,38,55],[360,60,35,50],[280,-100,35,45],[280,100,35,45],[380,-20,30,40]
+  [410,-120,40,55],[420,-90,50,75],[400,-60,45,65],[430,-30,55,85],[410,0,60,90],
+  [440,30,50,70],[400,60,45,65],[430,90,55,80],[410,120,40,55],
+  [460,-60,35,50],[460,0,38,55],[460,60,35,50],[380,-100,35,45],[380,100,35,45],[480,-20,30,40]
 ];
 function mountain(x,z,r,h,i){
   const base = (i%2===0) ? 0x1b5e20 : 0x2e7d32;
@@ -335,17 +400,33 @@ function mountain(x,z,r,h,i){
   colliders.push({x,z,r:r*0.85});
 }
 mountainPeaks.forEach((mp,i)=>mountain(mp[0],mp[1],mp[2],mp[3],i));
+// trees on the town-facing mountain slopes (green zone only: 0.7r..0.95r from peak)
+for(const mp of mountainPeaks){
+  const [mx2,mz2,mr,mh] = mp;
+  for(let k=0;k<3;k++){
+    let dx = -(0.75+0.1*k)*mr, dz = (k-1)*0.4*mr, dd = Math.hypot(dx,dz);
+    if(dd >= mr){ dx = -0.8*mr; dz = 0; dd = 0.8*mr; }
+    const slopeY = mh*0.7*(1 - dd/mr);
+    cyl(0.25,0.35,1.8,0x7a4a22,mx2+dx,slopeY+0.9,mz2+dz);
+    sph(1.3,0x1b5e20,mx2+dx,slopeY+2.8,mz2+dz);
+  }
+}
 for(let i=0;i<20;i++){
   const fx = 205 + ((i*37)%60), fz = -115 + ((i*53)%230);
   if(Math.abs(fz) < 8) continue;
   tree(fx, fz);
 }
+for(let i=0;i<20;i++){
+  const fx = 300 + ((i*37)%60), fz = -115 + ((i*53)%230);
+  if(Math.abs(fz) < 8) continue;
+  tree(fx, fz);
+}
 sph(1.5,0x9e9e9e,195,0.8,-20); sph(1.2,0x9e9e9e,198,0.6,25); sph(1.8,0x9e9e9e,192,0.9,60);
-const streamSign = signMesh('ရေချောင်း', '#4fc3f7', '#ffffff', 168, 2.5, 12, 6, 1.2);
+const streamSign = signMesh('ရေချောင်း', '#4fc3f7', '#ffffff', 161, 2.5, 12, 6, 1.2);
 streamSign.rotation.y = -Math.PI/2;
 const mountainSign = signMesh('တောင်တန်း', '#607d8b', '#ffffff', 190, 3, -12, 6, 1.2);
 mountainSign.rotation.y = -Math.PI/2;
-cyl(0.1,0.1,2,0x455a64,168,1,12); cyl(0.1,0.1,2.4,0x455a64,190,1.2,-12);
+cyl(0.1,0.1,2,0x455a64,161,1,12); cyl(0.1,0.1,2.4,0x455a64,190,1.2,-12);
 // ---- farm, market (2 stalls) ----
 bx(10,0.3,7,0x8d5a2b,-18,0.15,-32);
 for(let r=0;r<4;r++) bx(9,0.15,0.8,0x6d4c41,-18,0.35,-34.5+r*2);
@@ -409,6 +490,8 @@ const targets = [
   {x:-65,z:-65,label:'မြောက်အနောက်အိမ်',r:10},{x:-65,z:55,label:'တောင်အနောက်အိမ်',r:10},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်',r:10},{x:55,z:55,label:'တောင်အရှေ့အိမ်',r:10},
   {x:-95,z:25,label:'အနောက်အိမ်',r:10},{x:95,z:-55,label:'အရှေ့အိမ်',r:10},{x:-55,z:95,label:'တောင်အိမ်',r:10},
   {x:15,z:110,label:'တောင်အိမ်သစ်',r:10},{x:-15,z:-105,label:'မြောက်အိမ်သစ်',r:10},{x:112,z:20,label:'အရှေ့အိမ်သစ်',r:10},{x:-110,z:-10,label:'အနောက်အိမ်သစ်',r:10},
+  {x:-120,z:-120,label:'အနောက်မြောက်အိမ်သစ်',r:10},{x:120,z:-120,label:'အရှေ့မြောက်အိမ်သစ်',r:10},{x:-40,z:120,label:'တောင်အနောက်အိမ်သစ်',r:10},{x:120,z:120,label:'တောင်အရှေ့အိမ်သစ်',r:10},
+  {x:-120,z:-40,label:'အနောက်အိမ်သစ်2',r:10},{x:-120,z:40,label:'အနောက်အိမ်သစ်3',r:10},{x:120,z:-40,label:'အရှေ့အိမ်သစ်2',r:10},{x:120,z:40,label:'အရှေ့အိမ်သစ်3',r:10},
   {x:-100,z:60,label:'ကျောင်း',r:16},{x:100,z:-20,label:'ဆေးရုံ',r:14},{x:-20,z:100,label:'လက်ဖက်ရည်ဆိုင်',r:6.5},{x:100,z:60,label:'ကုန်စုံဆိုင်',r:6.5}
 ];
 let delivery = null;
@@ -554,7 +637,7 @@ function playBird(){
 // player
 const player = makePerson(0x1565c0, 0x37474f, {skin:0xe8b88a, detailed:true});
 scene.add(player.g);
-player.g.position.set(0,0,10); player.g.scale.setScalar(1.05); player.g.rotation.y = Math.PI;
+player.g.position.set(0,0,10); player.g.scale.setScalar(0.85); player.g.rotation.y = Math.PI;
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 bx(0.5,0.3,2.4,0xd32f2f,0,0.5,0,bikeG);
 bx(0.6,0.2,0.6,0x212121,0,0.7,-0.4,bikeG);
@@ -567,15 +650,16 @@ bx(0.6,0.2,0.6,0x212121,0,0.7,-0.4,bikeG);
   bx(0.5,0.4,0.4,0x8d6e63,0,0.75,1.4,bikeG);
 })();
 // ---- people: road walkers, yard orbiters, school kids, workers ----
+const allRoadLines = [-160,-80,-40,0,40,80,160];
 const intersections = [];
-for(const x of roadLines) for(const z of roadLines) intersections.push({x,z});
+for(const x of allRoadLines) for(const z of allRoadLines) intersections.push({x,z});
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
 const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
-for(let i=0;i<10;i++){
+for(let i=0;i<16;i++){
   const female = i % 3 === 0;
-  const p = makePerson(npcShirts[i], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
-  p.g.scale.setScalar(1.05);
+  const p = makePerson(npcShirts[i%12], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
+  p.g.scale.setScalar(0.85);
   const start = intersections[i*2 % intersections.length];
   p.g.position.set(start.x, 0, start.z);
   scene.add(p.g);
@@ -585,23 +669,33 @@ const yardPeople = [];
 for(let i=0;i<5;i++){
   const h = houseList[i];
   const p = makePerson(npcShirts[(i+3)%12], 0x37474f, {skin:skins[(i+1)%4], female:(i%2===0), longHair:(i%2===0)});
-  p.g.scale.setScalar(1.05); scene.add(p.g);
+  p.g.scale.setScalar(0.85); scene.add(p.g);
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
+}
+// yard walkers around 3 new outer houses too
+for(let i=0;i<3;i++){
+  const h = houseList[31+i];
+  const p = makePerson(npcShirts[(i+6)%12], 0x37474f, {skin:skins[(i+2)%4], female:(i%2===0), longHair:(i%2===0)});
+  p.g.scale.setScalar(0.85); scene.add(p.g);
   yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:12, dir:(i%2===0?1:-1)});
 }
 const schoolKids = [];
 for(let i=0;i<4;i++){
   const p = makePerson([0xe53935,0x1565c0,0x43a047,0xf9a825][i], 0x37474f, {skin:skins[i%4]});
-  p.g.scale.setScalar(0.7); p.g.position.set(-105+i*3, 0, 70); scene.add(p.g);
+  p.g.scale.setScalar(0.57); p.g.position.set(-105+i*3, 0, 70); scene.add(p.g);
   schoolKids.push({p, target:{x:-108+Math.random()*16, z:68+Math.random()*3}});
 }
 const staticPeople = [];
 function staticPerson(shirt, x, z, rotY, opts){
   const p = makePerson(shirt, 0x37474f, opts || {});
-  p.g.scale.setScalar(1.05); p.g.position.set(x,0,z); p.g.rotation.y = rotY; scene.add(p.g);
+  p.g.scale.setScalar(0.85); p.g.position.set(x,0,z); p.g.rotation.y = rotY; scene.add(p.g);
   staticPeople.push(p); return p;
 }
 staticPerson(0x43a047, 21, 32, 0, {female:true, longHair:true});
 staticPerson(0x8d6e63, -14, -32, 0, {hat:true});
+staticPerson(0x1565c0, 36, -114, 0, {hat:true});
+staticPerson(0x43a047, -44, -114, 0, {female:true, longHair:true});
+staticPerson(0xe53935, 36, 126, Math.PI, {beard:true});
 staticPerson(0xef6c00, 15, -28, Math.PI, {beard:true});
 staticPerson(0xffffff, -17, 106, Math.PI, {});
 staticPerson(0x1565c0, 97, 66, Math.PI, {});
@@ -650,6 +744,7 @@ function addAnimal(g, area, speed){
 }
 for(let i=0;i<3;i++){ const d = makeDog(0x8d6e63); d.position.set(-20+i*4,0,24); addAnimal(d, {xmin:-28,xmax:-8,zmin:14,zmax:30}, 2.0); }
 for(let i=0;i<4;i++){ const c = makeChicken(i%2?0xffffff:0x8d6e63); c.position.set(-22+i*2,0,-30); addAnimal(c, {xmin:-26,xmax:-10,zmin:-38,zmax:-26}, 1.5); }
+for(let i=0;i<2;i++){ const d = makeDog(0xffffff); d.position.set(-124+i*4,0,116); addAnimal(d, {xmin:-130,xmax:-110,zmin:110,zmax:130}, 2.0); }
 for(let i=0;i<2;i++){ const cow = makeCow(); cow.position.set(-114+i*4,0,-100); addAnimal(cow, {xmin:-118,xmax:-110,zmin:-110,zmax:-90}, 1.2); }
 // ---- vehicles: cars on roads, bus loop, parked bikes ----
 function makeCar(color){
@@ -664,8 +759,8 @@ function makeCar(color){
   return g;
 }
 const cars = [];
-for(let i=0;i<3;i++){
-  const car = makeCar([0xe53935,0x1565c0,0xffffff][i]);
+for(let i=0;i<4;i++){
+  const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b][i]);
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
   cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 9});
@@ -677,8 +772,8 @@ for(const wx of [-1.5,1.5]) for(const wz of [-4.5,-1.5,1.5,4.5]){
   const w = cyl(0.7,0.7,0.3,0x212121,wx,0.7,wz,bus); w.rotation.z = Math.PI/2;
 }
 blobShadow(bus, 2.0, 6.5);
-bus.position.set(0,0,-80); scene.add(bus);
-const busRoute = [{x:0,z:-80},{x:80,z:-80},{x:80,z:80},{x:-80,z:80},{x:-80,z:-80},{x:0,z:-80}];
+bus.position.set(0,0,-160); scene.add(bus);
+const busRoute = [{x:0,z:-160},{x:160,z:-160},{x:160,z:160},{x:-160,z:160},{x:-160,z:-160},{x:0,z:-160}];
 let busIdx = 1;
 // state
 let money = parseInt(localStorage.getItem('mtl_money')||'0',10) || 0;
@@ -718,6 +813,10 @@ function nearest(){
     {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်'), r:6},
     {d:dist(100,100), label:'🙏 ဘုရားကြည့်မယ်', fn:()=>showMsg('🙏 ဘုရား — ဘုရားဖူးလို့ရတယ်'), r:6},
     {d:dist(-100,-100), label:'🌊 ကန်ကြည့်မယ်', fn:()=>showMsg('🌊 ကန် — ကန်နားမှာ အနားယူလို့ရတယ်'), r:8},
+    {d:dist(40,-120), label:'👮 ရဲစခန်းကြည့်မယ်', fn:()=>showMsg('👮 ရဲစခန်း — မြို့လုံခြုံရေးအတွက် တာဝန်ယူတယ်'), r:8.5},
+    {d:dist(-40,-120), label:'📚 စာကြည့်တိုက်ကြည့်မယ်', fn:()=>showMsg('📚 စာကြည့်တိုက် — စာဖတ်လို့ရတယ်'), r:8.5},
+    {d:dist(40,120), label:'📮 စာတိုက်ကြည့်မယ်', fn:()=>showMsg('📮 စာတိုက် — စာပို့လို့ရတယ်'), r:7.5},
+    {d:dist(-120,120), label:'🌳 ပန်းခြံကြည့်မယ်', fn:()=>showMsg('🌳 ပန်းခြံ — ကစားကွင်းနဲ့ အနားယူလို့ရတယ်'), r:12},
   ];
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
   opts.sort((a,b)=>a.d-b.d);
@@ -827,7 +926,7 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0;
 function playThud(){
   if(!soundOn || !audioCtx) return;
   try{
@@ -851,8 +950,8 @@ function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
   if(r.dist < threshold){
     const dx = player.g.position.x - r.qx, dz = player.g.position.z - r.qz, d = Math.hypot(dx,dz) || 1;
     player.g.position.x += dx/d*4; player.g.position.z += dz/d*4;
-    player.g.position.x = Math.max(-122, Math.min(200, player.g.position.x));
-    player.g.position.z = Math.max(-122, Math.min(122, player.g.position.z));
+    player.g.position.x = Math.max(-195, Math.min(200, player.g.position.x));
+    player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
     ensureAudio(); playThud();
     showMsg('🚗 ကားတိုက်မိပြီ! လမ်းပေါ် သတိထားပါ');
     carHitCooldown = 3;
@@ -868,7 +967,7 @@ function drawMinimap(){
   ctx.clearRect(0,0,240,120); ctx.fillStyle = '#6fbf5a'; ctx.fillRect(0,0,240,120);
   ctx.fillStyle = '#444444';
   for(const r of roadLines){ ctx.fillRect(mx(r)-1.5, my(-130), 3, 260*S); ctx.fillRect(mx(-130), my(r)-1.5, 560*S, 3); }
-  ctx.fillStyle = '#2196f3'; ctx.fillRect(mx(169), my(-130), 12*S, 260*S);
+  ctx.fillStyle = '#2196f3'; ctx.fillRect(mx(165), my(-130), 20*S, 260*S);
   ctx.fillStyle = '#8d5a2b';
   for(const f of fieldCenters) ctx.fillRect(mx(f[0]-11), my(f[1]-14), 22*S, 28*S);
   ctx.fillStyle = '#607d8b';
@@ -908,10 +1007,18 @@ function animate(now){
   if(cropTimer > 0){ cropTimer -= dt; if(cropTimer <= 0){ cropReady = true; crops.visible = true; } }
   if(marketTimer > 0) marketTimer -= dt;
   dayT += dt;
-  const phase = (dayT % 180) / 180, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
-  const dayF = Math.max(0, Math.min(1, sunH + 0.25));
+  // day 5 min + night 5 min = 600s cycle, day = sun above horizon (180 deg), night = below
+  const phase = (dayT % 600) / 600, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
+  const dayF = Math.max(0, Math.min(1, 0.5 + sunH*1.5));
   skyColor.lerpColors(nightColor, dayColor, dayF);
+  const dawnF = Math.max(0, 1 - Math.abs(sunH)*3);
+  if(dawnF > 0) skyColor.lerp(sunsetColor, dawnF*0.6);
   scene.fog.color.copy(skyColor);
+  sunDisc.position.set(player.g.position.x + Math.cos(angle)*250, 20 + Math.max(0, sunH)*150, player.g.position.z - 150);
+  sunDisc.visible = sunH > 0;
+  sunDisc.material.color.set(sunH < 0.3 ? 0xff8c42 : 0xffeb3b);
+  stars.visible = dayF < 0.5;
+  starMat.opacity = Math.max(0, 1 - dayF*2);
   sun.intensity = 0.25 + dayF * 1.0;
   sun.position.set(Math.cos(angle)*60, 10 + dayF*50, 20);
   hemi.intensity = 0.3 + dayF * 0.8;
@@ -938,13 +1045,13 @@ function animate(now){
     const sp = riding ? (fastBike?26:18) : 10.5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     turnTo(player.g, Math.atan2(dx,dz), dt, 10);
-    player.g.position.x = Math.max(-122, Math.min(200, player.g.position.x));
-    player.g.position.z = Math.max(-122, Math.min(122, player.g.position.z));
+    player.g.position.x = Math.max(-195, Math.min(200, player.g.position.x));
+    player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
     for(const c of colliders){
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
       if(d < c.r+0.8 && d > 0.01){ player.g.position.x = c.x + ddx/d*(c.r+0.8); player.g.position.z = c.z + ddz/d*(c.r+0.8); }
     }
-    player.g.position.y = (Math.abs(player.g.position.x-175) < 8 && Math.abs(player.g.position.z) < 4) ? 0.35 : 0;
+    player.g.position.y = (Math.abs(player.g.position.x-175) < 13 && Math.abs(player.g.position.z) < 4) ? 0.35 : 0;
     walkT += sp*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
@@ -1024,7 +1131,17 @@ function animate(now){
     }
   }
   for(const f of foam){ f.position.z += dt*4; if(f.position.z > 130) f.position.z = -130; }
-  for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
+  for(const c of clouds){ c.position.x += dt*c.userData.speed; if(c.position.x > 250) c.position.x = -250; }
+  for(const b of birds){
+    b.g.visible = dayF > 0.5;
+    if(!b.g.visible) continue;
+    const ang = gt*b.sp + b.ph;
+    const birdX = b.cx + Math.cos(ang)*b.r, birdZ = b.cz + Math.sin(ang)*b.r;
+    b.g.position.set(birdX, b.h, birdZ);
+    b.g.rotation.y = Math.atan2(-Math.sin(ang)*b.sp, Math.cos(ang)*b.sp);
+    const flap = Math.sin(gt*10 + b.ph)*0.6;
+    b.wl.rotation.z = flap; b.wr.rotation.z = -flap;
+  }
   const n = nearest();
   const actLabelEl = document.getElementById('actLabel');
   actLabelEl.textContent = n ? n.label : '';
