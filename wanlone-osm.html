@@ -84,6 +84,12 @@ function windowTexture(){
   return tx;
 }
 const winTex = windowTexture();
+function windowTextureFull(){
+  const tx = windowTexture();
+  tx.repeat.set(1, 1);
+  return tx;
+}
+const winTexFull = windowTextureFull();
 function wallMat(c){ return new THREE.MeshLambertMaterial({color: c, map: winTex}); }
 function box(w, h, d, c, x, y, z, parent){
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
@@ -191,7 +197,7 @@ for (const b of DATA.buildings){
   const h = heightOf(b);
   const g = new THREE.ExtrudeGeometry(sh, {depth: h, bevelEnabled: false});
   g.rotateX(-Math.PI/2);
-  const m = new THREE.Mesh(g, wallMat(bcolor(b))); scene.add(m);
+  const m = new THREE.Mesh(g, [wallMat(bcolor(b)), mat(bcolor(b))]); scene.add(m);
   { const xs = b.pts.map(p => p[0]), zs = b.pts.map(p => p[1]);
     const w = Math.max(...xs) - Math.min(...xs), d = Math.max(...zs) - Math.min(...zs);
     const cx = (Math.max(...xs) + Math.min(...xs))/2, cz = (Math.max(...zs) + Math.min(...zs))/2;
@@ -219,7 +225,7 @@ const houseRects = [];
 if (DATA.houses && DATA.houses.length){
   const bodyGeo = new THREE.BoxGeometry(1, 1, 1);
   const roofGeo = new THREE.ConeGeometry(0.75, 0.5, 4);
-  const bodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshLambertMaterial({color: 0xffffff, map: winTex}), DATA.houses.length);
+  const bodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshLambertMaterial({color: 0xffffff, map: winTexFull}), DATA.houses.length);
   const roofs = new THREE.InstancedMesh(roofGeo, new THREE.MeshLambertMaterial({color: 0xb3402a}), DATA.houses.length);
   const dummy = new THREE.Object3D(), col = new THREE.Color();
   const palette = [0xfff2cc, 0xddeeff, 0xffe0e0, 0xe0ffe0, 0xf5f5f5, 0xfff8dc];
@@ -271,7 +277,7 @@ function labelSprite(text, scale){
   ctx.beginPath(); ctx.roundRect(0, 0, 512, 128, 24); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.font = 'bold 52px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text.length > 22 ? text.slice(0, 22) : text, 256, 64);
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(cv), transparent: true, depthTest: false}));
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(cv), transparent: true, depthTest: true}));
   sp.scale.set(scale || 22, (scale || 22)/4, 1); return sp;
 }
 const beacons = [];
@@ -331,7 +337,7 @@ function makeLeg(sx){
 const legL = makeLeg(-0.20), legR = makeLeg(0.20);
 // backpack on the BACK (-z), not the chest
 box(0.42, 0.55, 0.16, 0xff9800, 0, 1.45, -0.30, fallback);
-{ const sh = new THREE.Mesh(new THREE.CircleGeometry(0.7, 16), new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false})); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; player.add(sh); }
+{ const sh = new THREE.Mesh(new THREE.CircleGeometry(1.1, 16), new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false})); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; player.add(sh); }
 player.position.set(-12, 0, 14); scene.add(player);
 // USER'S REAL CHARACTER (GLB, walk animation) - replaces the fallback humanoid
 let charMixer = null;
@@ -341,7 +347,7 @@ new GLTFLoader().load('human_character_walk_8.glb', gltf => {
   const bb = new THREE.Box3().setFromObject(model);
   const sz = bb.getSize(new THREE.Vector3());
   if (sz.y > 0){
-    const sc = 2.2 / sz.y;
+    const sc = 3.4 / sz.y;
     model.scale.setScalar(sc);
     model.position.set(-bb.min.x*sc, -bb.min.y*sc, -bb.min.z*sc);
   }
@@ -552,7 +558,7 @@ function animate(now){
     tc.g.position.set(px, 0, pz);
     tc.g.rotation.y = Math.atan2((bb[0]-aa[0])*tc.dir, (bb[1]-aa[1])*tc.dir);
   }
-  if (charMixer) charMixer.update(ml > 0.1 ? dt * 1.3 : 0);
+  if (charMixer) charMixer.update(ml > 0.1 ? dt * ((keys['shift'] || ml > 0.92) ? 2.2 : 1.4) : 0);
   renderer.render(scene, camera);
 }
 requestAnimationFrame(animate);
