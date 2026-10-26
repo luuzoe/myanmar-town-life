@@ -294,8 +294,8 @@ for(const tx of [-24,-16]){
   cyl(0.5,0.5,0.1,0x8d6e63,tx,0.8,106); cyl(0.08,0.08,0.8,0x8d6e63,tx,0.4,106);
   bx(0.5,0.5,0.5,0x6d4c41,tx-1,0.25,106); bx(0.5,0.5,0.5,0x6d4c41,tx+1,0.25,106);
 }
-tree(-130,110,true); tree(-110,110,true); tree(-130,130,true); tree(-110,130,true);
 // benches + bins + flower beds along the main avenue
+// (park trees are added AFTER treeBlockers is initialised below - calling tree() here crashed the whole script, Play never worked)
 for(const bx2 of [[-20,6.5],[20,6.5],[-20,-6.5],[20,-6.5]]){ bx(2,0.5,0.5,0x6d4c41,bx2[0],0.25,bx2[1]); colliders.push({x:bx2[0],z:bx2[1],r:1,cam:false}); }
 for(const bn of [[6.5,6.5],[-6.5,6.5],[6.5,-6.5],[-6.5,-6.5]]){ cyl(0.3,0.25,0.8,0x2e7d32,bn[0],0.4,bn[1]); colliders.push({x:bn[0],z:bn[1],r:0.5,cam:false}); }
 for(const fb of [[-10,10],[10,10],[-30,10],[30,10],[-10,-10],[10,-10]]) bx(3,0.3,1.5,[0xec407a,0xffeb3b,0xe53935][Math.abs(fb[0])%3],fb[0],0.15,fb[1]);
@@ -316,6 +316,7 @@ function tree(x,z,detailed){
 }
 [[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-36,-20],[36,20],[-70,-40],[70,40],[-40,70],[40,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1],true));
 [[-140,-140],[-20,-140],[140,-140],[-140,140],[20,140],[140,140],[-140,-20],[140,20]].forEach(p=>tree(p[0],p[1],true));
+tree(-130,110,true); tree(-110,110,true); tree(-130,130,true); tree(-110,130,true); // park corner trees (safe here: treeBlockers already initialised)
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3,8,6), new THREE.MeshBasicMaterial({color:0xffeb3b}));
