@@ -373,6 +373,13 @@ const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.Mesh
 bm.position.y = 6; beacon.add(bm);
 const bs = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
 bs.position.y = 12.5; beacon.add(bs); scene.add(beacon);
+// shop beacon: green pillar at the shop, visible only when no delivery (quest = go to shop)
+const shopBeacon = new THREE.Group();
+const sbm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.MeshBasicMaterial({color:0x2e7d32}));
+sbm.position.y = 6; shopBeacon.add(sbm);
+const sbs = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8), new THREE.MeshBasicMaterial({color:0x2e7d32}));
+sbs.position.y = 12.5; shopBeacon.add(sbs); scene.add(shopBeacon);
+shopBeacon.position.set(12, 0, -32);
 const targets = [
   {x:-18,z:-18,label:'အိမ်အဝါ',r:8},{x:18,z:-18,label:'အိမ်အပြာ',r:8},{x:-18,z:18,label:'အိမ်ပန်းရောင်',r:8},{x:18,z:18,label:'အိမ်အစိမ်း',r:8},{x:-100,z:-20,label:'အိမ်အဖြူ',r:8},
   {x:-65,z:-65,label:'မြောက်အနောက်အိမ်',r:8},{x:-65,z:55,label:'တောင်အနောက်အိမ်',r:8},{x:55,z:-65,label:'မြောက်အရှေ့အိမ်',r:8},{x:55,z:55,label:'တောင်အရှေ့အိမ်',r:8},
@@ -673,6 +680,8 @@ function nearest(){
     {d:dist(-20,-100), label:'🙏 ဘုန်းကြီးကျောင်းကြည့်မယ်', fn:()=>showMsg('🙏 ဘုန်းကြီးကျောင်း'), r:7.5},
     {d:dist(-100,100), label:'⚽ ဘောလုံးကွင်းကြည့်မယ်', fn:()=>showMsg('⚽ ဘောလုံးကွင်း — ကန်လို့ရတယ်')},
     {d:dist(100,-100), label:'🚌 ကားဂိတ်ကြည့်မယ်', fn:()=>showMsg('🚌 ကားဂိတ် — ဘတ်စ်ကားထွက်တယ်'), r:6},
+    {d:dist(100,100), label:'🙏 ဘုရားကြည့်မယ်', fn:()=>showMsg('🙏 ဘုရား — ဘုရားဖူးလို့ရတယ်'), r:6},
+    {d:dist(-100,-100), label:'🌊 ကန်ကြည့်မယ်', fn:()=>showMsg('🌊 ကန် — ကန်နားမှာ အနားယူလို့ရတယ်'), r:8},
   ];
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
   opts.sort((a,b)=>a.d-b.d);
@@ -692,6 +701,7 @@ function accept(){
   if(delivery){ showMsg('📦 အမှာပို့နေဆဲ — '+delivery.label+' ကို ပို့ပါ'); return; }
   delivery = targets[Math.floor(Math.random()*targets.length)];
   beacon.position.set(delivery.x, 0, delivery.z);
+  shopBeacon.position.set(0, -20, 0);
   jobEl.textContent = '📦 '+delivery.label+' ကို ပို့ပါ — အဝါရောင်မီးတိုင်ဆီ သွား';
   showMsg('🛵 အမှာရပြီ — '+delivery.label+' ကို ပို့ပါ');
 }
@@ -700,7 +710,7 @@ function deliver(){
   let pay = bigBasket ? 1500 : 1000;
   money += pay; save(); playCoin();
   showMsg('📦 ပို့ပြီးပြီ +'+pay+' ကျပ်');
-  delivery = null; beacon.position.set(0,-20,0); refresh();
+  delivery = null; beacon.position.set(0,-20,0); shopBeacon.position.set(12, 0, -32); refresh();
 }
 beacon.position.set(0,-20,0);
 const keys = {};
@@ -891,6 +901,8 @@ function animate(now){
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
+  shopBeacon.rotation.y += dt*2;
+  if(shopBeacon.position.y >= 0) shopBeacon.position.y = Math.sin(now/300)*0.6;
   // smooth rot-button turn: camYaw glides to target, never snaps 45 degrees at once
   {
     let cdiff = targetCamYaw - camYaw;
