@@ -710,12 +710,21 @@ document.getElementById('soundBtn').addEventListener('click', ()=>{
   if(soundOn) playChime();
 });
 joyEl.addEventListener('touchstart', ()=>ensureAudio(), {passive:true});
-document.getElementById('rotL').addEventListener('click', ()=>{ camYaw -= Math.PI/4; });
-document.getElementById('rotR').addEventListener('click', ()=>{ camYaw += Math.PI/4; });
-let dragX = null;
-canvas.addEventListener('pointerdown', e=>{ dragX = e.clientX; });
-addEventListener('pointermove', e=>{ if(dragX !== null){ camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; } });
-addEventListener('pointerup', ()=>{ dragX = null; });
+let targetCamYaw = Math.PI;
+document.getElementById('rotL').addEventListener('click', ()=>{ targetCamYaw -= Math.PI/4; });
+document.getElementById('rotR').addEventListener('click', ()=>{ targetCamYaw += Math.PI/4; });
+let dragId = null, dragX = null;
+canvas.addEventListener('pointerdown', e=>{
+  if(dragId === null){ dragId = e.pointerId; dragX = e.clientX; }
+});
+addEventListener('pointermove', e=>{
+  if(dragId !== null && e.pointerId === dragId){
+    camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
+  }
+});
+function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; } }
+addEventListener('pointerup', endDrag);
+addEventListener('pointercancel', endDrag);
 refresh();
 let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10;
 function camBlocked(camX, camZ, px, pz){
@@ -848,6 +857,14 @@ function animate(now){
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
+  // smooth rot-button turn: camYaw glides to target, never snaps 45 degrees at once
+  {
+    let cdiff = targetCamYaw - camYaw;
+    while(cdiff > Math.PI) cdiff -= Math.PI*2;
+    while(cdiff < -Math.PI) cdiff += Math.PI*2;
+    const cstep = Math.max(-4*dt, Math.min(4*dt, cdiff));
+    camYaw += cstep;
+  }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
   let targetDist = 16, targetH = 6.5;
