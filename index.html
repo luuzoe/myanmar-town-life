@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>မြန်မာမြို့လေး — Myanmar Town Life</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#87ceeb;font-family:system-ui,sans-serif}
+  #game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  #hud{position:fixed;top:10px;left:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap;z-index:10;pointer-events:none}
+  .pill{background:rgba(0,0,0,.65);color:#fff;padding:8px 12px;border-radius:20px;font-size:15px}
+  .pill b{color:#ffd54a}
+  #job{position:fixed;top:64px;left:10px;right:10px;z-index:10;pointer-events:none}
+  #job span{background:rgba(255,255,255,.92);padding:7px 12px;border-radius:14px;font-size:14px;display:inline-block}
+  #msg{position:fixed;top:104px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:9px 14px;border-radius:14px;font-size:15px;z-index:10;display:none;max-width:92vw;text-align:center}
+  #joy{position:fixed;left:16px;bottom:22px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
+  #knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.9)}
+  #btns{position:fixed;right:16px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:10}
+  #btns button{width:86px;height:86px;border-radius:50%;border:none;font-size:16px;font-weight:700;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  #act{background:#2e7d32}
+  #bikeBtn{background:#1565c0}
+  #shopBtn{background:#ef6c00;width:86px;height:52px;border-radius:26px!important}
+  #btns button:disabled{opacity:.45}
+  #start{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
+  #start .card{background:#fff;border-radius:20px;padding:22px;max-width:420px;width:100%;text-align:center}
+  #start h1{margin:0 0 8px;font-size:26px}
+  #start p{margin:6px 0;line-height:1.6;font-size:15px}
+  #start button{margin-top:14px;background:#2e7d32;color:#fff;border:none;padding:14px 22px;border-radius:14px;font-size:18px;font-weight:700;width:100%}
+  #shop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
+  #shop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%}
+  #shop button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
+  .buy{background:#2e7d32;color:#fff}
+  .close{background:#eee}
+  #hint{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:12px;font-size:13px;z-index:5;white-space:nowrap}
+  @media(min-width:700px){#joy{width:150px;height:150px}#knob{left:50px;top:50px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="pill">💰 <b id="money">0</b> ကျပ်</div>
+  <div class="pill">🏍️ <span id="speedLabel">လမ်းလျှောက်</span></div>
+</div>
+<div id="job"><span id="jobText">ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ</span></div>
+<div id="msg"></div>
+<div id="hint">ကွန်ပျူတာ — WASD / မြှား၊ E = လုပ်ဆောင်ချက်၊ B = ဆိုင်ကယ်</div>
+<div id="joy"><div id="knob"></div></div>
+<div id="btns">
+  <button id="act">လုပ်ဆောင်ရန်</button>
+  <button id="bikeBtn">🏍️ ဆိုင်ကယ်</button>
+  <button id="shopBtn">🛒 ဆိုင်</button>
+</div>
+
+<div id="start"><div class="card">
+  <h1>🏡 မြန်မာမြို့လေး</h1>
+  <p><b>မြို့တစ်ကွက်ထဲမှာ ဘဝ စပါ။</b></p>
+  <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (စတားမြှင့်ရင် ပိုရ)</p>
+  <p>ပိုက်ဆံစုပြီး ဆိုင်ကယ်မြန်တာ၊ ခြင်းကြီးတာ ဝယ်ပါ။<br>ဖုန်းဆို ဘယ်ဘက် စက်ဝိုင်းနဲ့ ရွှေ့ပါ၊ ညာဘက် ခလုတ်နဲ့ လုပ်ပါ။</p>
+  <button id="playBtn">▶ ဆော့မယ်</button>
+</div></div>
+
+<div id="shop"><div class="card">
+  <h2 style="margin:0">🛒 ဆိုင်</h2>
+  <p>လက်ရှိငွေ — <b id="shopMoney">0</b> ကျပ်</p>
+  <button class="buy" id="buyBike">🏍️ ဆိုင်ကယ်မြန် (၂၀၀၀ ကျပ်)</button>
+  <button class="buy" id="buyBasket">🧺 ခြင်းကြီး — ပို့ခ ၁.၅ ဆ (၃၀၀၀ ကျပ်)</button>
+  <button class="close" id="closeShop">ပိတ်မယ်</button>
+</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+const canvas = document.getElementById('game');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+renderer.setSize(innerWidth, innerHeight);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 60, 140);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 300);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+sun.position.set(30, 50, 20); scene.add(sun);
+function box(w,h,d,color,x,y,z){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshLambertMaterial({color}));
+  m.position.set(x,y,z); scene.add(m); return m;
+}
+function cone(r,h,color,x,y,z){
+  const m = new THREE.Mesh(new THREE.ConeGeometry(r,h,4), new THREE.MeshLambertMaterial({color}));
+  m.position.set(x,y,z); m.rotation.y = Math.PI/4; scene.add(m); return m;
+}
+// ground + roads
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(120,120), new THREE.MeshLambertMaterial({color:0x6fbf5a}));
+ground.rotation.x = -Math.PI/2; scene.add(ground);
+box(120,0.1,7,0x444444,0,0.05,0); box(7,0.1,120,0x444444,0,0.05,0);
+const colliders = [];
+function house(x,z,color){
+  box(6,3.5,5,color,x,1.75,z); cone(4.6,2.2,0xb3402a,x,4.6,z);
+  colliders.push({x,z,r:4.2});
+}
+house(-18,-18,0xfff2cc); house(18,-18,0xddeeff); house(-18,18,0xffe0e0); house(18,18,0xe0ffe0);
+house(-30,0,0xf5f5f5); house(30,0,0xfff8dc);
+function tree(x,z){
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,2), new THREE.MeshLambertMaterial({color:0x7a4a22}));
+  t.position.set(x,1,z); scene.add(t);
+  const c = new THREE.Mesh(new THREE.SphereGeometry(1.8,8,6), new THREE.MeshLambertMaterial({color:0x2e7d32}));
+  c.position.set(x,3.4,z); scene.add(c); colliders.push({x,z,r:1.2});
+}
+[[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-36,-20],[36,20]].forEach(p=>tree(p[0],p[1]));
+// farm plot
+box(10,0.3,7,0x8d5a2b,-18,0.15,-32);
+const crops = new THREE.Group(); scene.add(crops);
+for(let i=0;i<12;i++){
+  const c = new THREE.Mesh(new THREE.SphereGeometry(0.5,6,5), new THREE.MeshLambertMaterial({color:0xffe600}));
+  c.position.set(-22 + (i%4)*2.6, 0.8, -34 + Math.floor(i/4)*2.2); crops.add(c);
+}
+let cropReady = true, cropTimer = 0;
+// market stall
+box(7,0.3,4,0x8d5a2b,18,0.9,32);
+[[-2.8,1.6],[2.8,1.6]].forEach(()=>{});
+box(0.3,2,0.3,0x7a4a22,15.2,1,32); box(0.3,2,0.3,0x7a4a22,20.8,1,32);
+box(8,0.3,5,0xe53935,18,2.4,32);
+let marketTimer = 0;
+// shop building (delivery start)
+box(8,4,6,0xffe082,0,2,-32); box(8,0.4,7,0x1565c0,0,4.2,-32);
+colliders.push({x:0,z:-32,r:5.5});
+// delivery beacon
+const beacon = new THREE.Group();
+const bm = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,7), new THREE.MeshBasicMaterial({color:0xffeb3b}));
+bm.position.y = 3.5; beacon.add(bm);
+const bs = new THREE.Mesh(new THREE.SphereGeometry(0.9,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
+bs.position.y = 7.4; beacon.add(bs); scene.add(beacon);
+const targets = [{x:-18,z:-18,label:'အိမ်အဝါ'},{x:18,z:-18,label:'အိမ်အပြာ'},{x:-18,z:18,label:'အိမ်ပန်းရောင်'},{x:18,z:18,label:'အိမ်အစိမ်း'},{x:-30,z:0,label:'အိမ်အဖြူ'}];
+let delivery = null;
+// player
+const player = new THREE.Group(); scene.add(player);
+const body = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.2,0.5), new THREE.MeshLambertMaterial({color:0x1565c0}));
+body.position.y = 1.1; player.add(body);
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.45,10,8), new THREE.MeshLambertMaterial({color:0xffcc99}));
+head.position.y = 2.05; player.add(head);
+const bikeG = new THREE.Group(); bikeG.visible = false; player.add(bikeG);
+const bikeBody = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.3,1.8), new THREE.MeshLambertMaterial({color:0xd32f2f}));
+bikeBody.position.y = 0.45; bikeG.add(bikeBody);
+player.position.set(0,0,10);
+// state
+let money = parseInt(localStorage.getItem('mtl_money')||'0',10) || 0;
+let fastBike = localStorage.getItem('mtl_fast')==='1';
+let bigBasket = localStorage.getItem('mtl_basket')==='1';
+let riding = false;
+const moneyEl = document.getElementById('money'), jobEl = document.getElementById('jobText'),
+  actBtn = document.getElementById('act'), msgEl = document.getElementById('msg'),
+  speedEl = document.getElementById('speedLabel');
+let msgTimer = null;
+function showMsg(t){ msgEl.textContent = t; msgEl.style.display='block'; clearTimeout(msgTimer); msgTimer=setTimeout(()=>msgEl.style.display='none',2600); }
+function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.setItem('mtl_fast', fastBike?'1':'0'); localStorage.setItem('mtl_basket', bigBasket?'1':'0'); }
+function refresh(){
+  moneyEl.textContent = money.toLocaleString();
+  document.getElementById('shopMoney').textContent = money.toLocaleString();
+  speedEl.textContent = riding ? (fastBike?'ဆိုင်ကယ်မြန်':'ဆိုင်ကယ်') : 'လမ်းလျှောက်';
+  document.getElementById('buyBike').textContent = fastBike ? '✅ ဆိုင်ကယ်မြန် ဝယ်ပြီးပြီ' : '🏍️ ဆိုင်ကယ်မြန် (၂၀၀၀ ကျပ်)';
+  document.getElementById('buyBasket').textContent = bigBasket ? '✅ ခြင်းကြီး ဝယ်ပြီးပြီ' : '🧺 ခြင်းကြီး — ပို့ခ ၁.၅ ဆ (၃၀၀၀ ကျပ်)';
+  document.getElementById('buyBike').disabled = fastBike || money < 2000;
+  document.getElementById('buyBasket').disabled = bigBasket || money < 3000;
+  if(!delivery) jobEl.textContent = 'ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ';
+}
+function dist(x,z){ return Math.hypot(player.position.x-x, player.position.z-z); }
+function nearest(){
+  const opts = [
+    {d:dist(-18,-32), label:'🌾 လယ်ရိတ်မယ်', fn:harvest},
+    {d:dist(18,32), label:'🏪 ဈေးရောင်းမယ်', fn:sell},
+    {d:dist(0,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept},
+  ];
+  if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver});
+  opts.sort((a,b)=>a.d-b.d);
+  return opts[0].d < 6 ? opts[0] : null;
+}
+function harvest(){
+  if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
+  cropReady = false; crops.visible = false; cropTimer = 10;
+  money += 500; save(); refresh(); showMsg('🌾 ရိတ်ပြီးပြီ +၅၀၀ ကျပ်');
+}
+function sell(){
+  if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
+  marketTimer = 8; money += 800; save(); refresh(); showMsg('🏪 ရောင်းပြီးပြီ +၈၀၀ ကျပ်');
+}
+function accept(){
+  if(delivery) return;
+  delivery = targets[Math.floor(Math.random()*targets.length)];
+  beacon.position.set(delivery.x, 0, delivery.z);
+  jobEl.textContent = '📦 '+delivery.label+' ကို ပို့ပါ — အဝါရောင်မီးတိုင်ဆီ သွား';
+  showMsg('🛵 အမှာရပြီ — '+delivery.label+' ကို ပို့ပါ');
+}
+function deliver(){
+  if(!delivery) return;
+  let pay = bigBasket ? 1500 : 1000;
+  money += pay; save();
+  showMsg('📦 ပို့ပြီးပြီ +'+pay+' ကျပ်');
+  delivery = null; beacon.position.set(0,-20,0); refresh();
+}
+beacon.position.set(0,-20,0);
+// input
+const keys = {};
+addEventListener('keydown', e=>{ keys[e.code]=true; if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike(); });
+addEventListener('keyup', e=>keys[e.code]=false);
+let joy = {x:0,y:0};
+const joyEl = document.getElementById('joy'), knob = document.getElementById('knob');
+function joyMove(e){
+  const r = joyEl.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+  let dx = (t.clientX - (r.left+r.width/2)) / (r.width/2), dy = (t.clientY - (r.top+r.height/2)) / (r.height/2);
+  const len = Math.hypot(dx,dy); if(len > 1){ dx/=len; dy/=len; }
+  joy = {x:dx, y:dy}; knob.style.left = (40+dx*32)+'px'; knob.style.top = (40+dy*32)+'px';
+}
+function joyEnd(){ joy = {x:0,y:0}; knob.style.left='40px'; knob.style.top='40px'; }
+joyEl.addEventListener('touchstart', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
+joyEl.addEventListener('touchmove', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
+joyEl.addEventListener('touchend', joyEnd);
+function doAction(){ const n = nearest(); if(n) n.fn(); else showMsg('အနီးမှာ လုပ်စရာမရှိဘူး — လယ် / ဈေး / ဆိုင် ဆီ သွားပါ'); }
+function toggleBike(){ riding = !riding; bikeG.visible = riding; body.position.y = riding ? 1.35 : 1.1; head.position.y = riding ? 2.3 : 2.05; refresh(); }
+actBtn.addEventListener('click', doAction);
+document.getElementById('bikeBtn').addEventListener('click', toggleBike);
+document.getElementById('shopBtn').addEventListener('click', ()=>{ refresh(); document.getElementById('shop').style.display='flex'; });
+document.getElementById('closeShop').addEventListener('click', ()=>document.getElementById('shop').style.display='none');
+document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
+document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
+document.getElementById('playBtn').addEventListener('click', ()=>document.getElementById('start').style.display='none');
+refresh();
+let last = performance.now();
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt = Math.min((now-last)/1000, 0.05); last = now;
+  if(cropTimer > 0){ cropTimer -= dt; if(cropTimer <= 0){ cropReady = true; crops.visible = true; } }
+  if(marketTimer > 0) marketTimer -= dt;
+  let dx = 0, dz = 0;
+  if(keys.KeyW || keys.ArrowUp) dz -= 1;
+  if(keys.KeyS || keys.ArrowDown) dz += 1;
+  if(keys.KeyA || keys.ArrowLeft) dx -= 1;
+  if(keys.KeyD || keys.ArrowRight) dx += 1;
+  dx += joy.x; dz += joy.y;
+  const len = Math.hypot(dx,dz);
+  if(len > 0.1){
+    dx/=Math.max(1,len); dz/=Math.max(1,len);
+    const sp = riding ? (fastBike?18:12) : 5;
+    player.position.x += dx*sp*dt; player.position.z += dz*sp*dt;
+    player.rotation.y = Math.atan2(dx,dz);
+    player.position.x = Math.max(-55, Math.min(55, player.position.x));
+    player.position.z = Math.max(-55, Math.min(55, player.position.z));
+    for(const c of colliders){
+      const ddx = player.position.x-c.x, ddz = player.position.z-c.z, d = Math.hypot(ddx,ddz);
+      if(d < c.r+0.8 && d > 0.01){ player.position.x = c.x + ddx/d*(c.r+0.8); player.position.z = c.z + ddz/d*(c.r+0.8); }
+    }
+  }
+  const n = nearest();
+  actBtn.textContent = n ? n.label : 'လုပ်ဆောင်ရန်';
+  actBtn.disabled = !n;
+  beacon.rotation.y += dt*2;
+  if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
+  camera.position.lerp(new THREE.Vector3(player.position.x, 20, player.position.z+16), 0.12);
+  camera.lookAt(player.position.x, 0, player.position.z);
+  renderer.render(scene,camera);
+}
+requestAnimationFrame(animate);
+addEventListener('resize', ()=>{ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+</script>
+</body>
+</html>
