@@ -54,6 +54,7 @@
   <div class="pill">🏍️ <span id="speedLabel">လမ်းလျှောက်</span></div>
   <div class="pill" id="timePill">🌞 နေ့</div>
   <div class="pill">⭐ Lv <b id="level">1</b> · <span id="xp">0</span>/500</div>
+  <div class="pill">❤️ <b id="health">100</b></div>
   <div class="pill">🎯 <span id="questPill">—</span></div>
 </div>
 <div id="job"><span id="jobText">ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ</span></div>
@@ -68,6 +69,8 @@
 <button id="rotL">↺</button><button id="rotR">↻</button>
 <button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
 <button id="pauseBtn" style="position:fixed;right:56px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">⏸</button>
+<button id="photoBtn" style="position:fixed;right:100px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">📸</button>
+<div id="flash" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9"></div>
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
@@ -75,10 +78,16 @@
   <p style="font-size:13px">📖 မောင်မောင် မြို့ရောက် — အလုပ်လုပ်၊ အိမ်ဝယ်၊ ဆိုင်ဖွင့်</p>
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=42">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=42">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=42">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=42">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
+  <p style="font-size:13px"><a href="mongla.html?v=43">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=43">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=43">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=43">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+</div></div>
+<div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
+  <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
+  <p style="line-height:1.7">1. joystick / WASD နဲ့ ရွေ့<br>2. အနီးရောက်ရင် လုပ် နှိပ် — လယ်/ဈေး/ပို့/ငါးမျှား<br>3. ပိုက်ဆံရရင် 🛒 ဆိုင်မှာ ဆိုင်ကယ်/အိမ်ဝယ်<br>4. ကားဂိတ်မှာ ဘတ်စ်စီး၊ ကွင်းမှာ ဘောလုံးကန်<br>5. P = ရပ်၊ 📸 = ဓာတ်ပုံမုဒ်</p>
+  <button style="width:100%;padding:12px;border:none;border-radius:12px;font-size:16px;font-weight:700;background:#eee" id="closeTutorial">ပိတ်မယ်</button>
 </div></div>
 <div id="shop"><div class="card">
   <h2 style="margin:0">🛒 ဆိုင်</h2>
@@ -90,6 +99,9 @@
   <button class="buy" id="buyStall">🏪 ဈေးဆိုင်ကြီး upgrade (၄၀၀၀ ကျပ်) — ရောင်းခ ၁၂၀၀</button>
   <button class="buy" id="buyOwnShop">🏪 ကိုယ်ပိုင်ဆိုင် ဖွင့် (၁၀၀၀၀ ကျပ်) — နေ့တိုင်း +၃၀၀</button>
   <button class="buy" id="hireHelper">👨‍🌾 အကူ ငှား (၃၀၀၀ ကျပ်) — နေ့တိုင်း +၁၀၀</button>
+  <button class="buy" id="qualityBtn">🎮 အရည်အသွေး: အမြင့်</button>
+  <button class="buy" id="musicBtn">🎵 ဂီတ: ပိတ်</button>
+  <button class="buy" id="shirtBtn">👕 အင်္ကျီအရောင် ပြောင်း</button>
   <button class="close" id="closeShop">ပိတ်မယ်</button>
 </div></div>
 <script type="module">
@@ -913,6 +925,49 @@ const rainGeo = new THREE.BufferGeometry();
 const rainPts = new THREE.Points(rainGeo, new THREE.PointsMaterial({color:0x90caf9, size:0.25}));
 rainPts.visible = false; scene.add(rainPts);
 let raining = false, weatherTimer = 90, dayCount = 0, prevPhase = 0, festivalClaimed = false;
+let health = parseInt(localStorage.getItem('mtl_health')||'100',10); if(!health || health <= 0) health = 100;
+let schoolLessons = parseInt(localStorage.getItem('mtl_lessons')||'0',10) || 0;
+let shirtIdx = parseInt(localStorage.getItem('mtl_shirt')||'0',10) || 0;
+const SHIRT_COLORS = [0x1565c0,0xe53935,0x43a047,0xf9a825,0x8e24aa,0xffffff];
+let musicOn = localStorage.getItem('mtl_music')==='1', musicTimer = 0;
+let marketFactor = 1, drivingCar = false, trafficTimer = 15, trafficNSGreen = true, lightningTimer = 8, photoMode = false;
+let lowQuality = localStorage.getItem('mtl_quality')==='1', inHouse = false, returnPos = null;
+// parked driveable car
+const parkedCar = makeCar(0x1565c0); parkedCar.position.set(30,0,-20); scene.add(parkedCar);
+// truck + tuk-tuk traffic
+{ const tr = new THREE.Group(); bx(2.4,1.0,2.5,0x1565c0,0,0.8,2.5,tr); bx(2.4,0.6,2.5,0x90caf9,0,1.5,2.5,tr); bx(2.4,1.2,5,0x8d6e63,0,0.9,-1.5,tr);
+  for(const wx of [-1.2,1.2]) for(const wz of [-3,0,3]){ const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,tr); w.rotation.z = Math.PI/2; }
+  tr.position.set(-160,0,0); scene.add(tr); cars.push({g:tr, target:intersections[0], speed:7}); }
+{ const tk = new THREE.Group(); bx(1.4,0.6,2.2,0xffeb3b,0,0.5,0,tk); bx(1.4,0.5,1.4,0x212121,0,1.0,-0.2,tk); glassBx(1.2,0.4,0.06,0,1.0,0.55,tk);
+  for(const wx of [-0.7,0.7]){ const w = cyl(0.35,0.35,0.25,0x212121,wx,0.35,0.8,tk); w.rotation.z = Math.PI/2; }
+  const wf = cyl(0.35,0.35,0.25,0x212121,0,0.35,-0.9,tk); wf.rotation.z = Math.PI/2;
+  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:10}); }
+// traffic lights at (0,0): NS pole at (8,8), EW pole at (-8,-8)
+function trafficLight(x,z){ cyl(0.12,0.12,4.5,0x455a64,x,2.25,z); bx(0.6,1.6,0.3,0x212121,x,4.2,z);
+  const mats = [new THREE.MeshBasicMaterial({color:0x550000}), new THREE.MeshBasicMaterial({color:0x554400}), new THREE.MeshBasicMaterial({color:0x003300})];
+  for(let i=0;i<3;i++){ const m = new THREE.Mesh(new THREE.SphereGeometry(0.22,8,6), mats[i]); m.position.set(x,4.7-i*0.5,z); scene.add(m); } return mats; }
+const tlNS = trafficLight(8,8), tlEW = trafficLight(-8,-8);
+function setLights(){ const on = (m,c)=>m.color.setHex(c);
+  on(tlNS[0], trafficNSGreen?0x550000:0xe53935); on(tlNS[2], trafficNSGreen?0x43a047:0x003300);
+  on(tlEW[0], trafficNSGreen?0xe53935:0x550000); on(tlEW[2], trafficNSGreen?0x003300:0x43a047); }
+setLights();
+// headlight cones (visible at night only)
+const carLights = [];
+function headCone(parent, z){ const cm = new THREE.Mesh(new THREE.ConeGeometry(1.2,4,8), new THREE.MeshBasicMaterial({color:0xffeb3b, transparent:true, opacity:0.15, depthWrite:false}));
+  cm.rotation.x = Math.PI/2; cm.position.set(0,0.6,z); cm.visible = false; parent.add(cm); carLights.push(cm); return cm; }
+for(const c of cars) headCone(c.g, 4.5);
+headCone(bus, 8); headCone(bikeG, 2.5);
+// player vest (shirt colour, changeable in shop)
+const playerVest = cap(0.30,0.36,SHIRT_COLORS[shirtIdx],0,1.58,0,player.g); playerVest.scale.z = 0.68;
+// owned-house interior room at (500,150)
+bx(20,0.2,16,0x8d6e63,500,0.1,150);
+bx(20,2.5,0.3,0xfff2cc,500,1.25,142); bx(0.3,2.5,16,0xfff2cc,490,1.25,150); bx(0.3,2.5,16,0xfff2cc,510,1.25,150);
+bx(8.5,2.5,0.3,0xfff2cc,494.25,1.25,158); bx(8.5,2.5,0.3,0xfff2cc,505.75,1.25,158);
+bx(3,0.5,6,0xe53935,495,0.5,145); bx(1,0.4,1,0xffffff,495,0.9,145);
+cyl(0.6,0.6,0.1,0x8d6e63,503,0.8,150); cyl(0.08,0.08,0.8,0x8d6e63,503,0.4,150);
+bx(0.5,0.5,0.5,0x6d4c41,501,0.25,148); bx(0.5,0.5,0.5,0x6d4c41,505,0.25,152);
+for(let wx=492; wx<=508; wx+=4){ colliders.push({x:wx,z:142,r:1.2}); if(wx!==500) colliders.push({x:wx,z:158,r:1.2}); }
+for(let wz=144; wz<=156; wz+=4){ colliders.push({x:490,z:wz,r:1.2}); colliders.push({x:510,z:wz,r:1.2}); }
 const moneyEl = document.getElementById('money'), jobEl = document.getElementById('jobText'),
   actBtn = document.getElementById('act'), msgEl = document.getElementById('msg'),
   speedEl = document.getElementById('speedLabel'), timeEl = document.getElementById('timePill');
@@ -922,7 +977,9 @@ function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.
   localStorage.setItem('mtl_xp', String(xp)); localStorage.setItem('mtl_houses', String(ownedHouses)); localStorage.setItem('mtl_items', String(houseItems));
   localStorage.setItem('mtl_stall', stallUpg?'1':'0'); localStorage.setItem('mtl_ownshop', ownShop?'1':'0'); localStorage.setItem('mtl_helpers', String(helpers));
   localStorage.setItem('mtl_quest', String(questIdx)); localStorage.setItem('mtl_qprog', String(questProg));
-  try{ localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); }catch(e){} }
+  localStorage.setItem('mtl_health', String(health)); localStorage.setItem('mtl_lessons', String(schoolLessons)); localStorage.setItem('mtl_shirt', String(shirtIdx));
+  localStorage.setItem('mtl_music', musicOn?'1':'0'); localStorage.setItem('mtl_quality', lowQuality?'1':'0');
+  try{ localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); }catch(e){} }
 function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ level = nl; showMsg('⭐ Level '+level+' ရောက်ပြီ!'); playChime(); } save(); refresh(); }
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
@@ -955,6 +1012,10 @@ function refresh(){
   const bs = document.getElementById('buyStall'); if(bs) bs.textContent = stallUpg ? '✅ ဈေးဆိုင်ကြီး upgrade ပြီးပြီ' : '🏪 ဈေးဆိုင်ကြီး upgrade (၄၀၀၀ ကျပ်) — ရောင်းခ ၁၂၀၀';
   const bo = document.getElementById('buyOwnShop'); if(bo) bo.textContent = ownShop ? '✅ ကိုယ်ပိုင်ဆိုင် ဖွင့်ပြီးပြီ' : '🏪 ကိုယ်ပိုင်ဆိုင် ဖွင့် (၁၀၀၀၀ ကျပ်) — နေ့တိုင်း +၃၀၀';
   const hh = document.getElementById('hireHelper'); if(hh) hh.textContent = '👨‍🌾 အကူ ငှား (၃၀၀၀ ကျပ်) — ငှား ' + helpers;
+  const he = document.getElementById('health'); if(he) he.textContent = health;
+  const qb = document.getElementById('qualityBtn'); if(qb) qb.textContent = '🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်');
+  const mb = document.getElementById('musicBtn'); if(mb) mb.textContent = '🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်');
+  const sb = document.getElementById('shirtBtn'); if(sb) sb.textContent = '👕 အင်္ကျီအရောင် ပြောင်း (' + (shirtIdx+1) + '/6)';
 }
 function dist(x,z){ return Math.hypot(player.g.position.x-x, player.g.position.z-z); }
 function nearest(){
@@ -963,8 +1024,8 @@ function nearest(){
     {d:dist(18,32), label:'🏪 ဈေးရောင်းမယ်', fn:sell},
     {d:dist(95,-72), label:'🏪 ဈေးကြီးရောင်းမယ်', fn:sell, r:11.5},
     {d:dist(12,-32), label: delivery ? '📦 အမှာပို့နေဆဲ' : '🛵 အမှာလက်ခံမယ်', fn:accept, r:6},
-    {d:dist(-100,60), label:'🏫 ကျောင်းကြည့်မယ်', fn:()=>showMsg('🏫 စာသင်ကျောင်းရောက်ပြီ — ကလေးတွေ စာသင်နေတယ်'), r:16},
-    {d:dist(100,-20), label:'🏥 ဆေးရုံကြည့်မယ်', fn:()=>showMsg('🏥 ဆေးရုံကြည့်ပြီ — ဆရာဝန်တွေ ရှိတယ်'), r:14},
+    {d:dist(-100,60), label:'📚 စာသင်မယ် (+XP20)', fn:()=>{ schoolLessons++; const bonus = schoolLessons >= 3 ? ' — ရောင်းခ +၁၀၀ ရပြီ' : ''; gainXP(20); save(); refresh(); showMsg('📚 စာသင်ပြီးပြီ (+XP20)' + bonus); }, r:16},
+    {d:dist(100,-20), label: health >= 100 ? '🏥 ဆေးရုံ (ကျန်းမာနေပြီ)' : '🏥 ဆေးကုမယ် (၂၀၀ ကျပ်)', fn:()=>{ if(health >= 100){ showMsg('🏥 ကျန်းမာနေပြီ'); return; } if(money < 200){ showMsg('ငွေမလုံလောက်ဘူး'); return; } money -= 200; health = 100; save(); refresh(); showMsg('🏥 ဆေးကုပြီးပြီ — ကျန်းမာ ၁၀၀'); }, r:14},
     {d:dist(-20,100), label:'🍵 လက်ဖက်ရည်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🍵 လက်ဖက်ရည်ဆိုင် — လက်ဖက်ရည်သောက်လို့ရတယ်'), r:6.5},
     {d:dist(100,60), label:'🛒 ကုန်စုံဆိုင်ကြည့်မယ်', fn:()=>showMsg('🛒 ကုန်စုံဆိုင် — ပစ္စည်းစုံတယ်'), r:6.5},
     {d:dist(60,-100), label:'🏛️ မြို့အုပ်ချုပ်ရေးရုံးကြည့်မယ်', fn:()=>showMsg('🏛️ မြို့အုပ်ချုပ်ရေးရုံး'), r:7.5},
@@ -982,6 +1043,9 @@ function nearest(){
     {d:dist(100,-140), label:'🏍️ ဆိုင်ကယ်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🏍️ ဆိုင်ကယ်ဆိုင် — ဆိုင်ကယ်ပြင်လို့ရတယ်'), r:7.5},
     {d:dist(-120,120), label: (dayCount % 3 === 0 && !festivalClaimed) ? '🎉 ပွဲတော် ဆုယူမယ် (+၅၀၀)' : '🌳 ပန်းခြံကြည့်မယ်', fn:()=>{ if(dayCount % 3 === 0 && !festivalClaimed){ festivalClaimed = true; money += 500; gainXP(30); save(); refresh(); showMsg('🎉 ပွဲတော် ဆု +၅၀၀ ကျပ်!'); } else showMsg('🌳 ပန်းခြံ — ကစားကွင်းနဲ့ အနားယူလို့ရတယ်'); }, r:12},
   ];
+  opts.push({d:dist(parkedCar.position.x, parkedCar.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ကားမောင်းမယ်', fn:()=>{ if(drivingCar){ drivingCar = false; player.g.visible = true; player.g.position.set(parkedCar.position.x + 4, 0, parkedCar.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ဆင်းချင် လုပ် နှိပ်'); } refresh(); }, r:5});
+  if(ownedHouses > 0 && !(delivery && delivery.x===-18 && delivery.z===-18)) opts.push({d:dist(-18,-18), label: inHouse ? '🏠 အိမ်ထဲ ရောက်နေပြီ' : '🏠 အိမ်ထဲ ဝင်မယ်', fn:()=>{ if(inHouse) return; inHouse = true; returnPos = {x:player.g.position.x, z:player.g.position.z}; player.g.position.set(500,0,150); showMsg('🏠 အိမ်ထဲ ရောက်ပြီ'); }, r:12});
+  if(inHouse) opts.push({d:dist(500,150), label:'🚪 အိမ်က ပြန်ထွက်မယ်', fn:()=>{ inHouse = false; const rp = returnPos || {x:-18, z:-8}; player.g.position.set(rp.x, 0, rp.z); showMsg('🚪 အိမ်က ထွက်ပြီ'); }, r:12});
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
   opts.sort((a,b)=>a.d-b.d);
   const top = opts[0];
@@ -993,7 +1057,9 @@ function nearest(){
     if(d < 4) npcOpts.push({d, label:'💬 စကားပြောမယ်', fn:talk});
   }
   npcOpts.sort((a,b)=>a.d-b.d);
-  return npcOpts.length ? npcOpts[0] : null;
+  if(npcOpts.length) return npcOpts[0];
+  for(const a of animals){ const d = dist(a.g.position.x, a.g.position.z); if(d < 3) return {d, label:'🐶 အစာကျွေးမယ် (+၅၀)', fn:()=>{ money += 50; gainXP(10); a.target = {x:player.g.position.x, z:player.g.position.z}; save(); refresh(); playCoin(); showMsg('🐶 အစာကျွေးပြီ +၅၀ ကျပ်'); }}; }
+  return null;
 }
 function talk(){
   const msgs = ['မင်္ဂလာပါ! မြို့လေးကို လာလည်တာ ဝမ်းသာတယ်', 'ဒီနေ့ ရာသီဥတု ကောင်းတယ်', 'ဈေးကြီးမှာ ပစ္စည်းစုံတယ်', 'တောင်တန်းဘက် သွားရင် ရေချောင်းကို တံတားနဲ့ ဖြတ်ပါ', 'လယ်ရိတ်ရင် ၅၀၀၊ ဈေးရောင်းရင် ၈၀၀ ရတယ်', 'ကျောင်းမှာ ကလေးတွေ စာသင်နေတယ်'];
@@ -1006,7 +1072,7 @@ function harvest(){
 }
 function sell(){
   if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
-  marketTimer = 8; const sp = stallUpg ? 1200 : 800; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
+  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
 }
 function fish(){
   if(fishTimer > 0){ showMsg('ငါးမလာသေးဘူး၊ '+Math.ceil(fishTimer)+' စက္ကန့်စောင့်'); return; }
@@ -1076,6 +1142,14 @@ document.getElementById('buyStall').addEventListener('click', buyStall);
 document.getElementById('buyOwnShop').addEventListener('click', buyOwnShop);
 document.getElementById('hireHelper').addEventListener('click', hireHelper);
 document.getElementById('pauseBtn').addEventListener('click', ()=>{ paused = !paused; document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸'; showMsg(paused ? '⏸ ရပ်ထားတယ်' : '▶ ပြန်ဆော့နေပြီ'); });
+document.getElementById('tutorialBtn').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='flex'; });
+document.getElementById('closeTutorial').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='none'; });
+document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = !photoMode; const d = photoMode ? 'none' : '';
+  for(const id of ['hud','job','joy','btns','rotL','rotR','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
+  showMsg(photoMode ? '📸 ဓာတ်ပုံမုဒ် — ပြန်ထွက်ချင် 📸 နှိပ်' : '📸 ဓာတ်ပုံမုဒ် ပိတ်ပြီ'); });
+document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality && !isMobile; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
+document.getElementById('musicBtn').addEventListener('click', ()=>{ musicOn = !musicOn; save(); refresh(); showMsg('🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်')); });
+document.getElementById('shirtBtn').addEventListener('click', ()=>{ shirtIdx = (shirtIdx + 1) % SHIRT_COLORS.length; playerVest.material = M(SHIRT_COLORS[shirtIdx]); save(); refresh(); showMsg('👕 အင်္ကျီအရောင် ပြောင်းပြီ'); });
 document.getElementById('playBtn').addEventListener('click', async ()=>{
   ensureAudio();
   // phone only: one tap = auto fullscreen + auto landscape; desktop: no forced fullscreen
@@ -1116,7 +1190,9 @@ addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
 let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
-try{ const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); }
+try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
+  if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
+  const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); }
   const sd = parseFloat(localStorage.getItem('mtl_day')||'0'); if(!isNaN(sd) && sd >= 0 && sd < 600) dayT = sd; }catch(e){}
 function playTownAmbient(df){
   if(!soundOn || !audioCtx) return;
@@ -1147,7 +1223,7 @@ function distToSegment(px,pz,cx,cz,fx,fz,halfLen){
   return {dist: Math.hypot(px-qx, pz-qz), qx, qz};
 }
 function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
-  if(ridingBus) return;
+  if(ridingBus || drivingCar) return;
   if(carHitCooldown > 0) return;
   const r = distToSegment(player.g.position.x, player.g.position.z, cx, cz, fx, fz, halfLen);
   if(r.dist < threshold){
@@ -1155,8 +1231,8 @@ function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
     player.g.position.x += dx/d*4; player.g.position.z += dz/d*4;
     player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x)); // ground east edge 550, mountains at 380-480 must be reachable
     player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
-    ensureAudio(); playThud();
-    showMsg('🚗 ကားတိုက်မိပြီ! လမ်းပေါ် သတိထားပါ');
+    ensureAudio(); playThud(); health -= 20; if(health <= 0){ health = 100; money = Math.max(0, money - 500); player.g.position.set(0,0,10); showMsg('🏥 ဆေးရုံရောက်ပြီ — ၅၀၀ ကျပ် ကုန်သွားတယ်'); } save(); refresh();
+    showMsg('🚗 ကားတိုက်မိပြီ! ကျန်းမာ ' + health);
     carHitCooldown = 3;
   }
 }
@@ -1258,7 +1334,8 @@ function animate(now){
   moon.visible = dayF < 0.5;
   moon.position.set(player.g.position.x - Math.cos(angle)*120, 70, player.g.position.z - 60);
   const hour = Math.floor((6 + phase*24) % 24);
-  const timeText = (phase < 0.5 ? (dayF > 0.7 ? '🌞' : '🌅') : '🌙') + ' ' + hour + ':00';
+  const seasonName = ['☀️ နွေ','🌧️ မိုး','❄️ ဆောင်း'][Math.floor(dayCount/10) % 3];
+  const timeText = (phase < 0.5 ? (dayF > 0.7 ? '🌞' : '🌅') : '🌙') + ' ' + hour + ':00 · ' + seasonName;
   if(timeText !== lastTimeText){ lastTimeText = timeText; timeEl.textContent = timeText; }
   let inRight = 0, inUp = 0;
   if(keys.KeyD || keys.ArrowRight) inRight += 1;
@@ -1270,13 +1347,18 @@ function animate(now){
   if(ridingBus){ player.g.position.set(bus.position.x, 0, bus.position.z); }
   const camFwd = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   const camRight = {x: -Math.cos(camYaw), z: Math.sin(camYaw)};
+  if(drivingCar){ let cdx = camRight.x*inRight + camFwd.x*inUp, cdz = camRight.z*inRight + camFwd.z*inUp; const cl = Math.hypot(cdx,cdz);
+    if(cl > 0.1){ cdx/=Math.max(1,cl); cdz/=Math.max(1,cl); parkedCar.position.x += cdx*20*dt; parkedCar.position.z += cdz*20*dt; turnTo(parkedCar, Math.atan2(cdx,cdz), dt, 10);
+      parkedCar.position.x = Math.max(-195, Math.min(540, parkedCar.position.x)); parkedCar.position.z = Math.max(-195, Math.min(195, parkedCar.position.z));
+      for(const c of nearbyColliders(parkedCar.position.x, parkedCar.position.z)){ if(Math.abs(parkedCar.position.x-c.x) > c.r+1.5 || Math.abs(parkedCar.position.z-c.z) > c.r+1.5) continue; const ddx = parkedCar.position.x-c.x, ddz = parkedCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ parkedCar.position.x = c.x + ddx/dd*(c.r+1.5); parkedCar.position.z = c.z + ddz/dd*(c.r+1.5); } } }
+    player.g.position.set(parkedCar.position.x, 0, parkedCar.position.z); inRight = 0; inUp = 0; }
   let dx = camRight.x*inRight + camFwd.x*inUp;
   let dz = camRight.z*inRight + camFwd.z*inUp;
   const len = Math.hypot(dx,dz);
   const moving = len > 0.1;
   if(moving){
     dx/=Math.max(1,len); dz/=Math.max(1,len);
-    const sp = riding ? (fastBike?26:18) : 10.5;
+    const sp = (riding ? (fastBike?26:18) : 10.5) * (raining ? 0.8 : 1);
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     turnTo(player.g, Math.atan2(dx,dz), dt, 10);
     player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x));
@@ -1307,7 +1389,7 @@ function animate(now){
     if(Math.abs(tx-px) > 0.6) mx = Math.sign(tx-px);
     else if(Math.abs(tz-pz) > 0.6) mz = Math.sign(tz-pz);
     else { n.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
-    n.p.g.position.x += mx*n.speed*dt; n.p.g.position.z += mz*n.speed*dt;
+    n.p.g.position.x += mx*n.speed*(dayF > 0.5 ? 1 : 0.5)*dt; n.p.g.position.z += mz*n.speed*(dayF > 0.5 ? 1 : 0.5)*dt;
     turnTo(n.p.g, Math.atan2(mx,mz), dt, 8);
     if(Math.hypot(n.p.g.position.x-player.g.position.x, n.p.g.position.z-player.g.position.z) < 120) animatePerson(n.p, true, gt*n.speed + px, gt, false);
   }
@@ -1320,6 +1402,7 @@ function animate(now){
     animatePerson(y.p, true, gt*3.15 + px, gt, false);
   }
   for(const k of schoolKids){
+    k.p.g.visible = dayF > 0.5;
     const dx2 = k.target.x - k.p.g.position.x, dz2 = k.target.z - k.p.g.position.z, d2 = Math.hypot(dx2,dz2);
     if(d2 < 1){ k.target = {x:-108+Math.random()*12, z:68+Math.random()*3}; }
     else {
@@ -1345,8 +1428,10 @@ function animate(now){
     }
   }
   if(carHitCooldown > 0) carHitCooldown -= dt;
+  trafficTimer -= dt; if(trafficTimer <= 0){ trafficNSGreen = !trafficNSGreen; trafficTimer = 15; setLights(); }
   for(const car of cars){
     const tx = car.target.x, tz = car.target.z;
+    if(Math.hypot(car.g.position.x, car.g.position.z) < 12){ const movingX = Math.abs(tx-car.g.position.x) > 0.8; if((movingX && trafficNSGreen) || (!movingX && !trafficNSGreen)) continue; }
     const px = car.g.position.x, pz = car.g.position.z;
     let mx = 0, mz = 0;
     if(Math.abs(tx-px) > 0.8) mx = Math.sign(tx-px);
@@ -1392,13 +1477,16 @@ function animate(now){
   if(player.g.position.x > 340 && !mountainRewarded){ mountainRewarded = true; money += 500; gainXP(50); questProgress('mountain'); save(); refresh(); playCoin(); showMsg('⛰️ တောင်တန်းရောက်ပြီ! +၅၀၀ ကျပ်'); }
   if(player.g.position.x < 200) mountainRewarded = false;
   // V40: day wrap = passive income + festival day; weather cycle; football; doors; rain
-  if(phase < prevPhase){ dayCount++; festivalClaimed = false;
+  if(phase < prevPhase){ dayCount++; festivalClaimed = false; marketFactor = Math.round((0.8 + Math.random()*0.4)*10)/10; showMsg('🏪 ဈေးနှုန်း ပြောင်းပြီ x' + marketFactor);
     const passive = ownedHouses*200 + houseItems*50 + (ownShop ? 300 : 0) + helpers*100;
     if(passive > 0){ money += passive; save(); refresh(); playCoin(); showMsg('💰 နေ့သစ် ဝင်ငွေ +' + passive + ' ကျပ်'); }
     if(dayCount % 3 === 0) showMsg('🎉 ဒီနေ့ ပွဲတော်နေ့! ပန်းခြံကို သွားပါ'); }
   prevPhase = phase;
   weatherTimer -= dt;
-  if(weatherTimer <= 0){ raining = !raining; weatherTimer = raining ? 30 : 120; rainPts.visible = raining; if(raining) showMsg('🌧️ မိုးရွာနေတယ်'); }
+  if(weatherTimer <= 0){ raining = !raining; const dryLen = (Math.floor(dayCount/10) % 3 === 1) ? 60 : 120; weatherTimer = raining ? 30 : dryLen; rainPts.visible = raining; if(raining) showMsg('🌧️ မိုးရွာနေတယ်'); }
+  for(const cl of carLights) cl.visible = dayF < 0.5;
+  if(musicOn){ musicTimer -= dt; if(musicTimer <= 0){ const notes = [440,523,659,784,880,659]; tone(notes[Math.floor(Math.random()*notes.length)], 0.8, 0.03, 'sine'); musicTimer = 1.2; } }
+  if(raining){ lightningTimer -= dt; if(lightningTimer <= 0){ lightningTimer = 5 + Math.random()*5; const fl = document.getElementById('flash'); if(fl){ fl.style.opacity = '0.7'; setTimeout(()=>fl.style.opacity = '0', 200); } tone(50, 0.5, 0.08, 'sawtooth'); } }
   if(raining){ rainPts.position.set(player.g.position.x, 0, player.g.position.z);
     const rp = rainGeo.attributes.position.array; for(let i=0;i<300;i++){ rp[i*3+1] -= 30*dt; if(rp[i*3+1] < 0) rp[i*3+1] = 20; } rainGeo.attributes.position.needsUpdate = true; }
   // football ball physics
