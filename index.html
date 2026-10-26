@@ -8,19 +8,20 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#87ceeb;font-family:system-ui,sans-serif}
   #game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-  #hud{position:fixed;top:10px;left:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap;z-index:10;pointer-events:none}
-  .pill{background:rgba(0,0,0,.65);color:#fff;padding:8px 12px;border-radius:20px;font-size:15px}
+  #hud{position:fixed;top:8px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:10;pointer-events:none}
+  .pill{background:rgba(0,0,0,.65);color:#fff;padding:6px 10px;border-radius:16px;font-size:13px}
   .pill b{color:#ffd54a}
-  #job{position:fixed;top:64px;left:10px;right:10px;z-index:10;pointer-events:none}
-  #job span{background:rgba(255,255,255,.92);padding:7px 12px;border-radius:14px;font-size:14px;display:inline-block}
-  #msg{position:fixed;top:104px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:9px 14px;border-radius:14px;font-size:15px;z-index:10;display:none;max-width:92vw;text-align:center}
-  #joy{position:fixed;left:16px;bottom:22px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
-  #knob{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.9)}
-  #btns{position:fixed;right:16px;bottom:22px;display:flex;flex-direction:column;gap:10px;z-index:10}
-  #btns button{width:86px;height:86px;border-radius:50%;border:none;font-size:16px;font-weight:700;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+  #job{position:fixed;top:48px;left:8px;right:8px;z-index:10;pointer-events:none}
+  #job span{background:rgba(255,255,255,.92);padding:6px 10px;border-radius:12px;font-size:13px;display:inline-block}
+  #msg{position:fixed;top:88px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:10;display:none;max-width:92vw;text-align:center}
+  #joy{position:fixed;left:16px;bottom:16px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
+  #knob{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9)}
+  #btns{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:10;align-items:center}
+  #actLabel{background:rgba(0,0,0,.6);color:#fff;padding:4px 8px;border-radius:10px;font-size:12px;text-align:center;max-width:96px;min-height:18px}
+  #btns button{width:60px;height:60px;border-radius:50%;border:none;font-size:14px;font-weight:700;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.35)}
   #act{background:#2e7d32}
-  #bikeBtn{background:#1565c0}
-  #shopBtn{background:#ef6c00;width:86px;height:52px;border-radius:26px!important}
+  #bikeBtn{background:#1565c0;font-size:22px}
+  #shopBtn{background:#ef6c00;font-size:22px}
   #btns button:disabled{opacity:.45}
   #start{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
   #start .card{background:#fff;border-radius:20px;padding:22px;max-width:420px;width:100%;text-align:center}
@@ -33,10 +34,11 @@
   .buy{background:#2e7d32;color:#fff}
   .close{background:#eee}
   #hint{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:12px;font-size:13px;z-index:5;white-space:nowrap}
-  #rotL,#rotR{position:fixed;bottom:165px;width:54px;height:54px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:24px;z-index:10}
-  #rotL{left:16px} #rotR{left:80px}
+  #rotL,#rotR{position:fixed;bottom:134px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10}
+  #rotL{left:16px} #rotR{left:64px}
   @media(max-width:700px){#hint{display:none}}
-  @media(min-width:700px){#joy{width:150px;height:150px}#knob{left:50px;top:50px}}
+  @media(pointer:coarse){#hint{display:none}}
+  @media(max-height:500px){#hint{display:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -52,12 +54,13 @@
 <div id="hint">ကွန်ပျူတာ — WASD / မြှား၊ E = လုပ်ဆောင်ချက်၊ B = ဆိုင်ကယ်</div>
 <div id="joy"><div id="knob"></div></div>
 <div id="btns">
-  <button id="act">လုပ်ဆောင်ရန်</button>
-  <button id="bikeBtn">🏍️ ဆိုင်ကယ်</button>
-  <button id="shopBtn">🛒 ဆိုင်</button>
+  <div id="actLabel"></div>
+  <button id="act">လုပ်</button>
+  <button id="bikeBtn">🏍️</button>
+  <button id="shopBtn">🛒</button>
 </div>
 <button id="rotL">↺</button><button id="rotR">↻</button>
-<button id="soundBtn" style="position:fixed;right:16px;top:64px;width:48px;height:48px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:22px;z-index:10">🔊</button>
+<button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p><b>အပြင်ကမြို့ရွာလို ပြည့်စုံတဲ့ မြို့ — အိမ်၊ ကျောင်း၊ ဆေးခန်း၊ လက်ဖက်ရည်ဆိုင်၊ ဘုန်းကြီးကျောင်း၊ ဘောလုံးကွင်း၊ ကားဂိတ်၊ တိရစ္ဆာန်တွေ၊ ကားတွေ။</b></p>
@@ -236,15 +239,17 @@ sph(0.7,0xffc107,100,9.6,100); colliders.push({x:100,z:100,r:6});
 mesh(new THREE.CylinderGeometry(8,8,0.3,20), 0x4fc3f7, -100, 0.15, -100);
 colliders.push({x:-100,z:-100,r:8});
 // ---- trees, lamps, power poles, grass, clouds ----
+const treeBlockers = [];
 function tree(x,z){
   cyl(0.3,0.45,2.2,0x7a4a22,x,1.1,z);
   sph(1.9,0x2e7d32,x,3.6,z);
   colliders.push({x,z,r:1.2});
+  treeBlockers.push({x,z,r:2.0});
 }
 [[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-36,-20],[36,20],[-70,-40],[70,40],[-40,70],[40,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1]));
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
-  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.45,10,8), new THREE.MeshBasicMaterial({color:0xffeb3b}));
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3,8,6), new THREE.MeshBasicMaterial({color:0xffeb3b}));
   bulb.position.set(x,4.7,z); scene.add(bulb); colliders.push({x,z,r:0.5});
 }
 [[-80,5],[-40,5],[40,5],[80,5],[5,-80],[5,-40],[5,40],[5,80]].forEach(p=>lamp(p[0],p[1]));
@@ -637,9 +642,9 @@ function joyMove(e){
   const r = joyEl.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
   let dx = (t.clientX - (r.left+r.width/2)) / (r.width/2), dy = (t.clientY - (r.top+r.height/2)) / (r.height/2);
   const len = Math.hypot(dx,dy); if(len > 1){ dx/=len; dy/=len; }
-  joy = {x:dx, y:dy}; knob.style.left = (40+dx*32)+'px'; knob.style.top = (40+dy*32)+'px';
+  joy = {x:dx, y:dy}; knob.style.left = (35+dx*28)+'px'; knob.style.top = (35+dy*28)+'px';
 }
-function joyEnd(){ joy = {x:0,y:0}; knob.style.left='40px'; knob.style.top='40px'; }
+function joyEnd(){ joy = {x:0,y:0}; knob.style.left='35px'; knob.style.top='35px'; }
 joyEl.addEventListener('touchstart', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
 joyEl.addEventListener('touchmove', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
 joyEl.addEventListener('touchend', joyEnd);
@@ -670,10 +675,10 @@ canvas.addEventListener('pointerdown', e=>{ dragX = e.clientX; });
 addEventListener('pointermove', e=>{ if(dragX !== null){ camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; } });
 addEventListener('pointerup', ()=>{ dragX = null; });
 refresh();
-let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 19, smoothCamH = 7.5, lastStep = -1, birdTimer = 10;
+let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10;
 function camBlocked(camX, camZ, px, pz){
-  for(const c of colliders){
-    if(c.r < 3) continue;
+  for(const c of [...colliders, ...treeBlockers]){
+    if(c.r < 2 && !treeBlockers.includes(c)) continue;
     const dx = px - camX, dz = pz - camZ, len2 = dx*dx + dz*dz;
     if(len2 < 0.01) continue;
     let t = ((c.x - camX)*dx + (c.z - camZ)*dz) / len2;
@@ -794,19 +799,20 @@ function animate(now){
   }
   for(const c of clouds){ c.position.x += dt*1.2; if(c.position.x > 140) c.position.x = -140; }
   const n = nearest();
-  actBtn.textContent = n ? n.label : 'လုပ်ဆောင်ရန်';
+  document.getElementById('actLabel').textContent = n ? n.label : '';
+  actBtn.textContent = 'လုပ်';
   actBtn.disabled = !n;
   beacon.rotation.y += dt*2;
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = 19, targetH = 7.5;
-  for(let a=0; a<10; a++){
+  let targetDist = 16, targetH = 6.5;
+  for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
-    targetDist = Math.max(6, targetDist - 1.5);
-    targetH = Math.min(13, targetH + 0.8);
-    if(targetDist <= 6) break;
+    targetDist = Math.max(3, targetDist - 1.5);
+    targetH = Math.min(12, targetH + 0.8);
+    if(targetDist <= 3) break;
   }
   smoothCamDist += (targetDist - smoothCamDist) * Math.min(1, dt*8);
   smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*8);
