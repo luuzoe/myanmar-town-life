@@ -61,7 +61,7 @@
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p><b>အပြင်ကမြို့ရွာလို ပြည့်စုံတဲ့ မြို့ — အိမ်၊ ကျောင်း၊ ဆေးခန်း၊ လက်ဖက်ရည်ဆိုင်၊ ဘုန်းကြီးကျောင်း၊ ဘောလုံးကွင်း၊ ကားဂိတ်၊ တိရစ္ဆာန်တွေ၊ ကားတွေ။</b></p>
   <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (ခြင်းကြီးရင် ၁၅၀၀)</p>
-  <p>လမ်းလျှောက်မြန်သွားပြီ။ ကင်မရာ အလိုလို မလှည့်ဘူး — ↺ ↻ နဲ့ မျက်နှာပြင်ဆွဲပြီး လှည့်ပါ။<br>နေ့/ည ၃ မိနစ်တစ်ပတ်။</p>
+  <p>လမ်းလျှောက် အရမ်းမြန်သွားပြီ (၁၄)၊ ဆိုင်ကယ် ၂၂/၃၂။ လမ်းလျှောက်ပုံက အမြန်နှုန်းနဲ့ ကိုက်ညီသွားပြီ။ ကင်မရာ အလိုလို မလှည့်ဘူး — ↺ ↻ နဲ့ မျက်နှာပြင်ဆွဲပြီး လှည့်ပါ။<br>နေ့/ည ၃ မိနစ်တစ်ပတ်။</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="landscapeBtn" style="background:#1565c0">⤢ Landscape နဲ့ ဆော့မယ်</button>
 </div></div>
@@ -307,7 +307,7 @@ function makePerson(shirt, pants, opts){
   const g = new THREE.Group();
   bx(0.5,0.25,0.32,pants,0,1.12,0,g);
   bx(0.52,0.08,0.34,0x212121,0,1.27,0,g);
-  bx(0.55,0.6,0.34,shirt,0,1.58,0,g);
+  const torso = cap(0.28,0.35,shirt,0,1.58,0,g); torso.scale.z = 0.65;
   sph(0.12,shirt,-0.32,1.80,0,g); sph(0.12,shirt,0.32,1.80,0,g);
   cyl(0.09,0.09,0.18,skin,0,1.92,0,g);
   if(opts.female){
@@ -318,7 +318,8 @@ function makePerson(shirt, pants, opts){
     const hip = new THREE.Group(); hip.position.set(side*0.22, 1.05, 0); g.add(hip);
     cap(0.13,0.35,pants,0,-0.28,0,hip);
     const knee = new THREE.Group(); knee.position.set(0,-0.55,0); hip.add(knee);
-    cap(0.11,0.30,skin,0,-0.24,0,knee);
+    sph(0.11,pants,0,0,0,knee);
+    cap(0.10,0.30,skin,0,-0.24,0,knee);
     const foot = new THREE.Group(); foot.position.set(0,-0.50,0); knee.add(foot);
     bx(0.22,0.14,0.42,shoe,0,0.07,0.08,foot);
     bx(0.23,0.04,0.44,0xffffff,0,0.02,0.08,foot);
@@ -329,33 +330,34 @@ function makePerson(shirt, pants, opts){
     const shoulder = new THREE.Group(); shoulder.position.set(side*0.48, 1.78, 0); g.add(shoulder);
     cap(0.09,0.28,shirt,0,-0.20,0,shoulder);
     const elbow = new THREE.Group(); elbow.position.set(0,-0.38,0); shoulder.add(elbow);
+    sph(0.09,shirt,0,0,0,elbow);
     cap(0.08,0.25,skin,0,-0.18,0,elbow);
     const hand = new THREE.Group(); hand.position.set(0,-0.38,0); elbow.add(hand);
     bx(0.16,0.18,0.07,skin,0,-0.07,0,hand);
-    for(const fx of [-0.06,-0.02,0.02,0.06]) bx(0.035,0.12,0.04,skin,fx,-0.20,0,hand);
+    for(const fx of [-0.06,-0.02,0.02,0.06]) bx(0.04,0.14,0.05,skin,fx,-0.21,0,hand);
     const thumb = bx(0.04,0.10,0.04,skin,side*0.10,-0.05,0,hand); thumb.rotation.z = -side*0.6;
     return {shoulder, elbow};
   }
   const armL = arm(-1), armR = arm(1);
-  const head = new THREE.Group(); head.position.set(0,2.12,0); g.add(head);
-  sph(0.28,skin,0,0,0,head);
-  sph(0.07,skin,-0.28,0,0,head); sph(0.07,skin,0.28,0,0,head);
-  sph(0.05,skin,0,-0.02,0.27,head);
-  bx(0.12,0.03,0.02,0x8d3b3b,0,-0.13,0.27,head);
-  bx(0.11,0.02,0.02,0x212121,-0.11,0.13,0.27,head); bx(0.11,0.02,0.02,0x212121,0.11,0.13,0.27,head);
+  const head = new THREE.Group(); head.position.set(0,2.18,0); g.add(head);
+  sph(0.22,skin,0,0,0,head);
+  sph(0.06,skin,-0.22,0,0,head); sph(0.06,skin,0.22,0,0,head);
+  sph(0.04,skin,0,-0.02,0.21,head);
+  bx(0.14,0.04,0.02,0x8d3b3b,0,-0.10,0.21,head);
+  bx(0.12,0.03,0.02,0x212121,-0.09,0.10,0.21,head); bx(0.12,0.03,0.02,0x212121,0.09,0.10,0.21,head);
   const eyes = [];
-  for(const ex of [-0.11,0.11]){
-    eyes.push(sph(0.05,0xffffff,ex,0.05,0.25,head));
-    eyes.push(sph(0.025,0x111111,ex,0.05,0.295,head));
+  for(const ex of [-0.09,0.09]){
+    eyes.push(sph(0.05,0xffffff,ex,0.03,0.20,head));
+    eyes.push(sph(0.025,0x111111,ex,0.03,0.245,head));
   }
   if(!opts.bald){
-    const hair = sph(0.30,opts.hair || 0x212121,0,0.18,-0.03,head); hair.scale.set(1,0.65,1);
-    if(opts.longHair) bx(0.34,0.55,0.10,opts.hair || 0x212121,0,-0.25,-0.26,head);
+    const hair = sph(0.24,opts.hair || 0x212121,0,0.14,-0.02,head); hair.scale.set(1,0.65,1);
+    if(opts.longHair) bx(0.28,0.55,0.10,opts.hair || 0x212121,0,-0.25,-0.22,head);
   }
   if(opts.beard){
-    const beard = sph(0.20,0x212121,0,-0.20,0.18,head); beard.scale.set(1,0.7,0.6);
+    const beard = sph(0.17,0x212121,0,-0.16,0.15,head); beard.scale.set(1,0.7,0.6);
   }
-  if(opts.hat) mesh(new THREE.ConeGeometry(0.45,0.25,12), 0xffd54f, 0, 0.38, 0, head);
+  if(opts.hat) mesh(new THREE.ConeGeometry(0.38,0.25,12), 0xffd54f, 0, 0.32, 0, head);
   return {g, thighL:legL.hip, thighR:legR.hip, shinL:legL.knee, shinR:legR.knee, upperL:armL.shoulder, upperR:armR.shoulder, foreL:armL.elbow, foreR:armR.elbow, head, eyes};
 }
 function animatePerson(p, moving, walkPhase, globalTime, riding){
@@ -365,12 +367,12 @@ function animatePerson(p, moving, walkPhase, globalTime, riding){
     p.upperL.rotation.x = -0.6; p.upperR.rotation.x = -0.6;
     p.foreL.rotation.x = -0.4; p.foreR.rotation.x = -0.4;
   } else if(moving){
-    const s = Math.sin(walkPhase*9)*0.6;
+    const s = Math.sin(walkPhase*3.9)*0.65;
     p.thighL.rotation.x = s; p.thighR.rotation.x = -s;
     p.shinL.rotation.x = Math.max(0, -s)*1.1; p.shinR.rotation.x = Math.max(0, s)*1.1;
     p.upperL.rotation.x = -s*0.8; p.upperR.rotation.x = s*0.8;
     p.foreL.rotation.x = -0.4; p.foreR.rotation.x = -0.4;
-    p.head.position.y = 2.12 + Math.abs(Math.sin(walkPhase*9))*0.03;
+    p.head.position.y = 2.18 + Math.abs(Math.sin(walkPhase*3.9))*0.03;
     p.head.rotation.y = 0;
   } else {
     p.thighL.rotation.x = 0; p.thighR.rotation.x = 0;
@@ -378,7 +380,7 @@ function animatePerson(p, moving, walkPhase, globalTime, riding){
     p.upperL.rotation.x = 0; p.upperR.rotation.x = 0;
     p.foreL.rotation.x = 0; p.foreR.rotation.x = 0;
     p.head.rotation.y = Math.sin(globalTime*0.8)*0.15;
-    p.head.position.y = 2.12 + Math.sin(globalTime*2)*0.01;
+    p.head.position.y = 2.18 + Math.sin(globalTime*2)*0.01;
   }
   const blink = (globalTime % 3.7 < 0.12) ? 0.15 : 1;
   for(const e of p.eyes) e.scale.y = blink;
@@ -411,7 +413,7 @@ for(let i=0;i<12;i++){
   const start = intersections[i*2 % intersections.length];
   p.g.position.set(start.x, 0, start.z);
   scene.add(p.g);
-  npcs.push({p, target: intersections[(i*2+5) % intersections.length], speed: 3.5});
+  npcs.push({p, target: intersections[(i*2+5) % intersections.length], speed: 4.5});
 }
 const yardPeople = [];
 for(let i=0;i<6;i++){
@@ -487,7 +489,7 @@ for(let i=0;i<3;i++){
   const car = makeCar([0xe53935,0x1565c0,0xffffff][i]);
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
-  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 7});
+  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 9});
 }
 const bus = new THREE.Group();
 bx(2.5,2.2,8,0xffc107,0,1.3,0,bus);
@@ -631,7 +633,7 @@ function animate(now){
   const moving = len > 0.1;
   if(moving){
     dx/=Math.max(1,len); dz/=Math.max(1,len);
-    const sp = riding ? (fastBike?24:16) : 8.5;
+    const sp = riding ? (fastBike?32:22) : 14;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     player.g.rotation.y = Math.atan2(dx,dz);
     player.g.position.x = Math.max(-122, Math.min(122, player.g.position.x));
@@ -640,7 +642,7 @@ function animate(now){
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
       if(d < c.r+0.8 && d > 0.01){ player.g.position.x = c.x + ddx/d*(c.r+0.8); player.g.position.z = c.z + ddz/d*(c.r+0.8); }
     }
-    walkT += dt;
+    walkT += sp*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
   for(const n of npcs){
@@ -652,23 +654,23 @@ function animate(now){
     else { n.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     n.p.g.position.x += mx*n.speed*dt; n.p.g.position.z += mz*n.speed*dt;
     n.p.g.rotation.y = Math.atan2(mx,mz);
-    animatePerson(n.p, true, gt + px, gt, false);
+    animatePerson(n.p, true, gt*n.speed + px, gt, false);
   }
   for(const y of yardPeople){
-    y.angle += dt*0.25*y.dir;
+    y.angle += dt*0.35*y.dir;
     const px = y.house.x + Math.cos(y.angle)*y.radius, pz = y.house.z + Math.sin(y.angle)*y.radius;
     const dx2 = -Math.sin(y.angle)*y.dir, dz2 = Math.cos(y.angle)*y.dir;
     y.p.g.position.set(px, 0, pz);
     y.p.g.rotation.y = Math.atan2(dx2,dz2);
-    animatePerson(y.p, true, gt + px, gt, false);
+    animatePerson(y.p, true, gt*3.15 + px, gt, false);
   }
   for(const k of schoolKids){
     const dx2 = k.target.x - k.p.g.position.x, dz2 = k.target.z - k.p.g.position.z, d2 = Math.hypot(dx2,dz2);
     if(d2 < 1){ k.target = {x:-108+Math.random()*16, z:67+Math.random()*8}; }
     else {
-      k.p.g.position.x += dx2/d2*2.8*dt; k.p.g.position.z += dz2/d2*2.8*dt;
+      k.p.g.position.x += dx2/d2*3.5*dt; k.p.g.position.z += dz2/d2*3.5*dt;
       k.p.g.rotation.y = Math.atan2(dx2,dz2);
-      animatePerson(k.p, true, gt, gt, false);
+      animatePerson(k.p, true, gt*3.5, gt, false);
     }
   }
   for(const p of staticPeople) animatePerson(p, false, 0, gt, false);
@@ -698,7 +700,7 @@ function animate(now){
     else {
       let mx = 0, mz = 0;
       if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
-      bus.position.x += mx*8*dt; bus.position.z += mz*8*dt;
+      bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
       bus.rotation.y = Math.atan2(mx,mz);
     }
   }
