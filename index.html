@@ -81,10 +81,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=51">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=51">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=51">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=51">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=52">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=52">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=52">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=52">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -210,7 +210,7 @@ const roadLines = [-80,-40,0,40,80];
 // road variety: main avenue (x=0, z=0) is wider (10) with a yellow centre line,
 // side streets are narrower (7) and plain; sidewalks follow each road's width
 for(const r of roadLines){
-  const w = (r===0 ? 10 : 7), sw = w/2 + 1;
+  const w = (r===0 ? 12 : 7), sw = w/2 + 1; // V52: main avenue wider for two cars
   bx(400,0.1,w,0x444444,0,0.05,r).material = asphaltMat;
   bx(w,0.1,400,0x444444,r,0.05,0).material = asphaltMat;
   bx(400,0.12,2,0x9e9e9e,0,0.06,r+sw).material = sidewalkMat; bx(400,0.12,2,0x9e9e9e,0,0.06,r-sw).material = sidewalkMat;
@@ -222,8 +222,8 @@ for(let d=-190; d<=190; d+=20){
 }
 // zebra crosswalks across the main avenue at every side-road intersection
 for(const r of [-160,-80,-40,40,80,160]){
-  for(const sx of [-3.5,-1.5,1.5,3.5]) bx(0.5,0.12,2,0xffffff,sx,0.12,r);
-  for(const sz of [-3.5,-1.5,1.5,3.5]) bx(2,0.12,0.5,0xffffff,r,0.12,sz);
+  for(const sx of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) bx(0.5,0.12,2,0xffffff,sx,0.12,r);
+  for(const sz of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) bx(2,0.12,0.5,0xffffff,r,0.12,sz);
 }
 // outer ring roads at x/z = +-160 (new districts, 80-wide outer blocks)
 for(const r of [-160,160]){
@@ -1395,6 +1395,7 @@ function camBlocked(camX, camZ, px, pz){
   }
   return false;
 }
+function nearestLine(v){ let best = allRoadLines[0]; for(const l of allRoadLines) if(Math.abs(l-v) < Math.abs(best-v)) best = l; return best; }
 function animate(now){
   requestAnimationFrame(animate);
   const dt = Math.min((now-last)/1000, 0.05); last = now;
@@ -1544,6 +1545,8 @@ function animate(now){
     else if(Math.abs(tz-pz) > 0.8) mz = Math.sign(tz-pz);
     else { car.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     car.g.position.x += mx*car.speed*dt; car.g.position.z += mz*car.speed*dt;
+    if(mx !== 0) car.g.position.z += (nearestLine(pz) + (mx>0?2.5:-2.5) - car.g.position.z) * Math.min(1, dt*4);
+    else car.g.position.x += (nearestLine(px) + (mz>0?-2.5:2.5) - car.g.position.x) * Math.min(1, dt*4);
     turnTo(car.g, Math.atan2(mx,mz), dt, 6);
     const fx = Math.sin(car.g.rotation.y), fz = Math.cos(car.g.rotation.y);
     carHitCheck(car.g.position.x, car.g.position.z, fx, fz, 2.75, 1.8);
@@ -1552,7 +1555,10 @@ function animate(now){
     const dx2 = busDest.x - bus.position.x, dz2 = busDest.z - bus.position.z, d2 = Math.hypot(dx2,dz2);
     if(d2 < 3){ ridingBus = false; busDest = null; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဂိတ်ရောက်ပြီ!'); refresh(); }
     else { let mx = 0, mz = 0; if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
-      bus.position.x += mx*10*dt; bus.position.z += mz*10*dt; turnTo(bus, Math.atan2(mx,mz), dt, 5);
+      bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
+      if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?2:-2) - bus.position.z) * Math.min(1, dt*4);
+      else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-2:2) - bus.position.x) * Math.min(1, dt*4);
+      turnTo(bus, Math.atan2(mx,mz), dt, 5);
       const fx = Math.sin(bus.rotation.y), fz = Math.cos(bus.rotation.y); carHitCheck(bus.position.x, bus.position.z, fx, fz, 6, 2.0); }
   } else {
     const bt = busRoute[busIdx];
@@ -1562,6 +1568,8 @@ function animate(now){
       let mx = 0, mz = 0;
       if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
       bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
+      if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?2:-2) - bus.position.z) * Math.min(1, dt*4);
+      else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-2:2) - bus.position.x) * Math.min(1, dt*4);
       turnTo(bus, Math.atan2(mx,mz), dt, 5);
       const fx = Math.sin(bus.rotation.y), fz = Math.cos(bus.rotation.y);
       carHitCheck(bus.position.x, bus.position.z, fx, fz, 6, 2.0);
