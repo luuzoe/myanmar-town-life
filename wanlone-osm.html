@@ -56,7 +56,7 @@ renderer.setSize(innerWidth, innerHeight);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.Fog(0x87ceeb, 220, 900);
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 2000);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 2000);
 scene.add(new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.15));
 const sun = new THREE.DirectionalLight(0xffffff, 1.3); sun.position.set(100, 150, 60); scene.add(sun);
 { const sd = new THREE.Mesh(new THREE.SphereGeometry(14, 16, 12), new THREE.MeshBasicMaterial({color: 0xffeb3b, fog: false})); sd.position.set(-300, 180, -500); scene.add(sd); }
@@ -297,16 +297,37 @@ for (const nm of Object.keys(named).slice(0, 14)){
   const pts = named[nm].pts, mid = pts[Math.floor(pts.length/2)];
   const sp = labelSprite(nm, 18); sp.position.set(mid[0], 7, mid[1]); scene.add(sp);
 }
-// player (simple, fresh character)
+// player: humanoid (head with face/hair, jointed arms/legs, longyi, backpack on the BACK)
 const player = new THREE.Group();
-box(0.7, 0.9, 0.4, 0x1565c0, 0, 1.35, 0, player);
-{ const h = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), mat(0xe8b88a)); h.position.set(0, 2.05, 0); player.add(h); }
-const legL = box(0.26, 0.8, 0.26, 0x37474f, -0.2, 0.45, 0, player);
-const legR = box(0.26, 0.8, 0.26, 0x37474f, 0.2, 0.45, 0, player);
-const armL = box(0.22, 0.75, 0.22, 0x1565c0, -0.48, 1.35, 0, player);
-const armR = box(0.22, 0.75, 0.22, 0x1565c0, 0.48, 1.35, 0, player);
-box(0.5, 0.18, 0.5, 0xd32f2f, 0, 2.32, 0, player);
-box(0.4, 0.55, 0.15, 0xff9800, 0, 1.35, 0.28, player);
+function limbGroup(x, y, z, parent){ const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; }
+// torso (capsule, shirt blue)
+{ const tor = new THREE.Mesh(new THREE.CapsuleGeometry(0.36, 0.55, 4, 12), mat(0x1565c0)); tor.position.set(0, 1.45, 0); player.add(tor); }
+// longyi (Myanmar sarong, dark green cylinder over the hips/upper legs)
+{ const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.52, 0.85, 12), mat(0x2e5d3a)); lg.position.set(0, 0.88, 0); player.add(lg); }
+// head + face + hair (front is +z in player local space)
+{ const h = new THREE.Mesh(new THREE.SphereGeometry(0.30, 16, 12), mat(0xe8b88a)); h.position.set(0, 2.12, 0); player.add(h);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 12), mat(0x212121)); hair.position.set(0, 2.24, -0.04); hair.scale.set(1, 0.75, 1); player.add(hair);
+  for (const ex of [-0.11, 0.11]){ const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), mat(0x111111)); eye.position.set(ex, 2.14, 0.27); player.add(eye); }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat(0xd9a077)); nose.position.set(0, 2.04, 0.30); player.add(nose); }
+// arms: shoulder groups, upper arm + hand (pivot at shoulder, so they swing naturally)
+function makeArm(sx){
+  const g = limbGroup(sx, 1.78, 0, player);
+  box(0.22, 0.65, 0.22, 0x1565c0, 0, -0.32, 0, g);
+  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), mat(0xe8b88a)); hand.position.set(0, -0.72, 0); g.add(hand);
+  return g;
+}
+const armL = makeArm(-0.48), armR = makeArm(0.48);
+// legs: hip groups, thigh + shin + foot (pivot at hip)
+function makeLeg(sx){
+  const g = limbGroup(sx, 0.98, 0, player);
+  box(0.26, 0.45, 0.26, 0x37474f, 0, -0.22, 0, g);
+  box(0.22, 0.45, 0.22, 0x37474f, 0, -0.65, 0, g);
+  box(0.24, 0.12, 0.36, 0x3e2723, 0, -0.92, 0.06, g);
+  return g;
+}
+const legL = makeLeg(-0.20), legR = makeLeg(0.20);
+// backpack on the BACK (-z), not the chest
+box(0.42, 0.55, 0.16, 0xff9800, 0, 1.45, -0.30, player);
 { const sh = new THREE.Mesh(new THREE.CircleGeometry(0.7, 16), new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false})); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; player.add(sh); }
 player.position.set(-12, 0, 14); scene.add(player);
 // car
@@ -452,10 +473,10 @@ function animate(now){
     let diff = target - obj.rotation.y;
     while (diff > Math.PI) diff -= Math.PI*2; while (diff < -Math.PI) diff += Math.PI*2;
     obj.rotation.y += diff * Math.min(1, dt*10);
-    legL.position.y = 0.45 + Math.abs(Math.sin(walkPhase))*0.05; legR.position.y = 0.45 + Math.abs(Math.cos(walkPhase))*0.05;
-    legL.rotation.x = Math.sin(walkPhase)*0.5; legR.rotation.x = -Math.sin(walkPhase)*0.5;
-    armL.rotation.x = -Math.sin(walkPhase)*0.5; armR.rotation.x = Math.sin(walkPhase)*0.5;
-  } else { legL.rotation.x = 0; legR.rotation.x = 0; armL.rotation.x = 0; armR.rotation.x = 0; }
+    legL.rotation.x = Math.sin(walkPhase)*0.6; legR.rotation.x = -Math.sin(walkPhase)*0.6;
+    armL.rotation.x = -Math.sin(walkPhase)*0.6; armR.rotation.x = Math.sin(walkPhase)*0.6;
+    player.position.y = Math.abs(Math.sin(walkPhase))*0.06;
+  } else { legL.rotation.x = 0; legR.rotation.x = 0; armL.rotation.x = 0; armR.rotation.x = 0; player.position.y = 0; }
   // walkers
   for (const w of walkers){
     const a = w.pts[w.seg], b = w.pts[Math.min(w.seg+1, w.pts.length-1)];
@@ -490,18 +511,11 @@ function animate(now){
     });
   }
   const cur = inCar ? car.position : player.position;
-  if (ml > 0.1 && performance.now() > camAutoUntil){
-    const want = Math.atan2(mx, mz) + Math.PI;
-    let dd = want - camAngle; while (dd > Math.PI) dd -= Math.PI*2; while (dd < -Math.PI) dd += Math.PI*2;
-    camAngle += dd * Math.min(1, dt*2);
-  }
-  if (inCar){
-    let dd = heading + Math.PI - camAngle; while (dd > Math.PI) dd -= Math.PI*2; while (dd < -Math.PI) dd += Math.PI*2;
-    if (performance.now() > camAutoUntil) camAngle += dd * Math.min(1, dt*2);
-  }
+  // NO auto-rotate: camera stays where the user put it (drag/buttons only).
+  // Auto-spin while walking/turning was making eyes dizzy.
   const horiz = camDist * Math.cos(camPitch), vert = camDist * Math.sin(camPitch);
   const target = new THREE.Vector3(cur.x + Math.sin(camAngle)*horiz, 1 + vert, cur.z + Math.cos(camAngle)*horiz);
-  camera.position.lerp(target, 0.15);
+  camera.position.lerp(target, 0.10);
   camera.lookAt(cur.x, 1.5, cur.z);
   for (const cg of clouds){ cg.position.x += dt*2; if (cg.position.x > 700) cg.position.x = -700; }
   for (const tc of traffic){
