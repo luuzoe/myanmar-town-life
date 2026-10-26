@@ -33,6 +33,9 @@
   .buy{background:#2e7d32;color:#fff}
   .close{background:#eee}
   #hint{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:12px;font-size:13px;z-index:5;white-space:nowrap}
+  #rotL,#rotR{position:fixed;bottom:165px;width:54px;height:54px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:24px;z-index:10}
+  #rotL{left:16px} #rotR{left:80px}
+  @media(max-width:700px){#hint{display:none}}
   @media(min-width:700px){#joy{width:150px;height:150px}#knob{left:50px;top:50px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
@@ -53,11 +56,12 @@
   <button id="bikeBtn">🏍️ ဆိုင်ကယ်</button>
   <button id="shopBtn">🛒 ဆိုင်</button>
 </div>
+<button id="rotL">↺</button><button id="rotR">↻</button>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p><b>မြို့ကြီးထဲမှာ ဘဝ စပါ — အိမ်ကြီး ၂၇ လုံး၊ ကျောင်း၊ ဆေးခန်း၊ နေ့/ည ရှိတယ်။</b></p>
   <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (ခြင်းကြီးရင် ၁၅၀၀)</p>
-  <p>နေ့/ည တစ်ပတ် ၃ မိနစ် — ညမှာ လမ်းမီးတွေ လင်းတယ်။<br>ဖုန်းဆို ဘယ်ဘက် စက်ဝိုင်းနဲ့ ရွှေ့ပါ၊ ညာဘက် ခလုတ်နဲ့ လုပ်ပါ။</p>
+  <p>နေ့/ည တစ်ပတ် ၃ မိနစ် — ညမှာ လမ်းမီးတွေ လင်းတယ်။<br>ကင်မရာ အလိုလို မလှည့်တော့ဘူး — လှည့်ချင်ရင် မျက်နှာပြင်ကို ဆွဲပါ၊ ဒါမှမဟုတ် ↺ ↻ ခလုတ်နှိပ်ပါ။<br>ဖုန်းဆို ဘယ်ဘက် စက်ဝိုင်းနဲ့ ရွှေ့ပါ၊ ညာဘက် ခလုတ်နဲ့ လုပ်ပါ။</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="landscapeBtn" style="background:#1565c0">⤢ Landscape နဲ့ ဆော့မယ်</button>
 </div></div>
@@ -397,6 +401,12 @@ document.getElementById('closeShop').addEventListener('click', ()=>document.getE
 document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
 document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
 document.getElementById('playBtn').addEventListener('click', ()=>document.getElementById('start').style.display='none');
+document.getElementById('rotL').addEventListener('click', ()=>{ camYaw -= Math.PI/4; });
+document.getElementById('rotR').addEventListener('click', ()=>{ camYaw += Math.PI/4; });
+let dragX = null;
+canvas.addEventListener('pointerdown', e=>{ dragX = e.clientX; });
+addEventListener('pointermove', e=>{ if(dragX !== null){ camYaw += (e.clientX - dragX)*0.005; dragX = e.clientX; } });
+addEventListener('pointerup', ()=>{ dragX = null; });
 document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
   try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
   try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
@@ -438,12 +448,7 @@ function animate(now){
   const moving = len > 0.1;
   if(moving){
     dx/=Math.max(1,len); dz/=Math.max(1,len);
-    // auto-rotate camera toward the direction of travel (shortest angle)
-    const targetYaw = Math.atan2(dx,dz);
-    let diff = targetYaw - camYaw;
-    while(diff > Math.PI) diff -= Math.PI*2;
-    while(diff < -Math.PI) diff += Math.PI*2;
-    camYaw += diff * Math.min(1, dt*3.5);
+    // camera does NOT auto-rotate: camYaw only changes via rotate buttons / screen drag
     const sp = riding ? (fastBike?18:12) : 5;
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     player.g.rotation.y = Math.atan2(dx,dz);
