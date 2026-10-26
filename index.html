@@ -24,10 +24,10 @@
   #shopBtn{background:#ef6c00;font-size:22px}
   #btns button:disabled{opacity:.45}
   #start{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
-  #start .card{background:#fff;border-radius:20px;padding:22px;max-width:420px;width:100%;text-align:center}
-  #start h1{margin:0 0 8px;font-size:26px}
-  #start p{margin:6px 0;line-height:1.6;font-size:15px}
-  #start button{margin-top:14px;background:#2e7d32;color:#fff;border:none;padding:14px 22px;border-radius:14px;font-size:18px;font-weight:700;width:100%}
+  #start .card{background:#fff;border-radius:20px;padding:18px;max-width:360px;width:100%;text-align:center}
+  #start h1{margin:0 0 6px;font-size:24px}
+  #start p{margin:6px 0;line-height:1.5;font-size:15px}
+  #start button{margin-top:10px;background:#2e7d32;color:#fff;border:none;padding:13px 22px;border-radius:14px;font-size:18px;font-weight:700;width:100%}
   #shop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
   #shop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%}
   #shop button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
@@ -63,11 +63,8 @@
 <button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <p><b>အပြင်ကမြို့ရွာလို ပြည့်စုံတဲ့ မြို့ — အိမ်၊ ကျောင်း၊ ဆေးခန်း၊ လက်ဖက်ရည်ဆိုင်၊ ဘုန်းကြီးကျောင်း၊ ဘောလုံးကွင်း၊ ကားဂိတ်၊ တိရစ္ဆာန်တွေ၊ ကားတွေ။</b></p>
-  <p>🌾 လယ်ရိတ် = ၅၀၀ ကျပ်<br>🏪 ဈေးရောင်း = ၈၀၀ ကျပ်<br>🛵 အမှာပို့ = ၁၀၀၀ ကျပ် (ခြင်းကြီးရင် ၁၅၀၀)</p>
-  <p>လမ်းလျှောက် အလယ်အလတ် (၁၀.၅)၊ ဆိုင်ကယ် ၁၈/၂၆။ ကင်မရာ လူနောက်ကို တိုက်ရိုက်လိုက်တယ်။ ဖုန်းမှာ အလိုလို ပေါ့ပါးတဲ့ mode၊ ကွန်ပျူတာမှာ အရိပ်ပါတဲ့ mode နဲ့ နှစ်မျိုးလုံး ချောချောဆော့လို့ရတယ်။ ↺ ↻ နဲ့ မျက်နှာပြင်ဆွဲပြီး လှည့်ပါ။<br>နေ့/ည ၃ မိနစ်တစ်ပတ်။</p>
+  <p>🌾 ၅၀၀ · 🏪 ၈၀၀ · 🛵 ၁၀၀၀ ကျပ်</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
-  <button id="landscapeBtn" style="background:#1565c0">⤢ Landscape နဲ့ ဆော့မယ်</button>
 </div></div>
 <div id="shop"><div class="card">
   <h2 style="margin:0">🛒 ဆိုင်</h2>
@@ -656,18 +653,19 @@ document.getElementById('shopBtn').addEventListener('click', ()=>{ ensureAudio()
 document.getElementById('closeShop').addEventListener('click', ()=>document.getElementById('shop').style.display='none');
 document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
 document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
-document.getElementById('playBtn').addEventListener('click', ()=>{ ensureAudio(); document.getElementById('start').style.display='none'; });
+document.getElementById('playBtn').addEventListener('click', async ()=>{
+  ensureAudio();
+  // phone: one tap = auto fullscreen + auto landscape, no second button
+  try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
+  try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
+  document.getElementById('start').style.display='none';
+});
 document.getElementById('soundBtn').addEventListener('click', ()=>{
   ensureAudio(); soundOn = !soundOn;
   document.getElementById('soundBtn').textContent = soundOn ? '🔊' : '🔇';
   if(soundOn) playChime();
 });
 joyEl.addEventListener('touchstart', ()=>ensureAudio(), {passive:true});
-document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
-  try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
-  try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
-  document.getElementById('start').style.display='none';
-});
 document.getElementById('rotL').addEventListener('click', ()=>{ camYaw -= Math.PI/4; });
 document.getElementById('rotR').addEventListener('click', ()=>{ camYaw += Math.PI/4; });
 let dragX = null;
