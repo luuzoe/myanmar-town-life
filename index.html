@@ -42,6 +42,7 @@
   @media(pointer:coarse){#hint{display:none}}
   @media(max-height:500px){#hint{display:none}}
   @media(pointer:fine){#joy{display:none}}
+  #minimap{position:fixed;top:56px;right:12px;width:160px;height:80px;border-radius:12px;z-index:10;opacity:.92}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -63,6 +64,7 @@
 </div>
 <button id="rotL">↺</button><button id="rotR">↻</button>
 <button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
+<canvas id="minimap" width="160" height="80"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
   <p>🌾 ၅၀၀ · 🏪 ၈၀၀ · 🛵 ၁၀၀၀ ကျပ်</p>
@@ -686,7 +688,19 @@ function nearest(){
   if(delivery) opts.push({d:dist(delivery.x,delivery.z), label:'📦 '+delivery.label+' ကို ပို့မယ်', fn:deliver, r:delivery.r});
   opts.sort((a,b)=>a.d-b.d);
   const top = opts[0];
-  return top.d < (top.r ? top.r+3 : 12) ? top : null;
+  if(top.d < (top.r ? top.r+3 : 12)) return top;
+  // NPC talk: only when no building/delivery action is closer (so shopkeeper never blocks shop)
+  const npcOpts = [];
+  for(const p of [...npcs.map(n=>n.p), ...yardPeople.map(y=>y.p), ...schoolKids.map(k=>k.p), ...staticPeople]){
+    const d = dist(p.g.position.x, p.g.position.z);
+    if(d < 4) npcOpts.push({d, label:'💬 စကားပြောမယ်', fn:talk});
+  }
+  npcOpts.sort((a,b)=>a.d-b.d);
+  return npcOpts.length ? npcOpts[0] : null;
+}
+function talk(){
+  const msgs = ['မင်္ဂလာပါ! မြို့လေးကို လာလည်တာ ဝမ်းသာတယ်', 'ဒီနေ့ ရာသီဥတု ကောင်းတယ်', 'ဈေးကြီးမှာ ပစ္စည်းစုံတယ်', 'တောင်တန်းဘက် သွားရင် ရေချောင်းကို တံတားနဲ့ ဖြတ်ပါ', 'လယ်ရိတ်ရင် ၅၀၀၊ ဈေးရောင်းရင် ၈၀၀ ရတယ်', 'ကျောင်းမှာ ကလေးတွေ စာသင်နေတယ်'];
+  showMsg(msgs[Math.floor(Math.random()*msgs.length)]);
 }
 function harvest(){
   if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
@@ -714,7 +728,12 @@ function deliver(){
 }
 beacon.position.set(0,-20,0);
 const keys = {};
-addEventListener('keydown', e=>{ keys[e.code]=true; if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike(); });
+addEventListener('keydown', e=>{
+  keys[e.code]=true;
+  const uiOpen = document.getElementById('shop').style.display==='flex' || document.getElementById('start').style.display!=='none';
+  if(uiOpen) return;
+  if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike();
+});
 addEventListener('keyup', e=>keys[e.code]=false);
 let joy = {x:0,y:0};
 const joyEl = document.getElementById('joy'), knob = document.getElementById('knob');
@@ -728,7 +747,7 @@ function joyEnd(){ joy = {x:0,y:0}; knob.style.left='35px'; knob.style.top='35px
 joyEl.addEventListener('touchstart', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
 joyEl.addEventListener('touchmove', e=>{e.preventDefault(); joyMove(e);}, {passive:false});
 joyEl.addEventListener('touchend', joyEnd);
-function doAction(){ const n = nearest(); if(n) n.fn(); else showMsg('အနီးမှာ လုပ်စရာမရှိဘူး — လယ် / ဈေး / ဆိုင် ဆီ သွားပါ'); }
+function doAction(){ const n = nearest(); if(n) n.fn(); else showMsg('အနီးမှာ လုပ်စရာမရှိဘူး — လယ် / ဈေး / ဆိုင် / ရွာသား ဆီ သွားပါ'); }
 function toggleBike(){ riding = !riding; bikeG.visible = riding; refresh(); }
 actBtn.addEventListener('click', doAction);
 document.getElementById('bikeBtn').addEventListener('click', toggleBike);
@@ -767,7 +786,36 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; } 
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10;
+let last = performance.now(), walkT = 0, dayT = 45, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0;
+// ---- minimap: town + east (stream, fields, mountains), player + beacons + NPCs ----
+const minimapEl = document.getElementById('minimap'), minimapCtx = minimapEl ? minimapEl.getContext('2d') : null;
+function drawMinimap(){
+  if(!minimapCtx) return;
+  const ctx = minimapCtx, S = 160/560, offY = (80 - 260*S)/2;
+  const mx = x => (x+135)*S, my = z => (z+130)*S + offY;
+  ctx.clearRect(0,0,160,80); ctx.fillStyle = '#6fbf5a'; ctx.fillRect(0,0,160,80);
+  ctx.fillStyle = '#444444';
+  for(const r of roadLines){ ctx.fillRect(mx(r)-1, my(-130), 2, 260*S); ctx.fillRect(mx(-130), my(r)-1, 560*S, 2); }
+  ctx.fillStyle = '#2196f3'; ctx.fillRect(mx(169), my(-130), 12*S, 260*S);
+  ctx.fillStyle = '#8d5a2b';
+  for(const f of fieldCenters) ctx.fillRect(mx(f[0]-11), my(f[1]-14), 22*S, 28*S);
+  ctx.fillStyle = '#607d8b';
+  for(const m of [[320,0],[300,-90],[300,90],[350,-50],[350,50],[330,120],[330,-120]]) ctx.fillRect(mx(m[0])-3, my(m[1])-3, 6, 6);
+  ctx.fillStyle = '#ffffff';
+  for(const h of houseList) ctx.fillRect(mx(h[0])-1, my(h[1])-1, 2, 2);
+  ctx.fillStyle = '#ffeb3b'; ctx.fillRect(mx(-100)-2, my(60)-2, 4, 4);
+  ctx.fillStyle = '#e53935'; ctx.fillRect(mx(100)-2, my(-20)-2, 4, 4);
+  ctx.fillStyle = '#ef6c00'; ctx.fillRect(mx(95)-2, my(-72)-2, 4, 4);
+  ctx.fillStyle = '#2e7d32'; ctx.fillRect(mx(12)-2, my(-32)-2, 4, 4);
+  if(delivery){ ctx.fillStyle = '#ffeb3b'; ctx.fillRect(mx(delivery.x)-2, my(delivery.z)-2, 4, 4); }
+  else if(shopBeacon.position.y >= 0){ ctx.fillStyle = '#2e7d32'; ctx.fillRect(mx(12)-2, my(-32)-2, 4, 4); }
+  ctx.fillStyle = '#ec407a';
+  for(const p of [...npcs.map(n=>n.p), ...yardPeople.map(y=>y.p), ...schoolKids.map(k=>k.p), ...staticPeople]) ctx.fillRect(mx(p.g.position.x)-1, my(p.g.position.z)-1, 2, 2);
+  const px = mx(player.g.position.x), py = my(player.g.position.z);
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px, py);
+  ctx.lineTo(px + Math.sin(player.g.rotation.y)*7, py + Math.cos(player.g.rotation.y)*7); ctx.stroke();
+}
 function camBlocked(camX, camZ, px, pz){
   for(const c of [...colliders, ...treeBlockers]){
     if(c.cam === false) continue;
@@ -797,7 +845,8 @@ function animate(now){
   hemi.intensity = 0.3 + dayF * 0.8;
   moon.visible = dayF < 0.5;
   moon.position.set(player.g.position.x - Math.cos(angle)*120, 70, player.g.position.z - 60);
-  const timeText = phase < 0.5 ? (dayF > 0.7 ? '🌞 နေ့' : '🌅 နံနက်/ညနေ') : '🌙 ည';
+  const hour = Math.floor((6 + phase*24) % 24);
+  const timeText = (phase < 0.5 ? (dayF > 0.7 ? '🌞' : '🌅') : '🌙') + ' ' + hour + ':00';
   if(timeText !== lastTimeText){ lastTimeText = timeText; timeEl.textContent = timeText; }
   let inRight = 0, inUp = 0;
   if(keys.KeyD || keys.ArrowRight) inRight += 1;
@@ -805,6 +854,7 @@ function animate(now){
   if(keys.KeyW || keys.ArrowUp) inUp += 1;
   if(keys.KeyS || keys.ArrowDown) inUp -= 1;
   inRight += joy.x; inUp += -joy.y;
+  if(document.getElementById('shop').style.display==='flex' || document.getElementById('start').style.display!=='none'){ inRight = 0; inUp = 0; }
   const camFwd = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   const camRight = {x: -Math.cos(camYaw), z: Math.sin(camYaw)};
   let dx = camRight.x*inRight + camFwd.x*inUp;
@@ -903,6 +953,7 @@ function animate(now){
   if(beacon.position.y >= 0) beacon.position.y = Math.sin(now/300)*0.6;
   shopBeacon.rotation.y += dt*2;
   if(shopBeacon.position.y >= 0) shopBeacon.position.y = Math.sin(now/300)*0.6;
+  if(++mapFrame % 3 === 0) drawMinimap();
   // smooth rot-button turn: camYaw glides to target, never snaps 45 degrees at once
   {
     let cdiff = targetCamYaw - camYaw;
