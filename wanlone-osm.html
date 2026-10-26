@@ -29,7 +29,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head><body>
-<div id="debug" style="position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:#fff;padding:6px;font-size:12px;z-index:99;white-space:pre-wrap"></div><canvas id="game"></canvas><canvas id="mini" width="132" height="132" style="position:fixed;right:8px;top:100px;width:132px;height:132px;border-radius:12px;border:2px solid rgba(0,0,0,.5);z-index:10;background:#9dbb7d"></canvas>
+<div id="debug" style="position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:#fff;padding:6px;font-size:12px;z-index:99;white-space:pre-wrap"></div><canvas id="game"></canvas>
 <div id="hud"><div class="pill">⭐ <b id="score">0</b></div><div class="pill">📍 <b id="found">0</b>/<span id="total">0</span></div><div class="pill">⏱️ <span id="clock">00:00</span></div><div class="pill" id="mode">🚶 လမ်းလျှောက်</div></div>
 <div id="list"><b id="listHead">ရှာရမယ့်နေရာများ ▼</b><div id="items"></div></div>
 <div id="msg"></div>
@@ -67,6 +67,23 @@ for (let i = 0; i < 9; i++){
   cg.position.set(-600 + i*150, 90 + (i%3)*15, -300 + (i%4)*150); scene.add(cg); clouds.push(cg);
 }
 function mat(c){ return new THREE.MeshLambertMaterial({color: c}); }
+function windowTexture(){
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+  const cx = cv.getContext('2d');
+  cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, 256, 256);
+  // window grid: dark glass with a lit frame, 4 cols x 4 rows per tile
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++){
+    const x = 12 + c*64, y = 12 + r*64;
+    cx.fillStyle = '#2b3a4a'; cx.fillRect(x, y, 40, 44);
+    cx.fillStyle = 'rgba(180,220,255,0.35)'; cx.fillRect(x, y, 40, 14);
+    cx.fillStyle = '#dddddd'; cx.fillRect(x+18, y, 4, 44); cx.fillRect(x, y+20, 40, 4);
+  }
+  const tx = new THREE.CanvasTexture(cv);
+  tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(0.12, 0.12);
+  return tx;
+}
+const winTex = windowTexture();
+function wallMat(c){ return new THREE.MeshLambertMaterial({color: c, map: winTex}); }
 function box(w, h, d, c, x, y, z, parent){
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
   m.position.set(x, y, z); (parent || scene).add(m); return m;
@@ -86,7 +103,7 @@ for (const l of DATA.landuse) flatShape(l.pts, LU[l.kind] || 0xd0d0d0, 0.06);
 for (const w of DATA.waters) if (w.kind === 'poly') flatShape(w.pts, 0x4fc3f7, 0.1);
 // roads as one merged coloured quad mesh
 const RW = {trunk: 11, primary: 9, secondary: 8, tertiary: 7, residential: 5, unclassified: 5, living_street: 4, service: 3.5, footway: 2, path: 2, steps: 2, track: 3, construction: 5};
-const RC = {trunk: 0xd96c4a, primary: 0xe8a040, secondary: 0xe8c860, tertiary: 0xf2f2f2, residential: 0xe8e8e8, unclassified: 0xe0e0e0, living_street: 0xe8e8e8, service: 0xcccccc, footway: 0xb0a090, path: 0xb0a090, steps: 0xb0a090, track: 0xc9b48a, construction: 0xcccccc};
+const RC = {trunk: 0x2f2f2f, primary: 0x353535, secondary: 0x3d3d3d, tertiary: 0x454545, residential: 0x4d4d4d, unclassified: 0x4d4d4d, living_street: 0x4d4d4d, service: 0x555555, footway: 0x8a7f70, path: 0x8a7f70, steps: 0x8a7f70, track: 0xc9b48a, construction: 0x555555};
 (function buildRoads(){
   const pos = [], col = [], idx = [];
   function quad(p1, p2, w, c, y){
@@ -123,13 +140,22 @@ const RC = {trunk: 0xd96c4a, primary: 0xe8a040, secondary: 0xe8c860, tertiary: 0
   for (const r of DATA.roads){
     const w = RW[r.type] || 4;
     for (let i = 0; i + 1 < r.pts.length; i++) quad2(sp, sc, si, r.pts[i], r.pts[i+1], w + 3, 0x9e9e9e, 0.12);
-    if (['trunk', 'primary', 'secondary'].includes(r.type)){
+    if (['trunk', 'primary', 'secondary', 'tertiary'].includes(r.type)){
+      const dashCol = (r.type === 'trunk' || r.type === 'primary') ? 0xffeb3b : 0xffffff;
       for (let i = 0; i + 1 < r.pts.length; i++){
         const a = r.pts[i], b = r.pts[i+1], L = Math.hypot(b[0]-a[0], b[1]-a[1]);
         for (let d = 0; d + 3 < L; d += 7){
           const t0 = d/L, t1 = (d+3)/L;
-          quad2(sp, sc, si, [a[0]+(b[0]-a[0])*t0, a[1]+(b[1]-a[1])*t0], [a[0]+(b[0]-a[0])*t1, a[1]+(b[1]-a[1])*t1], 0.6, 0xffeb3b, 0.19);
+          quad2(sp, sc, si, [a[0]+(b[0]-a[0])*t0, a[1]+(b[1]-a[1])*t0], [a[0]+(b[0]-a[0])*t1, a[1]+(b[1]-a[1])*t1], 0.5, dashCol, 0.19);
         }
+      }
+      // white edge lines on main roads
+      for (let i = 0; i + 1 < r.pts.length; i++){
+        const a = r.pts[i], b = r.pts[i+1], L = Math.hypot(b[0]-a[0], b[1]-a[1]);
+        if (L < 0.5) continue;
+        const px = -(b[1]-a[1])/L, pz = (b[0]-a[0])/L, hw = w/2 - 0.4;
+        quad2(sp, sc, si, [a[0]+px*hw, a[1]+pz*hw], [b[0]+px*hw, b[1]+pz*hw], 0.3, 0xffffff, 0.18);
+        quad2(sp, sc, si, [a[0]-px*hw, a[1]-pz*hw], [b[0]-px*hw, b[1]-pz*hw], 0.3, 0xffffff, 0.18);
       }
     }
   }
@@ -164,7 +190,7 @@ for (const b of DATA.buildings){
   const h = heightOf(b);
   const g = new THREE.ExtrudeGeometry(sh, {depth: h, bevelEnabled: false});
   g.rotateX(-Math.PI/2);
-  const m = new THREE.Mesh(g, mat(bcolor(b))); scene.add(m);
+  const m = new THREE.Mesh(g, wallMat(bcolor(b))); scene.add(m);
   { const xs = b.pts.map(p => p[0]), zs = b.pts.map(p => p[1]);
     const w = Math.max(...xs) - Math.min(...xs), d = Math.max(...zs) - Math.min(...zs);
     const cx = (Math.max(...xs) + Math.min(...xs))/2, cz = (Math.max(...zs) + Math.min(...zs))/2;
@@ -192,7 +218,7 @@ const houseRects = [];
 if (DATA.houses && DATA.houses.length){
   const bodyGeo = new THREE.BoxGeometry(1, 1, 1);
   const roofGeo = new THREE.ConeGeometry(0.75, 0.5, 4);
-  const bodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshLambertMaterial({color: 0xffffff}), DATA.houses.length);
+  const bodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshLambertMaterial({color: 0xffffff, map: winTex}), DATA.houses.length);
   const roofs = new THREE.InstancedMesh(roofGeo, new THREE.MeshLambertMaterial({color: 0xb3402a}), DATA.houses.length);
   const dummy = new THREE.Object3D(), col = new THREE.Color();
   const palette = [0xfff2cc, 0xddeeff, 0xffe0e0, 0xe0ffe0, 0xf5f5f5, 0xfff8dc];
@@ -319,16 +345,6 @@ for (let i = 0; i < 6 && longRoads.length; i++){
   scene.add(g);
   traffic.push({g, pts, seg: 0, t: 0, dir: 1, speed: 11 + i*2});
 }
-// minimap (drawn once, player dot each frame)
-const mini = document.getElementById('mini'), mctx = mini.getContext('2d');
-(function drawMiniBase(){
-  mctx.fillStyle = '#9dbb7d'; mctx.fillRect(0, 0, 132, 132);
-  const sc = 132/1700, ox = 66, oy = 66;
-  const MX = x => ox + x*sc, MZ = z => oy + z*sc;
-  for (const r of DATA.roads){ mctx.strokeStyle = '#dddddd'; mctx.lineWidth = 1; mctx.beginPath(); r.pts.forEach((p, i) => { if (i === 0) mctx.moveTo(MX(p[0]), MZ(p[1])); else mctx.lineTo(MX(p[0]), MZ(p[1])); }); mctx.stroke(); }
-  for (const b of DATA.buildings){ mctx.fillStyle = '#e8ddd0'; mctx.beginPath(); b.pts.forEach((p, i) => { if (i === 0) mctx.moveTo(MX(p[0]), MZ(p[1])); else mctx.lineTo(MX(p[0]), MZ(p[1])); }); mctx.closePath(); mctx.fill(); }
-  for (const cp of DATA.checkpoints){ mctx.fillStyle = '#ffeb3b'; mctx.beginPath(); mctx.arc(MX(cp.x), MZ(cp.z), 3, 0, Math.PI*2); mctx.fill(); }
-})();
 // input
 const keys = {};
 addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (e.key.toLowerCase() === 'c') toggleCar(); });
@@ -369,12 +385,15 @@ async function lockLandscape(){
   try{ if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
 }
 document.getElementById('landBtn').addEventListener('click', lockLandscape);
-let camAngle = Math.PI, camAutoUntil = 0;
+let camAngle = Math.PI, camAutoUntil = 0, camPitch = 0.45, camDist = 16;
 document.getElementById('rotL').addEventListener('click', () => { camAngle -= 0.6; camAutoUntil = performance.now() + 8000; });
 document.getElementById('rotR').addEventListener('click', () => { camAngle += 0.6; camAutoUntil = performance.now() + 8000; });
 let dragX = null;
 canvas.addEventListener('pointerdown', e => { dragX = e.clientX; });
-canvas.addEventListener('pointermove', e => { if (dragX !== null){ camAngle += (e.clientX - dragX) * 0.01; dragX = e.clientX; camAutoUntil = performance.now() + 8000; } });
+let dragY = null;
+canvas.addEventListener('pointerdown', e => { dragY = e.clientY; });
+canvas.addEventListener('pointermove', e => { if (dragX !== null){ camAngle += (e.clientX - dragX) * 0.01; camPitch = Math.max(0.15, Math.min(1.1, camPitch + (e.clientY - (dragY ?? e.clientY)) * 0.005)); dragX = e.clientX; dragY = e.clientY; camAutoUntil = performance.now() + 8000; } });
+addEventListener('pointerup', () => { dragY = null; });
 addEventListener('pointerup', () => { dragX = null; });
 document.getElementById('playBtn').addEventListener('click', () => {
   document.getElementById('start').style.display = 'none'; started = true; startTime = performance.now();
@@ -476,9 +495,10 @@ function animate(now){
     let dd = heading + Math.PI - camAngle; while (dd > Math.PI) dd -= Math.PI*2; while (dd < -Math.PI) dd += Math.PI*2;
     if (performance.now() > camAutoUntil) camAngle += dd * Math.min(1, dt*2);
   }
-  const target = new THREE.Vector3(cur.x + Math.sin(camAngle)*22, 22, cur.z + Math.cos(camAngle)*22);
-  camera.position.lerp(target, 0.12);
-  camera.lookAt(cur.x, 1, cur.z);
+  const horiz = camDist * Math.cos(camPitch), vert = camDist * Math.sin(camPitch);
+  const target = new THREE.Vector3(cur.x + Math.sin(camAngle)*horiz, 1 + vert, cur.z + Math.cos(camAngle)*horiz);
+  camera.position.lerp(target, 0.15);
+  camera.lookAt(cur.x, 1.5, cur.z);
   for (const cg of clouds){ cg.position.x += dt*2; if (cg.position.x > 700) cg.position.x = -700; }
   for (const tc of traffic){
     const a = tc.pts[tc.seg], b = tc.pts[Math.min(tc.seg+1, tc.pts.length-1)];
@@ -490,17 +510,6 @@ function animate(now){
     const px = aa[0] + (bb[0]-aa[0])*tc.t, pz = aa[1] + (bb[1]-aa[1])*tc.t;
     tc.g.position.set(px, 0, pz);
     tc.g.rotation.y = Math.atan2((bb[0]-aa[0])*tc.dir, (bb[1]-aa[1])*tc.dir);
-  }
-  // minimap player dot (throttled: every 6th frame)
-  if (Math.floor(t*10) % 2 === 0){
-    mctx.fillStyle = '#9dbb7d'; mctx.fillRect(0, 0, 132, 132);
-    // redraw base quickly: roads only + player
-    const sc = 132/1700, ox = 66, oy = 66;
-    mctx.strokeStyle = '#dddddd'; mctx.lineWidth = 1;
-    for (const r of DATA.roads){ mctx.beginPath(); r.pts.forEach((p, i) => { const sx = ox + p[0]*sc, sy = oy + p[1]*sc; if (i === 0) mctx.moveTo(sx, sy); else mctx.lineTo(sx, sy); }); mctx.stroke(); }
-    mctx.fillStyle = inCar ? '#d32f2f' : '#1565c0';
-    mctx.beginPath(); mctx.arc(ox + cur.x*sc, oy + cur.z*sc, 4, 0, Math.PI*2); mctx.fill();
-    mctx.fillStyle = '#fff'; mctx.font = 'bold 10px sans-serif'; mctx.textAlign = 'center'; mctx.fillText('YOU', ox + cur.x*sc, oy + cur.z*sc - 8);
   }
   renderer.render(scene, camera);
 }
