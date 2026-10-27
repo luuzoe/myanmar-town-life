@@ -13,7 +13,7 @@
   .pill b{color:#ffd54a}
   #job{position:fixed;top:48px;left:8px;right:8px;z-index:10;pointer-events:none}
   #job span{background:rgba(255,255,255,.92);padding:6px 10px;border-radius:12px;font-size:13px;display:inline-block}
-  #msg{position:fixed;top:88px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:10;display:none;max-width:92vw;text-align:center}
+  #msg{position:fixed;top:88px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:25;display:none;max-width:92vw;text-align:center} /* V62: above shop overlay (20) so purchase messages stay visible */
   #joy{position:fixed;left:16px;bottom:16px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
   #knob{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9)}
   #btns{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:row;gap:8px;z-index:10;align-items:flex-end}
@@ -31,7 +31,7 @@
   #start p{margin:6px 0;line-height:1.5;font-size:15px}
   #start button{margin-top:10px;background:#2e7d32;color:#fff;border:none;padding:13px 22px;border-radius:14px;font-size:18px;font-weight:700;width:100%}
   #shop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
-  #shop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%}
+  #shop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto} /* V62: close button always reachable on small screens */
   #shop button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
   .buy{background:#2e7d32;color:#fff}
   .close{background:#eee}
@@ -1225,6 +1225,7 @@ beacon.position.set(0,-20,0);
 const keys = {};
 addEventListener('keydown', e=>{
   keys[e.code]=true;
+  if(e.code==='Escape'){ const sh = document.getElementById('shop'); if(sh.style.display==='flex'){ sh.style.display='none'; return; } const tu = document.getElementById('tutorial'); if(tu.style.display==='flex'){ tu.style.display='none'; return; } } // V62: Escape closes shop/tutorial (old code returned early when UI open, so Escape did nothing)
   const uiOpen = document.getElementById('shop').style.display==='flex' || document.getElementById('start').style.display!=='none';
   if(uiOpen) return;
   if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike(); if(e.code==='KeyP'){ paused = !paused; document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸'; showMsg(paused ? '⏸ ရပ်ထားတယ် (P နဲ့ ပြန်စ)' : '▶ ပြန်ဆော့နေပြီ'); }
@@ -1260,7 +1261,8 @@ function doAction(){ const n = nearest(); if(n) n.fn(); else showMsg('အနီ�
 function toggleBike(){ riding = !riding; bikeG.visible = riding; refresh(); }
 actBtn.addEventListener('click', doAction);
 document.getElementById('bikeBtn').addEventListener('click', toggleBike);
-document.getElementById('shopBtn').addEventListener('click', ()=>{ ensureAudio(); playChime(); refresh(); document.getElementById('shop').style.display='flex'; });
+document.getElementById('shopBtn').addEventListener('click', ()=>{ const sh = document.getElementById('shop'); if(sh.style.display==='flex'){ sh.style.display='none'; return; } ensureAudio(); playChime(); refresh(); sh.style.display='flex'; }); // V62: cart button toggles (was open-only)
+document.getElementById('shop').addEventListener('click', e=>{ if(e.target.id==='shop') e.currentTarget.style.display='none'; }); // V62: tap outside the card closes the shop
 document.getElementById('closeShop').addEventListener('click', ()=>document.getElementById('shop').style.display='none');
 document.getElementById('buyBike').addEventListener('click', ()=>{ if(!fastBike && money>=2000){ money-=2000; fastBike=true; save(); refresh(); showMsg('🏍️ ဆိုင်ကယ်မြန် ရပြီ'); } });
 document.getElementById('buyBasket').addEventListener('click', ()=>{ if(!bigBasket && money>=3000){ money-=3000; bigBasket=true; save(); refresh(); showMsg('🧺 ခြင်းကြီး ရပြီ၊ ပို့ခ ၁.၅ ဆ'); } });
@@ -1278,6 +1280,7 @@ document.getElementById('tutorialBtn').addEventListener('click', ()=>{ document.
 document.getElementById('closeTutorial').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='none'; });
 document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = !photoMode; const d = photoMode ? 'none' : '';
   for(const id of ['hud','job','joy','btns','rotL','rotR','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
+  if(!photoMode) camPitch = Math.atan(4.3/16); // V62: restore normal camera pitch on exit (was staying high)
   showMsg(photoMode ? '📸 ဓာတ်ပုံမုဒ် — ပြန်ထွက်ချင် 📸 နှိပ်' : '📸 ဓာတ်ပုံမုဒ် ပိတ်ပြီ'); });
 document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCar) return; tone(420,0.3,0.08,'square'); setTimeout(()=>tone(520,0.3,0.08,'square'),120); showMsg('📣 ဟွန်း!'); });
 document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
