@@ -810,6 +810,16 @@ const SEAT_POSE = {
   L_Calf: [-0.8274, 0.0036, -0.0012, 0.5616], R_Calf: [-0.8266, -0.0052, 0.0218, 0.5624]
 };
 const _brQ = new THREE.Quaternion(), _brAxis = new THREE.Vector3(1,0,0); // V71: breathing rotation temp
+// V72: true standing pose — the GLB rest pose is an A-pose (arms spread ~35 deg out, elbows bent ~38 deg, feet 0.43m apart).
+// These 8 joint quats (solved by 2-bone IK from the bind data, verified: hands hang at sides, feet 0.29m apart) replace rest for those joints when idle.
+const STANDING_POSE = {
+  L_Upperarm: [0.0382, -0.0367, -0.6213, 0.7818], L_Forearm: [0.0779, 0.2377, -0.0489, 0.9670],
+  R_Upperarm: [-0.1296, 0.1413, 0.5561, 0.8087], R_Forearm: [0.0641, -0.2862, 0.0613, 0.9541],
+  L_Thigh: [0.9967, -0.0068, 0.0002, 0.0814], L_Calf: [-0.0547, 0.0105, -0.0007, 0.9984],
+  R_Thigh: [0.9972, 0.0354, -0.0010, 0.0659], R_Calf: [-0.0577, -0.0081, 0.0007, 0.9983]
+};
+const STANDING_Q = {};
+for(const k in STANDING_POSE) STANDING_Q[k] = new THREE.Quaternion().fromArray(STANDING_POSE[k]);
 // V61: idle pose time = 0.667s into the walk clip, the passing pose where the two
 // feet are closest together (measured from the clip: 0.087 GLB units apart).
 new GLTFLoader().load('character.glb', (gltf)=>{
@@ -1712,13 +1722,13 @@ function animate(now){
       if(glbBody) glbBody.position.y = -0.35; // hips down to seat height
     } else if(glbBody){
       glbBody.position.y = 0.05;
-      // V71: idle = true rest pose + breathing, NOT a frozen walk frame (at 0.667 the arms were swung 0.5+ rad mid-stride — looked like a statue)
+      // V72: idle blends to the STANDING_POSE (arms at sides, feet together-ish), not the A-pose rest — V71's rest had arms spread wide
       if(!moving && glbRest && glbBones){
         idleBlend = Math.min(1, idleBlend + dt*5);
         for(const name in glbRest){
           const b = glbBones[name]; if(!b) continue;
           b.position.lerp(glbRest[name].p, idleBlend);
-          b.quaternion.slerp(glbRest[name].q, idleBlend);
+          b.quaternion.slerp(STANDING_Q[name] || glbRest[name].q, idleBlend);
         }
         const sp = glbBones['Spine02'];
         if(sp) sp.quaternion.multiply(_brQ.setFromAxisAngle(_brAxis, Math.sin(gt*1.6)*0.012)); // breathing
