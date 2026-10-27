@@ -36,8 +36,8 @@
   .buy{background:#2e7d32;color:#fff}
   .close{background:#eee}
   #hint{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:12px;font-size:13px;z-index:5;white-space:nowrap}
-  #rotL,#rotR,#lookBtn{position:fixed;bottom:134px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10}
-  #rotL{left:16px} #rotR{left:64px} #lookBtn{left:112px}
+  #rotL,#rotR{position:fixed;bottom:134px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10}
+  #rotL{left:16px} #rotR{left:64px}
   @media(max-width:700px){#hint{display:none}}
   @media(pointer:coarse){#hint{display:none}}
   @media(max-height:500px){#hint{display:none}}
@@ -68,7 +68,7 @@
   <button id="hornBtn" style="display:none;background:#e53935;font-size:22px">📣</button>
   <button id="busDestBtn" style="display:none;background:#1565c0;font-size:14px">🚌 ဂိတ်</button>
 </div>
-<button id="rotL">↺</button><button id="rotR">↻</button><button id="lookBtn">⬆️</button>
+<button id="rotL">↺</button><button id="rotR">↻</button>
 <button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
 <button id="pauseBtn" style="position:fixed;right:56px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">⏸</button>
 <button id="photoBtn" style="position:fixed;right:100px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">📸</button>
@@ -76,7 +76,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V78</div>
+  <div style="font-size:12px;opacity:.6">V79</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
 </div></div>
@@ -1447,8 +1447,7 @@ document.getElementById('pauseBtn').addEventListener('click', ()=>{ paused = !pa
 document.getElementById('tutorialBtn').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='flex'; });
 document.getElementById('closeTutorial').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='none'; });
 document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = !photoMode; const d = photoMode ? 'none' : '';
-  for(const id of ['hud','job','joy','btns','rotL','rotR','lookBtn','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
-  if(!photoMode){ lookUp = false; const lb = document.getElementById('lookBtn'); if(lb) lb.textContent = '⬆️'; } // V78: look-up off on photo exit
+  for(const id of ['hud','job','joy','btns','rotL','rotR','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
   showMsg(photoMode ? '📸 ဓာတ်ပုံမုဒ် — ပြန်ထွက်ချင် 📸 နှိပ်' : '📸 ဓာတ်ပုံမုဒ် ပိတ်ပြီ'); });
 document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCar) return; tone(420,0.3,0.08,'square'); setTimeout(()=>tone(520,0.3,0.08,'square'),120); showMsg('📣 ဟွန်း!'); });
 document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
@@ -1472,12 +1471,11 @@ joyEl.addEventListener('touchstart', ()=>ensureAudio(), {passive:true});
 let targetCamYaw = Math.PI;
 document.getElementById('rotL').addEventListener('click', ()=>{ targetCamYaw += Math.PI/4; });
 document.getElementById('rotR').addEventListener('click', ()=>{ targetCamYaw -= Math.PI/4; });
-document.getElementById('lookBtn').addEventListener('click', ()=>{ lookUp = !lookUp; document.getElementById('lookBtn').textContent = lookUp ? '⬇️' : '⬆️'; showMsg(lookUp ? '👀 အပေါ်မော့ကြည့်နေပြီ — ပြန်ချချင် ⬇️ နှိပ်' : '⬇️ ပုံမှန်ပြန်ကြည့်နေပြီ'); }); // V78: look-up toggle (slow glide, no drag-pitch dizziness)
 let dragId = null, dragX = null, dragY = null;
 // camera pitch: drag up = LOOK UP (camera lower), drag down = LOOK DOWN (camera higher)
 // default pitch = atan((6.5-2.2)/16) = 15 degrees
-let smoothPitch = Math.atan(4.3/16);
-let lookUp = false; // V78: look-up is a button toggle now, not drag (drag-pitch caused dizziness)
+let camPitch = Math.atan(4.3/16);
+let smoothPitch = camPitch; // V79: drag-pitch restored (button removed on Zaw's word) — slow drag + slow glide
 canvas.addEventListener('pointerdown', e=>{
   if(dragId === null){ dragId = e.pointerId; dragX = e.clientX; dragY = e.clientY; }
 });
@@ -1486,8 +1484,9 @@ addEventListener('pointermove', e=>{
     // drag direction = view direction: drag right -> view right, drag left -> view left
     // (old sign was inverted: camYaw increase turns the view left, so drag must subtract)
     camYaw -= (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
-    // V78: vertical drag no longer pitches (it caused dizzy swings) — look-up is the ⬆️ button now
-    dragY = e.clientY;
+    // V79: drag up = look up (camera lower), drag down = look down — restored on Zaw's word, much slower
+    camPitch += (e.clientY - dragY)*0.0015; dragY = e.clientY; // was 0.005/0.003 — too fast and dizzy
+    camPitch = Math.max(-0.35, Math.min(1.22, camPitch)); // -20deg (look up) to 70deg (look down)
   }
 });
 function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dragY = null; } }
@@ -2234,7 +2233,7 @@ function animate(now){
   // pitch: camera height follows pitch (drag up/down), default 15deg = smoothCamH
   // V76: looking up — camera drops to near ground (never below it) and the gaze rises toward tower tops
   // V77: pitch is smoothed (lerped) so looking up glides instead of snapping — no more dizziness
-  smoothPitch += ((lookUp ? -0.28 : Math.atan(4.3/16)) - smoothPitch) * Math.min(1, dt*2); // V78: slow glide to the toggle target (was dt*4 + drag)
+  smoothPitch += (camPitch - smoothPitch) * Math.min(1, dt*2); // V79: slow glide to the drag target (button removed)
   const upExtra = Math.max(0, 0.09 - smoothPitch) * 20;
   let pitchH = smoothCamH + (Math.tan(smoothPitch) - Math.tan(Math.atan(4.3/16)))*smoothCamDist;
   pitchH = Math.max(0.5, player.g.position.y + 0.2, pitchH);
