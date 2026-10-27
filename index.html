@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V95</div>
+  <div style="font-size:12px;opacity:.6">V96</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -158,7 +158,7 @@ const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi)
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048); // V51: sharper shadows, less banding on flat roads
+sun.shadow.mapSize.set(1024, 1024); // V96: halved for phone perf (was 2048 — the shadow pass is the heaviest draw; slightly softer shadows)
 sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
 sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80; // V51: tighter shadow frustum around player
 sun.shadow.camera.near = 1; sun.shadow.camera.far = 250;
@@ -875,7 +875,7 @@ function animatePerson(p, moving, walkPhase, globalTime, riding){
 }
 function makeHumanNPC(scale, tint){
   const clone = cloneSkinned(glbBody);
-  clone.traverse((o)=>{ if(o.isMesh){ o.material = o.material.clone(); o.material.color.set(tint); o.castShadow = true; } });
+  clone.traverse((o)=>{ if(o.isMesh){ o.material = o.material.clone(); o.material.color.set(tint); o.castShadow = false; } });
   const g = new THREE.Group(); g.scale.setScalar(scale); g.add(clone);
   const bones = {}; clone.traverse((o)=>{ if(o.isBone) bones[o.name] = o; });
   for(const nm in bones){ const r = glbRest[nm]; if(r) bones[nm].position.copy(r.p); const q = STANDING_Q[nm] || (r && r.q); if(q) bones[nm].quaternion.copy(q); } // V78: standing pose base, not A-pose
@@ -919,7 +919,7 @@ function swapToRealModel(oldP, M){
   const clone = cloneSkinned(M.scene);
   clone.scale.setScalar(2.40); // same as player body (GLB height 1.0 -> 2.04 world at group 0.85)
   clone.rotation.y = -Math.PI/2; // same facing fix as the player (clip-space facing)
-  clone.traverse((o)=>{ if(o.isMesh) o.castShadow = true; });
+  clone.traverse((o)=>{ if(o.isMesh) o.castShadow = false; }); // V96: NPC shadows off (perf)
   const g = new THREE.Group();
   g.scale.setScalar(oldP.g.scale.x); // keep the V78 height variety / kid size
   g.add(clone);
@@ -945,6 +945,7 @@ function applyNpcModel(k){
 // V84: real-model NPC animation — play the model's own walk/idle clips; returns false for player-clone/blocky NPCs (old animatePerson path)
 function animateNpcModel(p, moving, dt){
   if(!p || !p.realModel || !p.mixer) return false;
+  if(Math.hypot(p.g.position.x - player.g.position.x, p.g.position.z - player.g.position.z) > 120) return true; // V96: far NPCs freeze (no mixer update) — walkers already had this guard, yard/kids/statics/workers did not
   const want = moving ? 'walk' : 'idle';
   if(p.curClip !== want){
     const from = p.curClip === 'walk' ? p.walkA : p.idleA;
@@ -1270,6 +1271,7 @@ function makeCar(color, type){
 const CAR_GLB_MODELS = ['sedan','suv','truck','van','taxi','police'];
 const carGlbTargets = []; // {g, model} — filled at car creation sites below
 const carGlbScenes = {};
+const carLambertCache = new Map(); // V96: Standard->Lambert materials, one per source material
 function swapCarGlb(t){
   const g = t.g; if(g.userData.glbApplied) return; const src = carGlbScenes[t.model]; if(!src) return;
   const clone = src.clone(true);
@@ -1278,7 +1280,7 @@ function swapCarGlb(t){
   const s = 4.2 / (lenZ * (g.scale.z || 1));
   clone.scale.setScalar(s);
   clone.position.set(-(bb.max.x + bb.min.x)/2, -bb.min.y, -(bb.max.z + bb.min.z)/2);
-  clone.traverse(o=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+  clone.traverse(o=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = false; if(o.material && o.material.isMeshStandardMaterial){ if(!carLambertCache.has(o.material)) carLambertCache.set(o.material, new THREE.MeshLambertMaterial({map: o.material.map})); o.material = carLambertCache.get(o.material); } } }); // V96: Lambert (same map) is much cheaper on phone GPUs; blob shadows ground the cars
   g.children.forEach(ch=>{ if(ch.userData.procMesh) ch.visible = false; });
   for(const sp of (g.userData.spokes || [])) sp.visible = false;
   for(const br of (g.userData.brakes || [])) br.visible = false;
@@ -2548,8 +2550,9 @@ function animate(now){
     targetH = Math.min(12, targetH + 0.8);
     if(targetDist <= 3) break;
   }
-  smoothCamDist += (targetDist - smoothCamDist) * Math.min(1, dt*8);
-  smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*8);
+  // V96: camera shake fix — pull in fast when blocked, ease out slow when clear (was same fast rate both ways, so the camera pumped in/out every time the blocked state flickered while strafing)
+  smoothCamDist += (targetDist - smoothCamDist) * Math.min(1, dt*(targetDist < smoothCamDist ? 8 : 2.5));
+  smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*(targetH > smoothCamH ? 8 : 2.5));
   // V83: pitch works EXACTLY like yaw — a pure rotation, no camera dive, no gaze shoot (the dive was the dizziness)
   // glide: same 4 rad/s rate limit as yaw (was dt*1.5 lerp — laggy/mushy, felt nothing like yaw)
   { const pdiff = camPitch - smoothPitch; const pstep = Math.max(-4*dt, Math.min(4*dt, pdiff)); smoothPitch += pstep; }
