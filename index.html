@@ -1001,7 +1001,12 @@ const QUESTS = [
   {label:'🎣 ငါးမျှား ၂ ခါ', key:'fish', target:2, reward:300},
   {label:'🏪 ဈေးရောင်း ၃ ခါ', key:'sell', target:3, reward:400},
   {label:'⛰️ တောင်တန်း ၁ ခါရောက်', key:'mountain', target:1, reward:500},
-];
+  {label:'🚕 Taxi ၂ ခါ ပို့', key:'taxi', target:2, reward:400},
+  {label:'🏠 အိမ် ၁ လုံးဝယ်', key:'house', target:1, reward:500},
+  {label:'🚌 ဘတ်စ်စီး ၂ ခါ', key:'bus', target:2, reward:300},
+  {label:'⚽ ဘောလုံးပွဲ ၁ ပွဲနိုင်', key:'matchwin', target:1, reward:500},
+  {label:'🐶 တိရစ္ဆာန် ၃ ကောင်ကျွေး', key:'feed', target:3, reward:300},
+]; // V67: quests 5 -> 10
 let questIdx = parseInt(localStorage.getItem('mtl_quest')||'0',10) || 0;
 let questProg = parseInt(localStorage.getItem('mtl_qprog')||'0',10) || 0;
 if(questIdx >= QUESTS.length) questIdx = 0;
@@ -1035,7 +1040,7 @@ const ownCar = makeCar(CAR_PAINTS[carPaintIdx]); ownCar.position.set(30,0,-12); 
 let driveCar = null, driveWheels = [], driveBrakes = [], driveMax = 30;
 const BUS_STOPS = [{label:'ဘတ်စ်ဂိတ်',x:100,z:-100},{label:'ကျောင်း',x:-100,z:60},{label:'ဆေးရုံ',x:100,z:-20},{label:'ဈေးကြီး',x:95,z:-72},{label:'ဘုရား',x:100,z:100},{label:'ပန်းခြံ',x:-120,z:120}];
 let busDest = null, busDestIdx = 0;
-let taxi = null;
+let taxi = null, taxiPerson = null;
 const TAXI_LANDMARKS = BUS_STOPS;
 let matchOn = false, matchTime = 0, myScore = 0, oppScore = 0;
 const oppPlayers = [];
@@ -1098,6 +1103,15 @@ function buildRoom(rx, rz){
   bx(3,0.5,6,0xe53935,rx-5,0.5,rz-5); bx(1,0.4,1,0xffffff,rx-5,0.9,rz-5);
   cyl(0.6,0.6,0.1,0x8d6e63,rx+3,0.8,rz); cyl(0.08,0.08,0.8,0x8d6e63,rx+3,0.4,rz);
   bx(0.5,0.5,0.5,0x6d4c41,rx+1,0.25,rz-2); bx(0.5,0.5,0.5,0x6d4c41,rx+5,0.25,rz+2);
+  // V67: furniture so owned rooms don't feel empty
+  bx(6,0.08,4,0x7b1fa2,rx,0.06,rz+1); // rug
+  bx(1.2,1.8,0.5,0x5d4037,rx+7,0.9,rz-7.5); // wardrobe
+  bx(3,0.6,1,0x1565c0,rx+8,0.3,rz+2); bx(3,0.9,0.4,0x1565c0,rx+8,0.45,rz+2.6); // sofa + backrest
+  bx(1.8,0.7,0.6,0x8d6e63,rx-8,0.35,rz-7); // bookshelf
+  cyl(0.25,0.25,0.08,0xffeb3b,rx-7,1.6,rz+5); cyl(0.05,0.05,1.6,0x37474f,rx-7,0.8,rz+5); // floor lamp
+  bx(1.6,0.15,1.6,0x795548,rx-3,0.75,rz+4); // dining table
+  bx(0.5,0.5,0.5,0x795548,rx-4.5,0.25,rz+4); bx(0.5,0.5,0.5,0x795548,rx-1.5,0.25,rz+4); // dining chairs
+  colliders.push({x:rx+8,z:rz+2,r:1.5}); colliders.push({x:rx+7,z:rz-7.5,r:1}); colliders.push({x:rx-8,z:rz-7,r:1});
   const sg = signMesh('🏠', '#fff2cc', '#000000', rx, 2.5, rz+7.8, 6, 1.5); sg.rotation.y = Math.PI;
   for(let wx=rx-8; wx<=rx+8; wx+=4){ colliders.push({x:wx,z:rz-8,r:1.2}); if(wx!==rx) colliders.push({x:wx,z:rz+8,r:1.2}); }
   for(let wz=rz-6; wz<=rz+6; wz+=4){ colliders.push({x:rx-10,z:wz,r:1.2}); colliders.push({x:rx+10,z:wz,r:1.2}); }
@@ -1122,18 +1136,21 @@ function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key)
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
   save(); refresh(); }
 function toggleBus(){ if(ridingBus){ ridingBus = false; busDest = null; bus.leg = 'x'; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဘတ်စ်က ဆင်းပြီ'); }
-  else { if(money < 200){ showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် လိုတယ်'); return; } money -= 200; ridingBus = true; riding = false; bikeG.visible = false; player.g.visible = false; gainXP(10); save(); showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် — ဂိတ်ရွေးချင် 🚌 ခလုတ် နှိပ်'); } refresh(); }
+  else { if(money < 200){ showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် လိုတယ်'); return; } money -= 200; ridingBus = true; riding = false; bikeG.visible = false; player.g.visible = false; gainXP(10); questProgress('bus'); save(); showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် — ဂိတ်ရွေးချင် 🚌 ခလုတ် နှိပ်'); } refresh(); }
 function startTaxi(){ if(taxi){ showMsg('🚕 Taxi ပို့နေဆဲ'); return; }
   const pk = intersections[Math.floor(Math.random()*intersections.length)];
   const dests = TAXI_LANDMARKS.filter(l=>Math.hypot(l.x-pk.x, l.z-pk.z) > 30);
   const dl = dests[Math.floor(Math.random()*dests.length)];
   taxi = {stage:'pickup', px:pk.x, pz:pk.z, dx:dl.x, dz:dl.z, dlabel:dl.label};
+  // V67: a visible passenger waits at the pickup point (was beacon-only)
+  if(!taxiPerson){ taxiPerson = makePerson(0xef6c00, 0x37474f, {skin:skins[0]}); taxiPerson.g.scale.setScalar(0.85); scene.add(taxiPerson.g); }
+  taxiPerson.g.position.set(pk.x, 0, pk.z); taxiPerson.g.visible = true;
   taxiBeacon.position.set(pk.x, 0, pk.z); showMsg('🚕 ခရီးသည် အဝါရောင်မီးတိုင်မှာ စောင့်နေတယ် — ကားနဲ့ သွားခေါ်'); }
 function startMatch(){ if(matchOn) return; matchOn = true; matchTime = 60; myScore = 0; oppScore = 0; ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; showMsg('⚽ ပွဲ စပြီ! ၆၀ စက္ကန့် — အနီအသင်းကို နိုင်အောင် ကန်ပါ'); }
 function kickBall(){ const d = Math.hypot(player.g.position.x-ball.position.x, player.g.position.z-ball.position.z); if(d > 4){ showMsg('⚽ ဘောလုံးနား သွားပါ'); return; }
   const gx = ball.position.x < -100 ? -87 : -113; const dx = gx-ball.position.x, dz = 100-ball.position.z, dl = Math.hypot(dx,dz)||1;
   ballVx = dx/dl*22; ballVz = dz/dl*22; gainXP(5); showMsg('⚽ ကန်လိုက်ပြီ!'); }
-function buyHouse(){ const price = 5000 + ownedHouses*3000; if(money < price){ showMsg('ငွေမလုံလောက်ဘူး — '+price+' လိုတယ်'); return; } money -= price; let hi = -1; for(let i=0;i<houseList.length;i++){ if(!ownedList.includes(i)){ hi = i; break; } } if(hi >= 0) ownedList.push(hi); ownedHouses = ownedList.length; gainXP(100); save(); refresh(); showMsg('🏠 အိမ်ဝယ်ပြီးပြီ! နေ့တိုင်း +၂၀၀'); }
+function buyHouse(){ const price = 5000 + ownedHouses*3000; if(money < price){ showMsg('ငွေမလုံလောက်ဘူး — '+price+' လိုတယ်'); return; } money -= price; let hi = -1; for(let i=0;i<houseList.length;i++){ if(!ownedList.includes(i)){ hi = i; break; } } if(hi >= 0) ownedList.push(hi); ownedHouses = ownedList.length; gainXP(100); questProgress('house'); save(); refresh(); showMsg('🏠 အိမ်ဝယ်ပြီးပြီ! နေ့တိုင်း +၂၀၀'); }
 function buyHouseItem(){ if(money < 1000){ showMsg('ငွေမလုံလောက်ဘူး'); return; } money -= 1000; houseItems++; gainXP(20); save(); refresh(); showMsg('🪑 အိမ်ပစ္စည်း +၁ — ငှားခ +၅၀'); }
 function buyStall(){ if(stallUpg){ showMsg('ဈေးဆိုင်ကြီး upgrade ပြီးပြီ'); return; } if(money < 4000){ showMsg('ငွေမလုံလောက်ဘူး'); return; } money -= 4000; stallUpg = true; gainXP(50); save(); refresh(); showMsg('🏪 ရောင်းခ ၁၂၀၀ ဖြစ်ပြီ'); }
 function buyOwnShop(){ if(ownShop){ showMsg('ကိုယ်ပိုင်ဆိုင် ရှိပြီးပြီ'); return; } if(money < 10000){ showMsg('ငွေမလုံလောက်ဘူး'); return; } money -= 10000; ownShop = true; gainXP(100); save(); refresh(); showMsg('🏪 ကိုယ်ပိုင်ဆိုင် ဖွင့်ပြီ! နေ့တိုင်း +၃၀၀'); }
@@ -1208,7 +1225,7 @@ function nearest(){
   }
   npcOpts.sort((a,b)=>a.d-b.d);
   if(npcOpts.length) return npcOpts[0];
-  for(const a of animals){ const d = dist(a.g.position.x, a.g.position.z); if(d < 3) return {d, label:'🐶 အစာကျွေးမယ် (+၅၀)', fn:()=>{ money += 50; gainXP(10); a.target = {x:player.g.position.x, z:player.g.position.z}; save(); refresh(); playCoin(); showMsg('🐶 အစာကျွေးပြီ +၅၀ ကျပ်'); }}; }
+  for(const a of animals){ const d = dist(a.g.position.x, a.g.position.z); if(d < 3) return {d, label:'🐶 အစာကျွေးမယ် (+၅၀)', fn:()=>{ money += 50; gainXP(10); questProgress('feed'); a.target = {x:player.g.position.x, z:player.g.position.z}; save(); refresh(); playCoin(); showMsg('🐶 အစာကျွေးပြီ +၅၀ ကျပ်'); }}; }
   return null;
 }
 function talk(){
@@ -1724,11 +1741,11 @@ function animate(now){
   if(ball.position.z < 90) { ball.position.z = 90; ballVz = -ballVz; } if(ball.position.z > 110) { ball.position.z = 110; ballVz = -ballVz; }
   for(const hd of houseDoors){ const dd = Math.hypot(player.g.position.x-hd.x, player.g.position.z-hd.z); const target = dd < 13 ? -1.9 : 0; hd.g.rotation.y += (target - hd.g.rotation.y) * Math.min(1, dt*6); }
   // V47: match timer + opponents + taxi
-  if(matchOn){ matchTime -= dt; if(matchTime <= 0){ matchOn = false; let rw = 0; if(myScore > oppScore) rw = 1000; else if(myScore === oppScore) rw = 300; if(rw > 0){ money += rw; gainXP(myScore > oppScore ? 50 : 20); save(); refresh(); playCoin(); } showMsg('⚽ ပွဲပြီးပြီ! သင် ' + myScore + ' - ' + oppScore + ' ပြိုင်ဘက် — ' + (rw > 0 ? '+'+rw+' ကျပ်' : 'ဆုမရပါ')); ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; for(let oi=0; oi<oppPlayers.length; oi++) oppPlayers[oi].g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); } }
+  if(matchOn){ matchTime -= dt; if(matchTime <= 0){ matchOn = false; let rw = 0; if(myScore > oppScore) rw = 1000; else if(myScore === oppScore) rw = 300; if(myScore > oppScore) questProgress('matchwin'); if(rw > 0){ money += rw; gainXP(myScore > oppScore ? 50 : 20); save(); refresh(); playCoin(); } showMsg('⚽ ပွဲပြီးပြီ! သင် ' + myScore + ' - ' + oppScore + ' ပြိုင်ဘက် — ' + (rw > 0 ? '+'+rw+' ကျပ်' : 'ဆုမရပါ')); ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; for(let oi=0; oi<oppPlayers.length; oi++) oppPlayers[oi].g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); } }
   for(const op of oppPlayers){ if(matchOn){ const dx = ball.position.x - op.g.position.x, dz = ball.position.z - op.g.position.z, dl = Math.hypot(dx,dz)||1; if(dl > 2){ op.g.position.x += dx/dl*6*dt; op.g.position.z += dz/dl*6*dt; turnTo(op.g, Math.atan2(dx,dz), dt, 8); } op.kickT -= dt; if(dl < 1.6 && op.kickT <= 0){ const gx = -113, gx2 = gx-ball.position.x, gz = 100-ball.position.z, gl = Math.hypot(gx2,gz)||1; ballVx = gx2/gl*14; ballVz = gz/gl*14; op.kickT = 1.5; } animatePerson(op, dl > 2, walkT, gt, false); } else animatePerson(op, false, walkT, gt, false); }
   if(taxi){ const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z;
-    if(taxi.stage === 'pickup'){ if(drivingCar && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
-    else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ money += 1200; gainXP(50); save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +၁၂၀၀ ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
+    if(taxi.stage === 'pickup'){ if(drivingCar && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; if(taxiPerson) taxiPerson.g.visible = false; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
+    else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ money += 1200; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +၁၂၀၀ ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
   taxiBeacon.rotation.y += dt*2; if(taxi) taxiBeacon.position.y = Math.sin(now/300)*0.6;
   { const bd = document.getElementById('busDestBtn'); if(bd) bd.style.display = ridingBus ? 'block' : 'none'; }
   // objective distance in job text so the player always knows how far the shop / delivery is
