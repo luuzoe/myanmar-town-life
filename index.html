@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V97</div>
+  <div style="font-size:12px;opacity:.6">V98</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -233,6 +233,8 @@ const roofTileTex = tileTex();
 const roofMatCache = {};
 function RM(color){ if(!roofMatCache[color]) roofMatCache[color] = new THREE.MeshLambertMaterial({map:roofTileTex, color}); return roofMatCache[color]; }
 const grassMat = new THREE.MeshLambertMaterial({map:grassTex});
+// V98: real CC0 grass photo (ambientCG Grass004) replaces the flat procedural green once loaded
+new THREE.TextureLoader().load('Textures/grass004.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40, 34); t.colorSpace = THREE.SRGBColorSpace; grassMat.map = t; grassMat.needsUpdate = true; });
 const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat, no texture (texture streaked on 400-long boxes)
 const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
 // ---- map (V70: big city — ground x -800..600, z -600..600) ----
@@ -570,10 +572,16 @@ for(let i=0;i<5;i++){
   birds.push({g:bg, wl, wr, cx:-50+i*25, cz:-50+i*20, r:20+i*5, h:22+i*2, sp:0.25+i*0.05, ph:i*1.3});
 }
 // ---- EAST: fields + forest belt, north-south stream, bridge, mountain range ----
-bx(60,0.1,7,0x8d6e63,160,0.12,0); // east road is dirt, raised above main road so it does not z-fight
+// V98: east dirt road uses real CC0 dirt-path photo (ambientCG Ground030), raised above main road so it does not z-fight
+const dirtMat = new THREE.MeshLambertMaterial({color:0x8d6e63});
+new THREE.TextureLoader().load('Textures/ground030.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(8, 1); t.colorSpace = THREE.SRGBColorSpace; dirtMat.map = t; dirtMat.needsUpdate = true; });
+const dirtRoad = new THREE.Mesh(new THREE.BoxGeometry(60,0.1,7), dirtMat); dirtRoad.position.set(160,0.12,0); dirtRoad.castShadow = true; dirtRoad.receiveShadow = true; scene.add(dirtRoad);
+// V98: fields use real CC0 dry-dirt photo (ambientCG Ground109)
+const fieldMat = new THREE.MeshLambertMaterial({color:0x8d5a2b});
+new THREE.TextureLoader().load('Textures/ground109.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 2); t.colorSpace = THREE.SRGBColorSpace; fieldMat.map = t; fieldMat.needsUpdate = true; });
 const fieldCenters = [[220,-90],[220,-45],[220,45],[220,90]]; // V63: moved east past the stream (x 209..231) — old x=148 fields sat ON the east-west roads at z=±40/±80
 for(const f of fieldCenters){
-  bx(22,0.3,28,0x8d5a2b,f[0],0.15,f[1]);
+  const fb = new THREE.Mesh(new THREE.BoxGeometry(22,0.3,28), fieldMat); fb.position.set(f[0],0.15,f[1]); fb.castShadow = true; fb.receiveShadow = true; scene.add(fb);
   for(const rz of [-8,0,8]) bx(18,0.4,1,0x2e7d32,f[0],0.4,f[1]+rz);
 }
 for(let i=0;i<40;i++){ // V69: 30 -> 40 trees
