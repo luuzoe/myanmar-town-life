@@ -1515,7 +1515,7 @@ function animate(now){
   }
   animatePerson(player, moving, walkT, gt, riding);
   player.g.position.y = groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
-  if(glbMixer) glbMixer.update((moving && !riding) ? dt * 3.0 * (raining ? 0.8 : 1) : 0); // V58: GLB walk clip is 2.37s/cycle, 1x looked slow-motion
+  if(glbMixer) glbMixer.update((moving && !riding) ? dt * 6.0 * (raining ? 0.8 : 1) : 0); // V59: steps must keep up with fast movement (old blocky char did ~5 steps/s; clip is 2.37s/cycle)
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
     if(stepIdx !== lastStep){ lastStep = stepIdx; playStep(); }
