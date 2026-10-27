@@ -1364,7 +1364,7 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 7, smoothCamH = 3.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 5, smoothCamH = 2.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
   const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
@@ -1768,7 +1768,7 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 7, targetH = drivingCar ? 6.5 : 3.5; // V64: walking camera closer again (driving unchanged)
+  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 5, targetH = drivingCar ? 6.5 : 2.5; // V68: walking camera closer again (driving unchanged)
   for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
@@ -1782,7 +1782,7 @@ function animate(now){
   const pitchH = smoothCamH + (Math.tan(camPitch) - Math.tan(Math.atan(4.3/16)))*smoothCamDist;
   camera.position.set(player.g.position.x - cf.x*smoothCamDist, pitchH, player.g.position.z - cf.z*smoothCamDist);
   { const tf = drivingCar ? 55 + Math.abs(carSpeed)*0.4 : 55; if(Math.abs(camera.fov - tf) > 0.1){ camera.fov += (tf - camera.fov) * Math.min(1, dt*5); camera.updateProjectionMatrix(); } }
-  camera.lookAt(player.g.position.x, player.g.position.y + 2.2, player.g.position.z);
+  camera.lookAt(player.g.position.x, player.g.position.y + 1.4, player.g.position.z); // V68: aim at chest, not above the head, so the character fills the frame
   renderer.render(scene,camera);
 }
 requestAnimationFrame(animate);
