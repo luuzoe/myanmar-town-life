@@ -85,7 +85,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V86</div>
+  <div style="font-size:12px;opacity:.6">V87</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -446,6 +446,12 @@ mesh(new THREE.ConeGeometry(3.2,7,12), 0xffc107, 100, 6, 100);
 sph(0.7,0xffc107,100,9.6,100); colliders.push({x:100,z:100,r:6});
 mesh(new THREE.CylinderGeometry(8,8,0.3,20), 0x4fc3f7, -100, 0.15, -100);
 colliders.push({x:-100,z:-100,r:8});
+// V87: pond polish — it was a bare blue disc, so: stone rim, reeds, lily pads, bench
+for(let si=0; si<16; si++){ const a = si/16*Math.PI*2; sph(0.55, 0x9e9e9e, -100+Math.cos(a)*8.3, 0.3, -100+Math.sin(a)*8.3); }
+for(const ra of [0.6, 2.2, 3.9, 5.3]){ const rx = -100+Math.cos(ra)*7.6, rz = -100+Math.sin(ra)*7.6; for(let ri=0; ri<4; ri++) cyl(0.06,0.09,1.4, 0x2e7d32, rx+(ri-1.5)*0.28, 0.85, rz+(ri%2)*0.3); }
+for(let li=0; li<5; li++){ const la = li/5*Math.PI*2 + 0.5; mesh(new THREE.CylinderGeometry(0.7,0.7,0.06,12), 0x43a047, -100+Math.cos(la)*4.5, 0.33, -100+Math.sin(la)*4.5); }
+sph(0.22, 0xf48fb1, -100+3.2, 0.38, -100-2.1);
+bx(2.2,0.25,0.6, 0x8d6e63, -91, 0.55, -91); bx(2.2,0.7,0.2, 0x8d6e63, -91, 0.9, -91.5); bx(0.25,0.55,0.5, 0x6d4c41, -91.8, 0.28, -91); bx(0.25,0.55,0.5, 0x6d4c41, -90.2, 0.28, -91); colliders.push({x:-91,z:-91,r:1});
 // ---- trees, lamps, power poles, grass, clouds ----
 const treeBlockers = [];
 function tree(x,z,detailed){
@@ -832,15 +838,23 @@ function upgradeNPCs(){
 // V84: real NPC models (Zaw's 20-GLB pack) — same pipeline as the player (scale 2.40, rotation -PI/2, own idle/walk clips)
 const npcModels = {};
 function loadNpcModels(){
-  for(let k=1;k<=20;k++){
+  // V87: staggered loading — all 20 models at once froze the game on entry (72MB of parses on the main thread).
+  // Now one at a time with a 700ms gap: the game stays smooth and NPCs upgrade gradually (player-clone look meanwhile).
+  const queue = [];
+  for(let k=1;k<=20;k++) queue.push(k);
+  const loadNext = ()=>{
+    if(!queue.length) return;
+    const k = queue.shift();
     const file = 'npc_' + String(k).padStart(2,'0') + '.glb';
     new GLTFLoader().load(file, (gltf)=>{
       const idle = gltf.animations.find((a)=>/idle/i.test(a.name)) || null;
       const walk = gltf.animations.find((a)=>/walk/i.test(a.name)) || gltf.animations[0] || null;
       npcModels[k] = {scene: gltf.scene, idle, walk};
       applyNpcModel(k);
-    }, undefined, ()=>{ /* keep the player-clone look if a model fails to load */ });
-  }
+      setTimeout(loadNext, 700);
+    }, undefined, ()=>{ /* keep the player-clone look if a model fails to load */ setTimeout(loadNext, 700); });
+  };
+  setTimeout(loadNext, 1000);
 }
 function swapToRealModel(oldP, M){
   if(!oldP || oldP.realModel) return oldP;
