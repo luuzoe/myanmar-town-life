@@ -45,7 +45,7 @@
   /* MINIMAP HIDDEN per Zaw 2026-10-26 (V41: hidden again on his word) - code kept */
   #minimap{position:fixed;top:56px;right:12px;width:240px;height:120px;border-radius:12px;z-index:10;opacity:.92;display:none}
 </style>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -104,6 +104,7 @@
 </div></div>
 <script type="module">
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const canvas = document.getElementById('game');
 const isMobile = innerWidth <= 700 || (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
@@ -757,6 +758,22 @@ const player = makePerson(0x1565c0, 0x37474f, {skin:0xe8b88a, detailed:true});
 scene.add(player.g);
 player.g.position.set(0,0,10); player.g.scale.setScalar(0.85); player.g.rotation.y = Math.PI;
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
+// V57: realistic GLB player character, PERSON-SIZED (not giant). The old blocky body
+// stays as fallback and is hidden only after the GLB loads successfully.
+let glbMixer = null;
+new GLTFLoader().load('character.glb', (gltf)=>{
+  const body = gltf.scene;
+  body.scale.setScalar(2.40); // GLB height 1.0 -> world 0.85*2.40 = 2.04, same as the old player
+  body.rotation.y = -Math.PI/2; // GLB faces +x; the game faces +z
+  body.traverse((o)=>{ if(o.isMesh) o.castShadow = true; });
+  for(const ch of [...player.g.children]){ if(ch !== bikeG) ch.visible = false; }
+  player.g.add(body);
+  if(gltf.animations.length){
+    glbMixer = new THREE.AnimationMixer(body);
+    const clip = gltf.animations.find((a)=>/walk/i.test(a.name)) || gltf.animations[0];
+    glbMixer.clipAction(clip).play();
+  }
+}, undefined, ()=>{ /* keep the old body if the GLB fails to load */ });
 bx(0.5,0.3,2.4,0xd32f2f,0,0.5,0,bikeG);
 bx(0.6,0.2,0.6,0x212121,0,0.7,-0.4,bikeG);
 (function(){
@@ -1473,6 +1490,7 @@ function animate(now){
     walkT += sp*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
+  if(glbMixer) glbMixer.update((moving && !riding) ? dt : 0); // GLB walk plays only while walking
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
     if(stepIdx !== lastStep){ lastStep = stepIdx; playStep(); }
