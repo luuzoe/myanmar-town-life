@@ -76,7 +76,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V81</div>
+  <div style="font-size:12px;opacity:.6">V82</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
 </div></div>
@@ -1486,7 +1486,7 @@ addEventListener('pointermove', e=>{
     camYaw -= (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
     // V79: drag up = look up (camera lower), drag down = look down — restored on Zaw's word, much slower
     camPitch += (e.clientY - dragY)*0.0010; dragY = e.clientY; // V81: middle of V79 (0.0015 too fast) and V80 (0.0006 too slow)
-    camPitch = Math.max(-0.35, Math.min(1.22, camPitch)); // -20deg (look up) to 70deg (look down)
+    camPitch = Math.max(0.05, Math.min(1.22, camPitch)); // V82: look up capped to a LITTLE bit only (was -0.35 = camera dived to ground + gaze +8.8 = huge swoop; now camera stays ~1.4, gaze +0.8, view ~9deg up max) — look down still to 70deg
   }
 });
 function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dragY = null; } }
