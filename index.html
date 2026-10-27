@@ -76,7 +76,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V74</div>
+  <div style="font-size:12px;opacity:.6">V75</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
 </div></div>
@@ -166,11 +166,8 @@ function fenceRect(cx,cz,hw,hd,gateW,gateX,color){
   bx(l1-l0,0.9,0.25,c,(l0+l1)/2,0.45,cz+hd); bx(r1-r0,0.9,0.25,c,(r0+r1)/2,0.45,cz+hd);
   bx(2*hw,0.9,0.25,c,cx,0.45,cz-hd);
   bx(0.25,0.9,2*hd,c,cx-hw,0.45,cz); bx(0.25,0.9,2*hd,c,cx+hw,0.45,cz);
-  for(let fx = cx-hw; fx <= cx+hw; fx += 3) colliders.push({x:fx, z:cz-hd, r:1.5, cam:false});
-  for(let fz = cz-hd; fz <= cz+hd; fz += 3){ colliders.push({x:cx-hw, z:fz, r:1.5, cam:false}); colliders.push({x:cx+hw, z:fz, r:1.5, cam:false}); }
-  for(let fx = cx-hw; fx <= g-gateW/2; fx += 3) colliders.push({x:fx, z:cz+hd, r:1.5, cam:false});
-  for(let fx = g+gateW/2; fx <= cx+hw; fx += 3) colliders.push({x:fx, z:cz+hd, r:1.5, cam:false});
-  colliders.push({x:g-gateW/2, z:cz+hd, r:1.5, cam:false}); colliders.push({x:g+gateW/2, z:cz+hd, r:1.5, cam:false});
+  // V75: NO fence-post colliders — the post line + a body circle made 1-unit prisons (player wedged between circle and posts, oscillating, couldn't move).
+  // The rails are low (0.9) and step-over-able; houses themselves still block via their body circles. Removing posts also frees mass-house-vs-fence gaps.
 }
 function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,8,6), color, x, y, z, parent); }
 function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry(rt,rb,h,8), color, x, y, z, parent); }
@@ -816,6 +813,7 @@ const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 // V57: realistic GLB player character, PERSON-SIZED (not giant). The old blocky body
 // stays as fallback and is hidden only after the GLB loads successfully.
 let glbMixer = null, glbAction = null, glbBody = null, glbBones = null, glbRest = null, idleBlend = 0;
+let stuckTimer = 0, stuckPX = 0, stuckPZ = 0, ghostUntil = 0; // V75: stuck rescue state
 // V66: seated bike pose — extrapolated from the walk clip itself (thigh forward 1.35 rad, calf flex 1.80 rad), quaternions (x,y,z,w)
 const SEAT_POSE = {
   L_Thigh: [0.8341, 0.2163, -0.1708, -0.4778], R_Thigh: [0.7529, -0.0486, 0.2737, 0.5966],
@@ -1738,14 +1736,24 @@ function animate(now){
     player.g.position.x = Math.max(-795, Math.min(595, player.g.position.x));
     player.g.position.z = Math.max(-595, Math.min(595, player.g.position.z));
     // V73: stream rect barrier (circle colliders only cover z ±131; the stream now spans the whole map) — bridge gap z -5..5
-    if(Math.abs(player.g.position.z) > 5 && player.g.position.x > 162 && player.g.position.x < 188){
+    // V75: skipped during ghost (stuck rescue)
+    if(gt > ghostUntil && Math.abs(player.g.position.z) > 5 && player.g.position.x > 162 && player.g.position.x < 188){
       player.g.position.x = player.g.position.x < 175 ? 162 : 188;
     }
-    for(let pass=0; pass<3; pass++) for(const c of nearbyColliders(player.g.position.x, player.g.position.z)){
+    if(gt > ghostUntil) for(let pass=0; pass<3; pass++) for(const c of nearbyColliders(player.g.position.x, player.g.position.z)){
       if(Math.abs(player.g.position.x-c.x) > c.r+0.8 || Math.abs(player.g.position.z-c.z) > c.r+0.8) continue;
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
       if(d < c.r+0.8 && d > 0.01){ player.g.position.x = c.x + ddx/d*(c.r+0.8); player.g.position.z = c.z + ddz/d*(c.r+0.8); }
       else if(d <= 0.01){ player.g.position.x = c.x + c.r+0.8; player.g.position.z = c.z; } // never stay stuck at a collider centre
+    }
+    // V75: stuck rescue — joystick held 2.5s with < 0.3u of movement = wedged: 1.5s ghost mode to walk out
+    if(gt > ghostUntil){
+      const moved = Math.hypot(player.g.position.x - stuckPX, player.g.position.z - stuckPZ);
+      if(moved > 0.3){ stuckTimer = 0; stuckPX = player.g.position.x; stuckPZ = player.g.position.z; }
+      else {
+        stuckTimer += dt;
+        if(stuckTimer > 2.5){ ghostUntil = gt + 1.5; stuckTimer = 0; showMsg('🚪 ပိတ်မိနေလို့ ခနလောက် ဖြတ်လျှောက်လို့ရပြီ — အပြင်ဘက်ကို ထွက်သွားပါ'); }
+      }
     }
     walkT += sp*dt;
   }
