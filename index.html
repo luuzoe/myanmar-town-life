@@ -76,7 +76,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V80</div>
+  <div style="font-size:12px;opacity:.6">V81</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
 </div></div>
@@ -1485,7 +1485,7 @@ addEventListener('pointermove', e=>{
     // (old sign was inverted: camYaw increase turns the view left, so drag must subtract)
     camYaw -= (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
     // V79: drag up = look up (camera lower), drag down = look down — restored on Zaw's word, much slower
-    camPitch += (e.clientY - dragY)*0.0006; dragY = e.clientY; // V80: was 0.0015 — still too fast, much slower now
+    camPitch += (e.clientY - dragY)*0.0010; dragY = e.clientY; // V81: middle of V79 (0.0015 too fast) and V80 (0.0006 too slow)
     camPitch = Math.max(-0.35, Math.min(1.22, camPitch)); // -20deg (look up) to 70deg (look down)
   }
 });
@@ -2233,7 +2233,7 @@ function animate(now){
   // pitch: camera height follows pitch (drag up/down), default 15deg = smoothCamH
   // V76: looking up — camera drops to near ground (never below it) and the gaze rises toward tower tops
   // V77: pitch is smoothed (lerped) so looking up glides instead of snapping — no more dizziness
-  smoothPitch += (camPitch - smoothPitch) * Math.min(1, dt*1.0); // V80: very slow glide (was dt*2 — still dizzy)
+  smoothPitch += (camPitch - smoothPitch) * Math.min(1, dt*1.5); // V81: middle glide (V79 dt*2 too fast, V80 dt*1 too slow)
   const upExtra = Math.max(0, 0.09 - smoothPitch) * 20;
   let pitchH = smoothCamH + (Math.tan(smoothPitch) - Math.tan(Math.atan(4.3/16)))*smoothCamDist;
   pitchH = Math.max(0.5, player.g.position.y + 0.2, pitchH);
