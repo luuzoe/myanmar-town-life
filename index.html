@@ -85,7 +85,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V87</div>
+  <div style="font-size:12px;opacity:.6">V88</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -897,6 +897,11 @@ function animateNpcModel(p, moving, dt){
   p.mixer.update(dt);
   return true;
 }
+// V88: work motion on top of the idle pose — farmers bend over crops, vendors sway at their stall
+function animateWork(p, gt, kind){
+  if(kind === 'farm'){ p.g.rotation.x = 0.16 + Math.sin(gt*2.4)*0.13; p.g.position.y = Math.abs(Math.sin(gt*2.4))*0.06; }
+  else { p.g.rotation.x = 0; p.g.rotation.z = Math.sin(gt*1.3)*0.05; p.g.position.y = 0; }
+}
 // ---- smooth turning + sound helpers ----
 function turnTo(obj, target, dt, rate){
   let diff = target - obj.rotation.y;
@@ -1029,6 +1034,18 @@ for(const x of roadLinesX) for(const z of roadLinesZ) intersections.push({x,z});
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
 const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
+// V88: jobs — some walkers work instead of wandering (farmers bend over crops, vendors stand at stalls/market)
+const NPC_JOBS = [
+  {x:-24, z:-28, rot:0.5, kind:'farm', place:'လယ်'},
+  {x:-18, z:-26, rot:-0.4, kind:'farm', place:'လယ်'},
+  {x:-12, z:-30, rot:0.9, kind:'farm', place:'လယ်'},
+  {x:-20, z:-36, rot:2.6, kind:'farm', place:'လယ်'},
+  {x:15, z:29, rot:2.2, kind:'vendor', place:'ဈေးတန်း'},
+  {x:21, z:33, rot:-0.8, kind:'vendor', place:'ဈေးတန်း'},
+  {x:18, z:27, rot:1.6, kind:'vendor', place:'ဈေးတန်း'},
+  {x:92, z:-69, rot:1.2, kind:'vendor', place:'ဈေးကြီး'},
+  {x:98, z:-75, rot:-1.5, kind:'vendor', place:'ဈေးကြီး'},
+];
 for(let i=0;i<48;i++){ // V69: road walkers 36 -> 48
   const female = i % 3 === 0;
   const p = makePerson(npcShirts[i%12], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
@@ -1036,7 +1053,7 @@ for(let i=0;i<48;i++){ // V69: road walkers 36 -> 48
   const start = intersections[(i*3) % intersections.length]; // V84: spread starts across the whole map (was i*2 — only the first ~100 crossings, never the east)
   p.g.position.set(start.x, 0, start.z);
   scene.add(p.g);
-  npcs.push({p, target: intersections[(i*3+71) % intersections.length], speed: 4.5}); // V84: targets on the opposite side of the map (retarget is random anyway)
+  npcs.push({p, target: intersections[(i*3+71) % intersections.length], speed: 4.5, job: (i % 4 === 0) ? NPC_JOBS[(i/4) % NPC_JOBS.length] : null}); // V84: targets on the opposite side of the map (retarget is random anyway); V88: every 4th walker works a job
 }
 const yardPeople = [];
 for(let i=0;i<5;i++){
@@ -1354,7 +1371,8 @@ function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.
   localStorage.setItem('mtl_owncar', ownCarBought?'1':'0'); localStorage.setItem('mtl_carupg', String(carUpg)); localStorage.setItem('mtl_carpaint', String(carPaintIdx));
   try{ localStorage.setItem('mtl_ownedlist', JSON.stringify(ownedList)); localStorage.setItem('mtl_owncarpos', JSON.stringify({x:ownCar.position.x, z:ownCar.position.z, rot:ownCar.rotation.y})); }catch(e){}
   try{ localStorage.setItem('mtl_carpos', JSON.stringify({x:parkedCar.position.x, z:parkedCar.position.z, rot:parkedCar.rotation.y})); localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); localStorage.setItem('mtl_streak', String(winStreak)); localStorage.setItem('mtl_friends', JSON.stringify(friends)); localStorage.setItem('mtl_roadshops', JSON.stringify(roadShops.map(s=>({x:s.x, z:s.z, owned:!!s.owned, lvl:s.lvl||1})))); }catch(e){} }
-function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ level = nl; showMsg('⭐ Level '+level+' ရောက်ပြီ!'); playChime(); } save(); refresh(); }
+function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ level = nl; const lb = 500*level; money += lb; showMsg('⭐ Level '+level+' ရောက်ပြီ! ဆု +'+lb+' ကျပ်'); playChime(); } save(); refresh(); }
+let dayEvent = 'none'; // V88: daily event — 'fair' day pays +300 per sale
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
   save(); refresh(); }
@@ -1470,7 +1488,9 @@ function talkTo(key){
   friends[key] = (friends[key] || 0) + 1; const lv = friends[key], nm = npcName(key);
   const msgs = ['မင်္ဂလာပါ! မြို့လေးကို လာလည်တာ ဝမ်းသာတယ်', 'ဒီနေ့ ရာသီဥတု ကောင်းတယ်', 'ဈေးကြီးမှာ ပစ္စည်းစုံတယ်', 'တောင်တန်းဘက် သွားရင် ရေချောင်းကို တံတားနဲ့ ဖြတ်ပါ', 'လယ်ရိတ်ရင် ၅၀၀၊ ဈေးရောင်းရင် ၈၀၀ ရတယ်', 'ကျောင်းမှာ ကလေးတွေ စာသင်နေတယ်'];
   let line = msgs[Math.floor(Math.random()*msgs.length)];
-  if(lv === 1) line = 'မင်္ဂလာပါ! ကျွန်တော်က ' + nm + ' ပါ — မြို့လေးကို လာလည်တာ ဝမ်းသာတယ်';
+  const wi = key[0]==='w' ? parseInt(key.slice(1),10) : -1;
+  const job = (wi >= 0 && npcs[wi]) ? npcs[wi].job : null;
+  if(lv === 1) line = job ? 'မင်္ဂလာပါ! ကျွန်တော်က ' + nm + ' ပါ — ' + job.place + ' မှာ အလုပ်လုပ်တယ်' : 'မင်္ဂလာပါ! ကျွန်တော်က ' + nm + ' ပါ — မြို့လေးကို လာလည်တာ ဝမ်းသာတယ်';
   if(lv === 3){ money += 100; line = '🎁 ' + nm + ' က ခင်လို့ လက်ဆောင် +၁၀၀ ကျပ် ပေးတယ်!'; playCoin(); }
   if(lv === 5){ money += 300; treasureTimer = 0; line = '🎁 ' + nm + ' က +၃၀၀ ကျပ် ပေးပြီး 🗺️ ရတနာနေရာကို ပြောပြတယ်! (ရွှေအလင်းတန်း ပေါ်လာမယ်)'; playCoin(); }
   if(lv === 10){ money += 500; line = '🎁 ' + nm + ' (ခင်မင်မှု ၁၀) က +၅၀၀ ကျပ် ပေးတယ်!'; playCoin(); }
@@ -1483,7 +1503,7 @@ function harvest(){
 }
 function sell(){
   if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
-  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
+  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; if(dayEvent === 'fair') sp += 300; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
 }
 function fish(){
   if(fishTimer > 0){ showMsg('ငါးမလာသေးဘူး၊ '+Math.ceil(fishTimer)+' စက္ကန့်စောင့်'); return; }
@@ -1978,6 +1998,12 @@ for(const mx of [-640,-480,-320,-200,-120,-60,-20,20,60,120]){
 }
 // V86: restore owned roadside shops (positions are deterministic, so x/z matching is stable)
 try{ const rs = JSON.parse(localStorage.getItem('mtl_roadshops')||'[]'); for(const s of roadShops){ const m = rs.find(r=>r.x===s.x && r.z===s.z); if(m){ s.owned = !!m.owned; s.lvl = m.lvl || 1; } } }catch(e){}
+// V88: shop keepers — 4 walkers stop wandering and work at roadside shops near the centre (fallback: first 4 placed)
+const nearShops = roadShops.filter(s=>Math.hypot(s.x, s.z) < 80).slice(0,4);
+(nearShops.length ? nearShops : roadShops.slice(0,4)).forEach((s,si)=>{
+  const w = npcs[1 + si*4];
+  if(w) w.job = {x: s.x + (s.x >= 0 ? 3.2 : -3.2), z: s.z, rot: s.x >= 0 ? -Math.PI/2 : Math.PI/2, kind:'vendor', place: s.name};
+});
 // city buildings: gas station, bank, hotel, mall (+ parking), billboards, bus shelters, food carts
 tryPlace(40, -200, 10, (x,z)=>{
   for(const px of [-4,4]) for(const pz of [-3,3]) cyl(0.25,0.25,4,0x9e9e9e,x+px,2,z+pz);
@@ -2217,6 +2243,7 @@ function animate(now){
   if(townTimer <= 0){ playTownAmbient(dayF); townTimer = 6 + Math.random()*8; }
   if(riding && moving){ bikeTimer -= dt; if(bikeTimer <= 0){ tone(55 + (fastBike ? 20 : 0), 0.3, 0.04, 'triangle'); bikeTimer = 0.4; } }
   for(const n of npcs){
+    if(n.job){ n.p.g.position.set(n.job.x, 0, n.job.z); n.p.g.rotation.y = n.job.rot; if(!animateNpcModel(n.p, false, dt)) animatePerson(n.p, false, 0, gt, false); animateWork(n.p, gt, n.job.kind); continue; }
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
     let mx = 0, mz = 0;
@@ -2348,7 +2375,7 @@ function animate(now){
   if(player.g.position.x > 340 && !mountainRewarded){ mountainRewarded = true; money += 500; gainXP(50); questProgress('mountain'); save(); refresh(); playCoin(); showMsg('⛰️ တောင်တန်းရောက်ပြီ! +၅၀၀ ကျပ်'); }
   if(player.g.position.x < 200) mountainRewarded = false;
   // V40: day wrap = passive income + festival day; weather cycle; football; doors; rain
-  if(phase < prevPhase){ dayCount++; festivalClaimed = false; marketFactor = Math.round((0.8 + Math.random()*0.4)*10)/10; showMsg('🏪 ဈေးနှုန်း ပြောင်းပြီ x' + marketFactor);
+  if(phase < prevPhase){ dayCount++; festivalClaimed = false; marketFactor = Math.round((0.8 + Math.random()*0.4)*10)/10; showMsg('🏪 ဈေးနှုန်း ပြောင်းပြီ x' + marketFactor); dayEvent = Math.random() < 0.35 ? 'fair' : 'none'; if(dayEvent === 'fair') showMsg('🎪 ဒီနေ့ ဈေးပွဲတော်နေ့! ရောင်းဈေး +၃၀၀ ကျပ်');
     const passive = ownedHouses*200 + houseItems*50 + (ownShop ? 300 : 0) + helpers*100 + roadShopDaily();
     if(passive > 0){ money += passive; save(); refresh(); playCoin(); showMsg('💰 နေ့သစ် ဝင်ငွေ +' + passive + ' ကျပ်'); }
     if(dayCount % 3 === 0) showMsg('🎉 ဒီနေ့ ပွဲတော်နေ့! ပန်းခြံကို သွားပါ'); }
