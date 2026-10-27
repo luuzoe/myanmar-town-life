@@ -105,6 +105,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'; // V70: merged mass houses
 const canvas = document.getElementById('game');
 const isMobile = innerWidth <= 700 || (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
@@ -116,9 +117,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const skyColor = new THREE.Color(0x87ceeb);
 scene.background = skyColor;
-scene.fog = new THREE.Fog(0x87ceeb, 200, 800);
+scene.fog = new THREE.Fog(0x87ceeb, 300, 2200); // V70: far city needs farther fog
 const nightColor = new THREE.Color(0x0b1026), dayColor = new THREE.Color(0x87ceeb);
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 800);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 3000); // V70: far 800 -> 3000 for the big map
 const hemi = new THREE.HemisphereLight(0xffffff, 0x66aa44, 1.1); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
@@ -197,34 +198,30 @@ const wallTex = noiseTex('#fdfdf5', ['#f0ead0','#e8e0c0'], 2, 1);
 const grassMat = new THREE.MeshLambertMaterial({map:grassTex});
 const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat, no texture (texture streaked on 400-long boxes)
 const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
-// ---- map ----
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(755,400), grassMat);
-ground.rotation.x = -Math.PI/2; ground.position.set(172.5,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
-const roadLines = [-80,-40,0,40,80];
-// road variety: main avenue (x=0, z=0) is wider (10) with a yellow centre line,
-// side streets are narrower (7) and plain; sidewalks follow each road's width
-for(const r of roadLines){
-  const w = (r===0 ? 12 : 7), sw = w/2 + 1; // V52: main avenue wider for two cars
-  bx(400,0.1,w,0x444444,0,0.05,r).material = asphaltMat;
-  bx(w,0.1,400,0x444444,r,0.05,0).material = asphaltMat;
-  bx(400,0.12,2,0x9e9e9e,0,0.06,r+sw).material = sidewalkMat; bx(400,0.12,2,0x9e9e9e,0,0.06,r-sw).material = sidewalkMat;
-  bx(2,0.12,400,0x9e9e9e,r+sw,0.06,0).material = sidewalkMat; bx(2,0.12,400,0x9e9e9e,r-sw,0.06,0).material = sidewalkMat;
+// ---- map (V70: big city — ground x -800..600, z -600..600) ----
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400,1200), grassMat);
+ground.rotation.x = -Math.PI/2; ground.position.set(-100,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
+// V70: separate vertical (x) and horizontal (z) road lines; avenue x=0/z=0 stays 12 wide
+const roadLinesX = [-720,-560,-400,-240,-160,-80,-40,0,40,80,160];
+const roadLinesZ = [-560,-400,-240,-160,-80,-40,0,40,80,160,240,400,560];
+for(const r of roadLinesX){
+  const w = (r===0 ? 12 : 7), sw = w/2 + 1;
+  bx(w,0.1,1200,0x444444,r,0.05,0).material = asphaltMat;
+  bx(2,0.12,1200,0x9e9e9e,r+sw,0.06,0).material = sidewalkMat; bx(2,0.12,1200,0x9e9e9e,r-sw,0.06,0).material = sidewalkMat;
 }
-for(let d=-190; d<=190; d+=20){
+for(const r of roadLinesZ){
+  const w = (r===0 ? 12 : 7), sw = w/2 + 1;
+  bx(1400,0.1,w,0x444444,-100,0.05,r).material = asphaltMat;
+  bx(1400,0.12,2,0x9e9e9e,-100,0.06,r+sw).material = sidewalkMat; bx(1400,0.12,2,0x9e9e9e,-100,0.06,r-sw).material = sidewalkMat;
+}
+for(let d=-590; d<=590; d+=20){
   bx(0.4,0.12,3,0xffeb3b,0,0.12,d);
   bx(3,0.12,0.4,0xffeb3b,d,0.12,0);
 }
-// zebra crosswalks across the main avenue at every side-road intersection
-for(const r of [-160,-80,-40,40,80,160]){
+// zebra crosswalks across both avenues at every side-road intersection
+for(const r of [-720,-560,-400,-240,-160,-80,-40,40,80,160,240,400,560]){
   for(const sx of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) bx(0.5,0.12,2,0xffffff,sx,0.12,r);
   for(const sz of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) bx(2,0.12,0.5,0xffffff,r,0.12,sz);
-}
-// outer ring roads at x/z = +-160 (new districts, 80-wide outer blocks)
-for(const r of [-160,160]){
-  bx(400,0.1,7,0x444444,0,0.05,r).material = asphaltMat;
-  bx(7,0.1,400,0x444444,r,0.05,0).material = asphaltMat;
-  bx(400,0.12,2,0x9e9e9e,0,0.06,r+4.5).material = sidewalkMat; bx(400,0.12,2,0x9e9e9e,0,0.06,r-4.5).material = sidewalkMat;
-  bx(2,0.12,400,0x9e9e9e,r+4.5,0.06,0).material = sidewalkMat; bx(2,0.12,400,0x9e9e9e,r-4.5,0.06,0).material = sidewalkMat;
 }
 // dirt footpaths: to school (west) and to pagoda (L-shaped, east)
 bx(20,0.1,2,0x8d6e63,-90,0.12,60);
@@ -235,24 +232,21 @@ bx(20,0.1,2,0x8d6e63,90,0.12,80); bx(2,0.1,20,0x8d6e63,100,0.12,90);
 function groundHeight(x,z){
   if(Math.abs(x-175) < 13 && Math.abs(z) < 4) return 0.35;
   let h = 0;
-  for(const r of roadLines){
+  for(const r of roadLinesX){ // V70: vertical roads span z -600..600
     const w = (r===0 ? 12 : 7), sw = w/2 + 1;
-    if(Math.abs(x) <= 200 && Math.abs(z-r) <= w/2) h = Math.max(h, 0.10);
-    if(Math.abs(x) <= 200 && (Math.abs(z-(r+sw)) <= 1 || Math.abs(z-(r-sw)) <= 1)) h = Math.max(h, 0.12);
-    if(Math.abs(z) <= 200 && Math.abs(x-r) <= w/2) h = Math.max(h, 0.10);
-    if(Math.abs(z) <= 200 && (Math.abs(x-(r+sw)) <= 1 || Math.abs(x-(r-sw)) <= 1)) h = Math.max(h, 0.12);
+    if(Math.abs(z) <= 600 && Math.abs(x-r) <= w/2) h = Math.max(h, 0.10);
+    if(Math.abs(z) <= 600 && (Math.abs(x-(r+sw)) <= 1 || Math.abs(x-(r-sw)) <= 1)) h = Math.max(h, 0.12);
   }
-  for(const r of [-160,160]){
-    if(Math.abs(x) <= 200 && Math.abs(z-r) <= 3.5) h = Math.max(h, 0.10);
-    if(Math.abs(x) <= 200 && (Math.abs(z-(r+4.5)) <= 1 || Math.abs(z-(r-4.5)) <= 1)) h = Math.max(h, 0.12);
-    if(Math.abs(z) <= 200 && Math.abs(x-r) <= 3.5) h = Math.max(h, 0.10);
-    if(Math.abs(z) <= 200 && (Math.abs(x-(r+4.5)) <= 1 || Math.abs(x-(r-4.5)) <= 1)) h = Math.max(h, 0.12);
+  for(const r of roadLinesZ){ // V70: horizontal roads span x -800..600
+    const w = (r===0 ? 12 : 7), sw = w/2 + 1;
+    if(Math.abs(x+100) <= 700 && Math.abs(z-r) <= w/2) h = Math.max(h, 0.10);
+    if(Math.abs(x+100) <= 700 && (Math.abs(z-(r+sw)) <= 1 || Math.abs(z-(r-sw)) <= 1)) h = Math.max(h, 0.12);
   }
   if(Math.abs(x+90) <= 10 && Math.abs(z-60) <= 1) h = Math.max(h, 0.17);
   if(Math.abs(x-90) <= 10 && Math.abs(z-80) <= 1) h = Math.max(h, 0.17);
   if(Math.abs(x-100) <= 1 && Math.abs(z-90) <= 10) h = Math.max(h, 0.17);
   // zebra crosswalks across the main avenue (top 0.18, not road 0.10)
-  for(const r of [-160,-80,-40,40,80,160]){
+  for(const r of [-720,-560,-400,-240,-160,-80,-40,40,80,160,240,400,560]){ // V70: all lines, not just old 6
     for(const s of [-5.5,-3.5,-1.5,1.5,3.5,5.5]){
       if(Math.abs(x-s) <= 0.25 && Math.abs(z-r) <= 1) h = Math.max(h, 0.18);
       if(Math.abs(z-s) <= 0.25 && Math.abs(x-r) <= 1) h = Math.max(h, 0.18);
@@ -844,9 +838,9 @@ bx(0.6,0.2,0.6,0x212121,0,0.7,-0.4,bikeG);
   bx(0.5,0.4,0.4,0x8d6e63,0,0.75,1.4,bikeG);
 })();
 // ---- people: road walkers, yard orbiters, school kids, workers ----
-const allRoadLines = [-160,-80,-40,0,40,80,160];
+const allRoadLines = [-720,-560,-400,-240,-160,-80,-40,0,40,80,160,240,400,560]; // V70: union, for nearestLine (safe: every reachable coord's nearest union member is on the right axis)
 const intersections = [];
-for(const x of allRoadLines) for(const z of allRoadLines) intersections.push({x,z});
+for(const x of roadLinesX) for(const z of roadLinesZ) intersections.push({x,z}); // V70: 11 x 13 = 143 intersections
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
 const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
@@ -984,12 +978,17 @@ function makeCar(color){
   return g;
 }
 const cars = [];
-for(let i=0;i<8;i++){
-  const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a][i]);
+for(let i=0;i<24;i++){ // V70: traffic 8 -> 24 cars for the big city
+  const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a,0x00acc1,0x8d6e63,0x78909c,0xd81b60,0x3949ab,0x00897b,0xc0ca33,0x5e35b1][i%16]);
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
   cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 8 + (i % 3)});
 }
+// V70: parked street cars in the new districts (curb-side, not driveable)
+[[-566,100,0],[-394,-300,Math.PI],[-234,400,0],[166,-400,Math.PI],[-566,-400,0],[-394,200,Math.PI],[246,300,0],[406,-100,Math.PI]].forEach((p,i)=>{
+  const c = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a][i]);
+  c.position.set(p[0],0,p[1]); c.rotation.y = p[2]; scene.add(c);
+});
 const bus = new THREE.Group();
 bx(3.0,3.0,12,0xffc107,0,1.6,0,bus);
 glassBx(0.06,0.8,10,-1.51,2.2,0,bus); glassBx(0.06,0.8,10,1.51,2.2,0,bus);
@@ -1159,7 +1158,10 @@ function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key)
 function toggleBus(){ if(ridingBus){ ridingBus = false; busDest = null; bus.leg = 'x'; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဘတ်စ်က ဆင်းပြီ'); }
   else { if(money < 200){ showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် လိုတယ်'); return; } money -= 200; ridingBus = true; riding = false; bikeG.visible = false; player.g.visible = false; gainXP(10); questProgress('bus'); save(); showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် — ဂိတ်ရွေးချင် 🚌 ခလုတ် နှိပ်'); } refresh(); }
 function startTaxi(){ if(taxi){ showMsg('🚕 Taxi ပို့နေဆဲ'); return; }
-  const pk = intersections[Math.floor(Math.random()*intersections.length)];
+  // V70: big city — pick a pickup within 400u of the player (else jobs could be 1000u+ away)
+  const near = intersections.filter(p=>Math.hypot(p.x-player.g.position.x, p.z-player.g.position.z) < 400);
+  const pool = near.length ? near : intersections;
+  const pk = pool[Math.floor(Math.random()*pool.length)];
   const dests = TAXI_LANDMARKS.filter(l=>Math.hypot(l.x-pk.x, l.z-pk.z) > 30);
   const dl = dests[Math.floor(Math.random()*dests.length)];
   taxi = {stage:'pickup', px:pk.x, pz:pk.z, dx:dl.x, dz:dl.z, dlabel:dl.label};
@@ -1388,9 +1390,9 @@ refresh();
 let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 5, smoothCamH = 2.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
-  const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
-  const cp = JSON.parse(localStorage.getItem('mtl_carpos')||'null'); if(cp && cp.x >= -195 && cp.x <= 540 && cp.z >= -195 && cp.z <= 195){ parkedCar.position.set(cp.x, 0, cp.z); if(typeof cp.rot === 'number') parkedCar.rotation.y = cp.rot; }
-  const ocp = JSON.parse(localStorage.getItem('mtl_owncarpos')||'null'); if(ocp && ocp.x >= -195 && ocp.x <= 540 && ocp.z >= -195 && ocp.z <= 195){ ownCar.position.set(ocp.x, 0, ocp.z); if(typeof ocp.rot === 'number') ownCar.rotation.y = ocp.rot; }
+  const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -795 && sp.x <= 595 && sp.z >= -595 && sp.z <= 595){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
+  const cp = JSON.parse(localStorage.getItem('mtl_carpos')||'null'); if(cp && cp.x >= -795 && cp.x <= 595 && cp.z >= -595 && cp.z <= 595){ parkedCar.position.set(cp.x, 0, cp.z); if(typeof cp.rot === 'number') parkedCar.rotation.y = cp.rot; }
+  const ocp = JSON.parse(localStorage.getItem('mtl_owncarpos')||'null'); if(ocp && ocp.x >= -795 && ocp.x <= 595 && ocp.z >= -595 && ocp.z <= 595){ ownCar.position.set(ocp.x, 0, ocp.z); if(typeof ocp.rot === 'number') ownCar.rotation.y = ocp.rot; }
   const sd = parseFloat(localStorage.getItem('mtl_day')||'0'); if(!isNaN(sd) && sd >= 0 && sd < 600) dayT = sd; }catch(e){}
 function playTownAmbient(df){
   if(!soundOn || !audioCtx) return;
@@ -1427,8 +1429,8 @@ function carHitCheck(cx,cz,fx,fz,halfLen,threshold){
   if(r.dist < threshold){
     const dx = player.g.position.x - r.qx, dz = player.g.position.z - r.qz, d = Math.hypot(dx,dz) || 1;
     player.g.position.x += dx/d*4; player.g.position.z += dz/d*4;
-    player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x)); // ground east edge 550, mountains at 380-480 must be reachable
-    player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
+    player.g.position.x = Math.max(-795, Math.min(595, player.g.position.x)); // V70: big-city bounds (was -195..540)
+    player.g.position.z = Math.max(-595, Math.min(595, player.g.position.z));
     ensureAudio(); playThud(); health -= 20; if(health <= 0){ health = 100; money = Math.max(0, money - 500); player.g.position.set(0,0,10); showMsg('🏥 ဆေးရုံရောက်ပြီ — ၅၀၀ ကျပ် ကုန်သွားတယ်'); } save(); refresh();
     showMsg('🚗 ကားတိုက်မိပြီ! ကျန်းမာ ' + health);
     carHitCooldown = 3;
@@ -1464,6 +1466,116 @@ function drawMinimap(){
   ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill();
   ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, py);
   ctx.lineTo(px + Math.sin(player.g.rotation.y)*10, py + Math.cos(player.g.rotation.y)*10); ctx.stroke();
+}
+// ---- V70: BIG CITY — ~920 extra houses (merged geometry, ~15 draw calls) + 1500 crowd (instanced) ----
+// Individual meshes for 1000 houses / 1500 people would lag phones, so mass content is merged/instanced.
+function mulberry32(a){ return function(){ a|=0; a = a+0x6D2B79F5|0; let t = Math.imul(a^a>>>15, 1|a); t = t + Math.imul(t^t>>>7, 61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const massRnd = mulberry32(20261027);
+const MASS_WALLS = [0xfff2cc,0xddeeff,0xffe0e0,0xe0ffe0,0xf5f5f5,0xfff8dc,0xffccbc,0xe1bee7];
+const MASS_ROOFS = [0xb3402a,0x37474f,0x6d4c41,0x8d6e63];
+const MASS_LANDMARKS = [[-100,60,16],[-20,-100,17],[100,-20,14],[100,60,10],[-20,100,10],[100,100,10],[100,-100,10],[95,-72,10],[12,-32,8],[-100,-100,14],[-100,100,14],[-120,120,20],[-18,-32,12],[18,32,12]];
+const MASS_FOOTPATHS = [[-100,-80,59,61],[80,100,79,81],[99,101,80,100]];
+function massOk(x,z,mass){
+  const hw = 11, hd = 9;
+  if(x-hw < -795 || x+hw > 595 || z-hd < -595 || z+hd > 595) return false;
+  for(const v of roadLinesX){ const sw = (v===0 ? 7 : 5.5); if(!(x+hw < v-sw || x-hw > v+sw)) return false; }
+  for(const h of roadLinesZ){ const sw = (h===0 ? 7 : 5.5); if(!(z+hd < h-sw || z-hd > h+sw)) return false; }
+  for(const h of houseList){ if(!(x+hw < h[0]-11 || x-hw > h[0]+11 || z+hd < h[1]-9 || z-hd > h[1]+9)) return false; }
+  for(const m of mass){ if(!(x+hw < m[0]-11 || x-hw > m[0]+11 || z+hd < m[1]-9 || z-hd > m[1]+9)) return false; }
+  if(!(x+hw < 160 || x-hw > 190)) return false; // east dirt road + bridge
+  if(x-hw < 169 && x+hw > 135) return false; // forest belt
+  for(const f of fieldCenters){ if(!(x+hw < f[0]-11 || x-hw > f[0]+11 || z+hd < f[1]-14 || z-hd > f[1]+14)) return false; }
+  for(const mp of mountainPeaks){ if(Math.hypot(x-mp[0], z-mp[1]) < mp[2]+13) return false; }
+  for(const lm of MASS_LANDMARKS){ if(Math.hypot(x-lm[0], z-lm[1]) < lm[2]+12) return false; }
+  for(const fp of MASS_FOOTPATHS){ if(!(x+hw < fp[0] || x-hw > fp[1] || z+hd < fp[2] || z-hd > fp[3])) return false; }
+  return true;
+}
+const massPlaced = [];
+const massWallGeos = {}, massRoofGeos = {}, massWinGeos = [], massDoorGeos = [];
+for(let gx=-790; gx<=590; gx+=24){
+  for(let gz=-580; gz<=580; gz+=24){
+    const x = gx + (massRnd()*10 - 5), z = gz + (massRnd()*10 - 6);
+    if(!massOk(x,z,massPlaced)) continue;
+    massPlaced.push([x,z]);
+    // variety from position hash (no RNG — keeps the jitter stream identical to the audit, so the count holds)
+    const hh = Math.abs(Math.floor(x*31 + z*17));
+    const wall = MASS_WALLS[hh % 8];
+    const roof = MASS_ROOFS[Math.abs(Math.floor(x*13 + z*29)) % 4];
+    const storeys = 1 + (Math.abs(Math.floor(x*7 + z*11)) % 3);
+    const w = 12 + (Math.abs(Math.floor(x*3 + z*5)) % 5);
+    const d = 10 + (Math.abs(Math.floor(x*5 + z*3)) % 3);
+    const wallH = 4 + storeys*4;
+    const sgn = (Math.abs(Math.floor(x*17 + z*7)) % 10) < 7 ? 1 : -1; // door face: 70% south, 30% north
+    (massWallGeos[wall] = massWallGeos[wall] || []).push(new THREE.BoxGeometry(w, wallH, d).translate(x, wallH/2, z));
+    const rg = new THREE.ConeGeometry(Math.hypot(w,d)/2*1.15, 4.5, 4);
+    rg.rotateY(Math.PI/4); rg.scale(1.3,1,1); rg.translate(x, wallH+2.25, z);
+    (massRoofGeos[roof] = massRoofGeos[roof] || []).push(rg);
+    for(let f=0; f<storeys; f++){
+      const wy = 4.5 + f*4;
+      for(const wx of [-w*0.28, w*0.28]) massWinGeos.push(new THREE.BoxGeometry(2.2,2.2,0.1).translate(x+wx, wy, z + sgn*(d/2+0.06)));
+    }
+    massDoorGeos.push(new THREE.BoxGeometry(1.3,2.6,0.15).translate(x, 1.3, z + sgn*(d/2+0.08)));
+    colliders.push({x, z, r:9});
+  }
+}
+for(const c in massWallGeos){ const mm = new THREE.Mesh(mergeGeometries(massWallGeos[c], false), M(+c)); mm.castShadow = true; mm.receiveShadow = true; scene.add(mm); }
+for(const c in massRoofGeos){ const mm = new THREE.Mesh(mergeGeometries(massRoofGeos[c], false), M(+c)); mm.castShadow = true; mm.receiveShadow = true; scene.add(mm); }
+{ const mm = new THREE.Mesh(mergeGeometries(massWinGeos, false), glassMat); scene.add(mm); }
+{ const mm = new THREE.Mesh(mergeGeometries(massDoorGeos, false), M(0x6d4c41)); scene.add(mm); }
+// ---- V70: crowd — 1500 ambient city people, 2 instanced draw calls ----
+const CROWD_N = 1500;
+const crowdRnd = mulberry32(4242);
+const crowdBodyGeo = new THREE.CapsuleGeometry(0.28, 0.75, 4, 8); crowdBodyGeo.translate(0, 0.7, 0);
+const crowdHeadGeo = new THREE.SphereGeometry(0.24, 8, 6); crowdHeadGeo.translate(0, 1.55, 0);
+const crowdBody = new THREE.InstancedMesh(crowdBodyGeo, new THREE.MeshLambertMaterial({color:0xffffff}), CROWD_N);
+const crowdHead = new THREE.InstancedMesh(crowdHeadGeo, new THREE.MeshLambertMaterial({color:0xffffff}), CROWD_N);
+crowdBody.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+crowdHead.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+crowdBody.castShadow = true; crowdHead.castShadow = true;
+scene.add(crowdBody); scene.add(crowdHead);
+const crowd = [];
+{
+  const shirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
+  const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
+  const dummy = new THREE.Object3D();
+  for(let i=0;i<CROWD_N;i++){
+    const vert = crowdRnd() < 0.5;
+    const line = vert ? roadLinesX[Math.floor(crowdRnd()*roadLinesX.length)] : roadLinesZ[Math.floor(crowdRnd()*roadLinesZ.length)];
+    crowd.push({vert, line, along:-580 + crowdRnd()*1160, lane:(crowdRnd() < 0.5 ? -2 : 2), dir:(crowdRnd() < 0.5 ? -1 : 1), speed:3.5 + crowdRnd()*2, phase:crowdRnd()*6.28});
+    dummy.position.set(0,0,0); dummy.updateMatrix();
+    crowdBody.setMatrixAt(i, dummy.matrix); crowdHead.setMatrixAt(i, dummy.matrix);
+    crowdBody.setColorAt(i, new THREE.Color(shirts[i % 12]));
+    crowdHead.setColorAt(i, new THREE.Color(skins[i % 4]));
+  }
+  crowdBody.instanceColor.needsUpdate = true; crowdHead.instanceColor.needsUpdate = true;
+}
+const crowdDummy = new THREE.Object3D();
+function updateCrowd(dt, gt){
+  for(let i=0;i<CROWD_N;i++){
+    const c = crowd[i];
+    c.along += c.dir * c.speed * dt;
+    const lo = c.vert ? -595 : -795, hi = 595;
+    if(c.along > hi) c.dir = -1;
+    else if(c.along < lo) c.dir = 1;
+    const cross = c.vert ? roadLinesZ : roadLinesX;
+    for(const cl of cross){
+      if(Math.abs(c.along - cl) < 1.5 && Math.random() < 0.3){
+        const fixed = c.line + c.lane;
+        c.vert = !c.vert; c.line = cl; c.along = fixed;
+        c.lane = (Math.random() < 0.5 ? -2 : 2);
+        c.dir = (Math.random() < 0.5 ? -1 : 1);
+        break;
+      }
+    }
+    const bob = Math.abs(Math.sin(gt*7 + c.phase)) * 0.06;
+    if(c.vert) crowdDummy.position.set(c.line + c.lane, 0.1 + bob, c.along);
+    else crowdDummy.position.set(c.along, 0.1 + bob, c.line + c.lane);
+    crowdDummy.updateMatrix();
+    crowdBody.setMatrixAt(i, crowdDummy.matrix);
+    crowdHead.setMatrixAt(i, crowdDummy.matrix);
+  }
+  crowdBody.instanceMatrix.needsUpdate = true;
+  crowdHead.instanceMatrix.needsUpdate = true;
 }
 // V29 collider grid: V28 fences added ~1200 post colliders, so per-frame O(N) scans (player + animals + camera x12)
 // stuttered on phones. Grid cells 20u: each collider stored in every cell its (r+1) box overlaps,
@@ -1555,7 +1667,7 @@ function animate(now){
     if(Math.abs(carSpeed) > 0.5) carHeading -= inRight * dt * 1.2 * Math.min(1, Math.abs(carSpeed)/10) * (carSpeed >= 0 ? 1 : -1); // V45 fix: was += (left went right)
     driveCar.position.x += Math.sin(carHeading)*carSpeed*dt; driveCar.position.z += Math.cos(carHeading)*carSpeed*dt;
     driveCar.rotation.y = carHeading;
-    driveCar.position.x = Math.max(-195, Math.min(540, driveCar.position.x)); driveCar.position.z = Math.max(-195, Math.min(195, driveCar.position.z));
+    driveCar.position.x = Math.max(-795, Math.min(595, driveCar.position.x)); driveCar.position.z = Math.max(-595, Math.min(595, driveCar.position.z)); // V70: big-city bounds
     for(const c of nearbyColliders(driveCar.position.x, driveCar.position.z)){ if(Math.abs(driveCar.position.x-c.x) > c.r+1.5 || Math.abs(driveCar.position.z-c.z) > c.r+1.5) continue; const ddx = driveCar.position.x-c.x, ddz = driveCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ driveCar.position.x = c.x + ddx/dd*(c.r+1.5); driveCar.position.z = c.z + ddz/dd*(c.r+1.5); } }
     // traffic collision: bounce back + health -10
     for(const oc of [...cars.map(c=>c.g), bus]){ if(oc === driveCar) continue; const od = Math.hypot(driveCar.position.x-oc.position.x, driveCar.position.z-oc.position.z); if(od < 3.5){ driveCar.position.x -= Math.sin(carHeading)*2; driveCar.position.z -= Math.cos(carHeading)*2; carSpeed = 0; health -= 10; if(health <= 0){ health = 100; money = Math.max(0, money-500); showMsg('🏥 ကားတိုက်ပြီး ဆေးရုံရောက်ပြီ — ၅၀၀'); } else showMsg('💥 ကားနဲ့ တိုက်မိပြီ! ကျန်းမာ ' + health); save(); refresh(); break; } }
@@ -1576,8 +1688,8 @@ function animate(now){
     const sp = (riding ? (fastBike?26:18) : 10.5) * (raining ? 0.8 : 1);
     player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
     turnTo(player.g, Math.atan2(dx,dz), dt, 10);
-    player.g.position.x = Math.max(-195, Math.min(540, player.g.position.x));
-    player.g.position.z = Math.max(-195, Math.min(195, player.g.position.z));
+    player.g.position.x = Math.max(-795, Math.min(595, player.g.position.x));
+    player.g.position.z = Math.max(-595, Math.min(595, player.g.position.z));
     for(const c of nearbyColliders(player.g.position.x, player.g.position.z)){
       if(Math.abs(player.g.position.x-c.x) > c.r+0.8 || Math.abs(player.g.position.z-c.z) > c.r+0.8) continue;
       const ddx = player.g.position.x-c.x, ddz = player.g.position.z-c.z, d = Math.hypot(ddx,ddz);
@@ -1625,6 +1737,7 @@ function animate(now){
     turnTo(y.p.g, Math.atan2(dx2,dz2), dt, 8);
     animatePerson(y.p, true, gt*3.15 + px, gt, false);
   }
+  updateCrowd(dt, gt); // V70: crowd walkers
   for(const k of schoolKids){
     k.p.g.visible = dayF > 0.5;
     const dx2 = k.target.x - k.p.g.position.x, dz2 = k.target.z - k.p.g.position.z, d2 = Math.hypot(dx2,dz2);
