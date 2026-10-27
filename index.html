@@ -286,7 +286,7 @@ function house(x,z,wall,roof,storeys){
     for(const sd of [-1,1]) glassBx(0.12,2.5,2.5,x+sd*8.05,wy,z);
   }
   bx(1,3,1,0x9e9e9e,x+5,wallTop+1.5,z-3);
-  fenceRect(x,z,11,9,4);
+  fenceRect(x,z,11,9,6); // V69: 4-wide gates were blocked by their own r1.5 posts (player r0.8 needs an opening > 4.6)
   colliders.push({x,z,r:10});
 }
 const houseList = [
@@ -299,21 +299,23 @@ const houseList = [
   [-95,-55,0xfff2cc,0xb3402a],[-95,25,0xddeeff,0x6d4c41],[95,-55,0xffe0e0,0xb3402a],[95,25,0xe0ffe0,0x37474f],
   [-55,-95,0xf5f5f5,0xb3402a],[25,-95,0xfff8dc,0x6d4c41],[-55,95,0xfff2cc,0x37474f],[25,95,0xddeeff,0xb3402a],
   [-95,-95,0xffe0e0,0x6d4c41],
-  [20,110,0xfff2cc,0xb3402a],[-20,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-60,0xe0ffe0,0xb3402a],
-  [-120,-120,0xfff2cc,0xb3402a],[120,-120,0xddeeff,0x37474f],
-  [-60,120,0xffe0e0,0xb3402a],[120,120,0xe0ffe0,0x6d4c41],
+  [20,120,0xfff2cc,0xb3402a],[-20,-105,0xddeeff,0x37474f],[112,20,0xffe0e0,0x6d4c41],[-110,-60,0xe0ffe0,0xb3402a],
+  [-117,-120,0xfff2cc,0xb3402a],[117,-120,0xddeeff,0x37474f],
+  [-60,120,0xffe0e0,0xb3402a],[117,120,0xe0ffe0,0x6d4c41],
   [-140,-100,0xf5f5f5,0xb3402a],[-140,100,0xfff8dc,0x37474f],
   [140,-100,0xfff2cc,0x6d4c41],[140,100,0xddeeff,0xb3402a],
   [-140,60,0xfff2cc,0xb3402a],[140,60,0xddeeff,0x37474f],[-20,140,0xffe0e0,0x6d4c41],
   [-140,-140,0xfff2cc,0xb3402a],[-140,-60,0xddeeff,0x37474f],[-140,20,0xffe0e0,0x6d4c41],[-140,140,0xf5f5f5,0xb3402a],
   [140,-140,0xfff8dc,0x37474f],[140,-60,0xfff2cc,0x6d4c41],[140,20,0xddeeff,0xb3402a],[140,140,0xffe0e0,0x37474f],
   [335,-50,0xfff2cc,0xb3402a],[270,-155,0xddeeff,0x37474f],[340,135,0xffe0e0,0x6d4c41],[255,120,0xe0ffe0,0xb3402a],
-  [345,25,0xf5f5f5,0x37474f],[345,-170,0xfff8dc,0x6d4c41],[310,-145,0xfff2cc,0xb3402a],[320,20,0xddeeff,0x37474f],
+  [345,25,0xf5f5f5,0x37474f],[345,-170,0xfff8dc,0x6d4c41],[310,-145,0xfff2cc,0xb3402a],[317,20,0xddeeff,0x37474f],
   [265,55,0xffe0e0,0x6d4c41],[305,95,0xe0ffe0,0xb3402a],[280,170,0xf5f5f5,0x37474f],[295,45,0xfff8dc,0x6d4c41],
   [270,-10,0xfff2cc,0xb3402a],[325,-95,0xddeeff,0x37474f],[260,-70,0xffe0e0,0x6d4c41],[300,-35,0xe0ffe0,0xb3402a],
   [340,175,0xf5f5f5,0x37474f],[260,-35,0xfff8dc,0x6d4c41],[355,60,0xfff2cc,0xb3402a],[335,-20,0xddeeff,0x37474f],
-  [260,-110,0xffe0e0,0x6d4c41],[345,85,0xe0ffe0,0xb3402a],[315,-180,0xf5f5f5,0x37474f],[310,140,0xfff8dc,0x6d4c41]
-]; // V65: +24 houses (74 total) — new east suburb past the stream, all clear of roads/houses/landmarks by audit
+  [260,-110,0xffe0e0,0x6d4c41],[345,85,0xe0ffe0,0xb3402a],[315,-180,0xf5f5f5,0x37474f],[310,140,0xfff8dc,0x6d4c41],
+  [-180,-120,0xfff2cc,0xb3402a],[-180,-20,0xddeeff,0x37474f],[-180,100,0xffe0e0,0x6d4c41],[-180,130,0xe0ffe0,0xb3402a],
+  [250,186,0xf5f5f5,0x37474f],[310,186,0xfff8dc,0x6d4c41],[370,186,0xfff2cc,0xb3402a]
+]; // V69: +7 houses (81 total) — west band x=-180 + south band z=186, all audit-clear (roads/houses/fields/mountains, corridors >= 6)
 for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1)); }
 // ---- school (big, 2 floors), hospital (was clinic) ----
 bx(30,0.5,16,0x9e9e9e,-100,0.25,60);
@@ -372,7 +374,7 @@ shopBuilding(-20,-100,12,6.5,8,0xffffff,0xffc107,'ဘုန်းကြီးက
 shopBuilding(60,-120,14,7,8,0xe3f2fd,0x1565c0,'ရဲစခန်း','#ffffff','#1565c0');
 shopBuilding(-60,-120,14,7,8,0xfff9c4,0x37474f,'စာကြည့်တိုက်','#ffeb3b','#1565c0');
 shopBuilding(60,120,12,6,7,0xffebee,0xe53935,'စာတိုက်','#ffffff','#e53935');
-fenceRect(-20,-100,15,15,4,-20); // monastery compound: 30x30, gate south at -20
+fenceRect(-20,-100,15,15,6,-20); // monastery compound: 30x30, gate south at -20 (V69: gate 4 -> 6, same post-block fix)
 shopBuilding(-100,-140,12,6.5,8,0xe8f5e9,0x2e7d32,'ဆေးဆိုင်','#ffffff','#2e7d32');
 shopBuilding(100,-140,12,6.5,8,0xfff3e0,0xef6c00,'ဆိုင်ကယ်ဆိုင်','#ffeb3b','#6d4c41');
 // park + playground at (-120,120): grass, cross paths, corner trees, benches, swings, slide, flowers
@@ -464,16 +466,17 @@ function lamp(x,z){
 // lamps on sidewalks at mid-block, never on a road (old list put them on road centres)
 [[-75,-60],[-35,20],[45,-20],[85,60],[-60,-75],[20,-35],[-20,45],[60,85]].forEach(p=>lamp(p[0],p[1]));
 // poles on the x=0 road's sidewalks at mid-block (old: at intersections, standing on the cross road)
+// V69: poles were at x=+-6 = the avenue asphalt edge (asphalt spans -6..6); sidewalks are at +-7
 for(const pz of [-60,-20,20,60]){
-  cyl(0.1,0.1,6,0x795548,-6,3,pz); bx(1.4,0.15,0.15,0x795548,-6,5.8,pz); colliders.push({x:-6,z:pz,r:0.5});
-  cyl(0.1,0.1,6,0x795548,6,3,pz); bx(1.4,0.15,0.15,0x795548,6,5.8,pz);
+  cyl(0.1,0.1,6,0x795548,-7,3,pz); bx(1.4,0.15,0.15,0x795548,-7,5.8,pz); colliders.push({x:-7,z:pz,r:0.5});
+  cyl(0.1,0.1,6,0x795548,7,3,pz); bx(1.4,0.15,0.15,0x795548,7,5.8,pz); colliders.push({x:7,z:pz,r:0.5});
 }
-for(const px of [-6,6]) for(const pair of [[-60,-20],[-20,20],[20,60]]){
+for(const px of [-7,7]) for(const pair of [[-60,-20],[-20,20],[20,60]]){ // V69: wires follow the poles to the sidewalk
   bx(0.08,0.08,pair[1]-pair[0],0x212121,px,5.8,(pair[0]+pair[1])/2);
 }
 for(let i=0;i<24;i++){
   const x = -115 + ((i*53)%230), z = -115 + ((i*89)%230);
-  const nearRoad = roadLines.some(r=>Math.abs(x-r)<9 || Math.abs(z-r)<9);
+  const nearRoad = [-160,-80,-40,0,40,80,160].some(r=>Math.abs(x-r)<9 || Math.abs(z-r)<9); // V69: was roadLines (missing +-160), tufts landed on the outer ring roads
   if(!nearRoad) mesh(new THREE.ConeGeometry(0.35,0.9,5), 0x388e3c, x, 0.45, z);
 }
 const clouds = [];
@@ -503,9 +506,10 @@ for(const f of fieldCenters){
   bx(22,0.3,28,0x8d5a2b,f[0],0.15,f[1]);
   for(const rz of [-8,0,8]) bx(18,0.4,1,0x2e7d32,f[0],0.4,f[1]+rz);
 }
-for(let i=0;i<30;i++){
+for(let i=0;i<40;i++){ // V69: 30 -> 40 trees
   const fx = 138 + ((i*29)%28), fz = -118 + ((i*47)%236);
   if(Math.abs(fz) < 8) continue;
+  if(fx > 162) continue; // V69: stream bank starts at 162, stream spans 165..185
   // forest loop had NO road guard (grass loop below has one) - it planted trees on outer ring x=160 + sidewalks + road -80
   if([-160,-80,-40,0,40,80,160].some(r=>Math.abs(fx-r)<9 || Math.abs(fz-r)<9)) continue;
   let nearField = false;
@@ -553,14 +557,18 @@ for(const mp of mountainPeaks){
     sph(1.3,0x1b5e20,mx2+dx,slopeY+3.6,mz2+dz);
   }
 }
-for(let i=0;i<20;i++){
+for(let i=0;i<28;i++){ // V69: 20 -> 28, guarded (was planting trees on fields + in house yards)
   const fx = 205 + ((i*37)%60), fz = -115 + ((i*53)%230);
   if(Math.abs(fz) < 8) continue;
+  if(houseList.some(h=>Math.abs(fx-h[0]) < 14 && Math.abs(fz-h[1]) < 12)) continue;
+  if(fieldCenters.some(f=>Math.abs(fx-f[0]) < 13 && Math.abs(fz-f[1]) < 16)) continue;
   tree(fx, fz);
 }
-for(let i=0;i<20;i++){
+for(let i=0;i<28;i++){ // V69: 20 -> 28, guarded (a tree used to land inside the (320,20) yard)
   const fx = 300 + ((i*37)%60), fz = -115 + ((i*53)%230);
   if(Math.abs(fz) < 8) continue;
+  if(houseList.some(h=>Math.abs(fx-h[0]) < 14 && Math.abs(fz-h[1]) < 12)) continue;
+  if(fieldCenters.some(f=>Math.abs(fx-f[0]) < 13 && Math.abs(fz-f[1]) < 16)) continue;
   tree(fx, fz);
 }
 sph(1.5,0x9e9e9e,195,0.8,-20); sph(1.2,0x9e9e9e,198,0.6,25); sph(1.8,0x9e9e9e,192,0.9,60);
@@ -842,7 +850,7 @@ for(const x of allRoadLines) for(const z of allRoadLines) intersections.push({x,
 const npcs = [];
 const npcShirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
 const skins = [0xffcc99,0xe8b88a,0xc68863,0x8d5a3b];
-for(let i=0;i<36;i++){ // V65: road walkers 24 -> 36
+for(let i=0;i<48;i++){ // V69: road walkers 36 -> 48
   const female = i % 3 === 0;
   const p = makePerson(npcShirts[i%12], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
   p.g.scale.setScalar(0.85);
@@ -878,8 +886,15 @@ for(let i=0;i<6;i++){
   p.g.scale.setScalar(0.85); scene.add(p.g);
   yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:8, dir:(i%2===0?1:-1)});
 }
+// V69: yard walkers around 4 new V69 houses too
+for(let i=0;i<4;i++){
+  const h = houseList[74+i];
+  const p = makePerson(npcShirts[(i+5)%12], 0x37474f, {skin:skins[(i+2)%4], female:(i%2===1), longHair:(i%2===1)});
+  p.g.scale.setScalar(0.85); scene.add(p.g);
+  yardPeople.push({p, house:{x:h[0],z:h[1]}, angle:i*1.05, radius:8, dir:(i%2===0?1:-1)});
+}
 const schoolKids = [];
-for(let i=0;i<6;i++){ // V65: school kids 4 -> 6
+for(let i=0;i<8;i++){ // V69: school kids 6 -> 8
   const p = makePerson([0xe53935,0x1565c0,0x43a047,0xf9a825][i%4], 0x37474f, {skin:skins[i%4]});
   p.g.scale.setScalar(0.57); p.g.position.set(-105+i*3, 0, 70); scene.add(p.g);
   schoolKids.push({p, target:{x:-108+Math.random()*12, z:68+Math.random()*3}});
@@ -956,8 +971,14 @@ function makeCar(color){
   glassBx(1.8,0.4,0.06,0,1.25,1.11,g); glassBx(1.8,0.4,0.06,0,1.25,-1.71,g);
   bx(0.35,0.2,0.06,0xffeb3b,-0.7,0.6,2.78,g); bx(0.35,0.2,0.06,0xffeb3b,0.7,0.6,2.78,g);
   bx(0.35,0.2,0.06,0xe53935,-0.7,0.6,-2.78,g); bx(0.35,0.2,0.06,0xe53935,0.7,0.6,-2.78,g);
+  // V69: cars look better — bumpers, grille, indicators, mirrors, hubcaps
+  bx(2.2,0.25,0.3,0x212121,0,0.35,2.85,g); bx(2.2,0.25,0.3,0x212121,0,0.35,-2.85,g);
+  bx(1.2,0.3,0.08,0x9e9e9e,0,0.65,2.84,g);
+  bx(0.35,0.2,0.06,0xef6c00,-1.15,0.6,2.78,g); bx(0.35,0.2,0.06,0xef6c00,1.15,0.6,2.78,g);
+  bx(0.18,0.25,0.3,0x212121,-1.2,1.3,0.9,g); bx(0.18,0.25,0.3,0x212121,1.2,1.3,0.9,g);
   for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){
     const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,g); w.rotation.z = Math.PI/2;
+    const hc = cyl(0.2,0.2,0.32,0x9e9e9e,wx,0.45,wz,g); hc.rotation.z = Math.PI/2;
   }
   blobShadow(g, 1.4, 3.0);
   return g;
@@ -1053,7 +1074,7 @@ if(ownedHouses > 0 && ownedList.length === 0){ for(let i=0;i<ownedHouses && i<ho
 ownedHouses = ownedList.length;
 // truck + tuk-tuk traffic
 { const tr = new THREE.Group(); bx(2.4,1.0,2.5,0x1565c0,0,0.8,2.5,tr); bx(2.4,0.6,2.5,0x90caf9,0,1.5,2.5,tr); bx(2.4,1.2,5,0x8d6e63,0,0.9,-1.5,tr);
-  for(const wx of [-1.2,1.2]) for(const wz of [-3,0,3]){ const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,tr); w.rotation.z = Math.PI/2; }
+  for(const wx of [-1.2,1.2]) for(const wz of [-3,0,3]){ const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,tr); w.rotation.z = Math.PI/2; const hc = cyl(0.2,0.2,0.32,0x9e9e9e,wx,0.45,wz,tr); hc.rotation.z = Math.PI/2; } // V69: truck hubcaps
   tr.position.set(-160,0,0); scene.add(tr); cars.push({g:tr, target:intersections[0], speed:7}); }
 { const tk = new THREE.Group(); bx(1.4,0.6,2.2,0xffeb3b,0,0.5,0,tk); bx(1.4,0.5,1.4,0x212121,0,1.0,-0.2,tk); glassBx(1.2,0.4,0.06,0,1.0,0.55,tk);
   for(const wx of [-0.7,0.7]){ const w = cyl(0.35,0.35,0.25,0x212121,wx,0.35,0.8,tk); w.rotation.z = Math.PI/2; }
