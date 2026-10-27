@@ -717,6 +717,7 @@ function makePerson(shirt, pants, opts){
   return {g, thighL:legL.hip, thighR:legR.hip, shinL:legL.knee, shinR:legR.knee, upperL:armL.shoulder, upperR:armR.shoulder, foreL:armL.elbow, foreR:armR.elbow, head, eyes};
 }
 function animatePerson(p, moving, walkPhase, globalTime, riding){
+  if(!p.thighL) return; // V64: player has no blocky limbs anymore (GLB only) — NPCs still animate
   if(riding){
     p.thighL.rotation.x = -0.7; p.thighR.rotation.x = -0.7;
     p.shinL.rotation.x = 1.1; p.shinR.rotation.x = 1.1;
@@ -787,7 +788,8 @@ function playBird(){
   }catch(e){}
 }
 // player
-const player = makePerson(0x1565c0, 0x37474f, {skin:0xe8b88a, detailed:true});
+// V64: old blocky player deleted on Zaw's word — GLB is the only player body now (NPCs still use makePerson)
+const player = {g: new THREE.Group()};
 scene.add(player.g);
 player.g.position.set(0,0,10); player.g.scale.setScalar(0.85); player.g.rotation.y = Math.PI;
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
@@ -798,11 +800,10 @@ let glbMixer = null, glbAction = null;
 // feet are closest together (measured from the clip: 0.087 GLB units apart).
 new GLTFLoader().load('character.glb', (gltf)=>{
   const body = gltf.scene;
-  body.scale.setScalar(2.40); // GLB height 1.0 -> world 0.85*2.40 = 2.04, same as the old player
+  body.scale.setScalar(2.40); // GLB height 1.0 -> world 0.85*2.40 = 2.04, person-sized
   body.rotation.y = -Math.PI/2; // GLB faces +x; the game faces +z
   body.position.y = 0.05; // V58: walk-cycle dip (~0.04 world) so feet never sink below the surface
   body.traverse((o)=>{ if(o.isMesh) o.castShadow = true; });
-  for(const ch of [...player.g.children]){ if(ch !== bikeG) ch.visible = false; }
   player.g.add(body);
   if(gltf.animations.length){
     glbMixer = new THREE.AnimationMixer(body);
@@ -1069,7 +1070,6 @@ for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Gr
   bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); ownWheels.push(wg); }
 for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; ownCar.add(bm); ownBrakes.push(bm); }
 // player vest (shirt colour, changeable in shop)
-const playerVest = cap(0.30,0.36,SHIRT_COLORS[shirtIdx],0,1.58,0,player.g); playerVest.scale.z = 0.68;
 // V47: one interior room per owned house (first 6 owned houses, each own room)
 function buildRoom(rx, rz){
   bx(20,0.2,16,0x8d6e63,rx,0.1,rz);
@@ -1287,7 +1287,7 @@ document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = 
 document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCar) return; tone(420,0.3,0.08,'square'); setTimeout(()=>tone(520,0.3,0.08,'square'),120); showMsg('📣 ဟွန်း!'); });
 document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
 document.getElementById('musicBtn').addEventListener('click', ()=>{ musicOn = !musicOn; save(); refresh(); showMsg('🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်')); });
-document.getElementById('shirtBtn').addEventListener('click', ()=>{ shirtIdx = (shirtIdx + 1) % SHIRT_COLORS.length; playerVest.material = M(SHIRT_COLORS[shirtIdx]); save(); refresh(); showMsg('👕 အင်္ကျီအရောင် ပြောင်းပြီ'); });
+document.getElementById('shirtBtn').addEventListener('click', ()=>{ showMsg('👕 ဇာတ်ကောင်အသစ်မှာ အင်္ကျီအရောင် ပြောင်းမရသေးဘူး'); }); // V64: vest deleted with the old character
 document.getElementById('playBtn').addEventListener('click', async ()=>{
   ensureAudio();
   // phone only: one tap = auto fullscreen + auto landscape; desktop: no forced fullscreen
@@ -1327,7 +1327,7 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 9, smoothCamH = 4.0, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 7, smoothCamH = 3.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
   const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
@@ -1726,7 +1726,7 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 9, targetH = drivingCar ? 6.5 : 4.0; // V60: walking camera closer again
+  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 7, targetH = drivingCar ? 6.5 : 3.5; // V64: walking camera closer again (driving unchanged)
   for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
