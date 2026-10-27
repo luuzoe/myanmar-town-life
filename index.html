@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V99</div>
+  <div style="font-size:12px;opacity:.6">V100</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -2103,8 +2103,7 @@ const nearShops = roadShops.filter(s=>Math.hypot(s.x, s.z) < 80).slice(0,4);
   if(w) w.job = {x: s.x + (s.x >= 0 ? 3.2 : -3.2), z: s.z, rot: s.x >= 0 ? -Math.PI/2 : Math.PI/2, kind:'vendor', place: s.name, home: nearestHouse(s.x, s.z)};
 });
 // V91: bus waiters — 6 walkers wait at route-side spots (bus passes within ~6u, so boarding triggers)
-const WAITER_SPOTS = [{x:6,z:-160},{x:166,z:-160},{x:166,z:160},{x:-566,z:160},{x:-566,z:-160},{x:-166,z:-160}];
-[2,10,18,26,34,42].forEach((wi,si)=>{ const w = npcs[wi]; if(w && !w.job){ w.busStop = si; w.busTimer = 0; const ws = WAITER_SPOTS[si]; w.p.g.position.set(ws.x, 0, ws.z); } });
+// V100: bus waiters removed — they stood at bare road edges for minutes (bus loop ~280s) with no shelter or sign, which looked like stuck NPCs; those 6 walkers now walk normally like everyone else
 // city buildings: gas station, bank, hotel, mall (+ parking), billboards, bus shelters, food carts
 tryPlace(40, -200, 10, (x,z)=>{
   for(const px of [-4,4]) for(const pz of [-3,3]) cyl(0.25,0.25,4,0x9e9e9e,x+px,2,z+pz);
@@ -2346,11 +2345,6 @@ function animate(now){
   if(townTimer <= 0){ playTownAmbient(dayF); townTimer = 6 + Math.random()*8; }
   if(riding && moving){ bikeTimer -= dt; if(bikeTimer <= 0){ tone(55 + (fastBike ? 20 : 0), 0.3, 0.04, 'triangle'); bikeTimer = 0.4; } }
   for(const n of npcs){
-    if(n.busStop !== undefined){ // V91: bus waiters — wait at route-side spots, board (vanish) when the bus passes, reappear at another stop later
-      if(n.busTimer > 0){ n.busTimer -= dt; if(n.busTimer <= 0){ n.busStop = Math.floor(Math.random()*WAITER_SPOTS.length); const ws = WAITER_SPOTS[n.busStop]; n.p.g.position.set(ws.x, 0, ws.z); n.p.g.visible = true; } }
-      else { const ws = WAITER_SPOTS[n.busStop]; n.p.g.position.set(ws.x, 0, ws.z); n.p.g.rotation.y = 0; if(!animateNpcModel(n.p, false, dt)) animatePerson(n.p, false, 0, gt, false); if(Math.hypot(bus.position.x-ws.x, bus.position.z-ws.z) < 12){ n.busTimer = 45; n.p.g.position.set(9999, 0, 9999); n.p.g.visible = false; } }
-      continue;
-    }
     if(n.job){ const atWork = dayF > 0.5; const spot = atWork ? n.job : (n.job.home || n.job); n.p.g.position.set(spot.x, 0, spot.z); n.p.g.rotation.y = spot.rot; if(!animateNpcModel(n.p, false, dt)) animatePerson(n.p, false, 0, gt, false); if(atWork) animateWork(n.p, gt, n.job.kind); else { n.p.g.rotation.x = 0; n.p.g.rotation.z = 0; } continue; }
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
