@@ -76,7 +76,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V76</div>
+  <div style="font-size:12px;opacity:.6">V77</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
 </div></div>
@@ -107,6 +107,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'; // V70: merged mass houses
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'; // V77: rebinds skeletons so GLB clones pose independently
 const canvas = document.getElementById('game');
 const isMobile = innerWidth <= 700 || (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
@@ -733,7 +734,23 @@ function makePerson(shirt, pants, opts){
   blobShadow(g, 0.7, 0.7);
   return {g, thighL:legL.hip, thighR:legR.hip, shinL:legL.knee, shinR:legR.knee, upperL:armL.shoulder, upperR:armR.shoulder, foreL:armL.elbow, foreR:armR.elbow, head, eyes};
 }
+const _glbQ = new THREE.Quaternion(), _glbX = new THREE.Vector3(1,0,0), _glbY = new THREE.Vector3(0,1,0);
 function animatePerson(p, moving, walkPhase, globalTime, riding){
+  if(p.isGLB){ // V77: human-model NPCs — pose bones around the rest pose (thigh swing is local X, per the walk clip)
+    const B = p.bones;
+    const setB = (nm, ang, axis) => { const b = B[nm], r = glbRest && glbRest[nm]; if(!b || !r) return; _glbQ.setFromAxisAngle(axis || _glbX, ang); b.quaternion.copy(r.q).multiply(_glbQ); };
+    const restB = (nm) => { const b = B[nm], r = glbRest && glbRest[nm]; if(b && r) b.quaternion.copy(r.q); };
+    if(riding){ setB('L_Thigh',-0.7); setB('R_Thigh',-0.7); setB('L_Calf',1.1); setB('R_Calf',1.1); setB('L_Upperarm',-0.6); setB('R_Upperarm',-0.6); setB('L_Forearm',-0.4); setB('R_Forearm',-0.4); }
+    else if(moving){ const s = Math.sin(walkPhase*1.6)*0.65;
+      setB('L_Thigh',s); setB('R_Thigh',-s);
+      setB('L_Calf',Math.max(0,-s)*1.1); setB('R_Calf',Math.max(0,s)*1.1);
+      setB('L_Upperarm',-s*0.8); setB('R_Upperarm',s*0.8);
+      setB('L_Forearm',-0.4); setB('R_Forearm',-0.4);
+    } else { for(const nm of ['L_Thigh','R_Thigh','L_Calf','R_Calf','L_Upperarm','R_Upperarm','L_Forearm','R_Forearm']) restB(nm);
+      setB('Head', Math.sin(globalTime*0.8)*0.15, _glbY);
+    }
+    return;
+  }
   if(!p.thighL) return; // V64: player has no blocky limbs anymore (GLB only) — NPCs still animate
   if(riding){
     p.thighL.rotation.x = -0.7; p.thighR.rotation.x = -0.7;
@@ -761,6 +778,25 @@ function animatePerson(p, moving, walkPhase, globalTime, riding){
   }
   const blink = (globalTime % 3.7 < 0.12) ? 0.15 : 1;
   for(const e of p.eyes) e.scale.y = blink;
+}
+function makeHumanNPC(scale, tint){
+  const clone = cloneSkinned(glbBody);
+  clone.traverse((o)=>{ if(o.isMesh){ o.material = o.material.clone(); o.material.color.set(tint); o.castShadow = true; } });
+  const g = new THREE.Group(); g.scale.setScalar(scale); g.add(clone);
+  const bones = {}; clone.traverse((o)=>{ if(o.isBone) bones[o.name] = o; });
+  for(const nm in bones){ const r = glbRest[nm]; if(r){ bones[nm].position.copy(r.p); bones[nm].quaternion.copy(r.q); } }
+  return {g, bones, isGLB:true};
+}
+// V77: nearby people become real human models — blocky placeholders are swapped for GLB clones once the model loads
+function upgradeNPCs(){
+  if(!glbBody || !glbRest) return;
+  const tints = [0xffffff,0xf5e8dc,0xe8e0d0,0xdfe8f0,0xf0e0e0];
+  let ti = 0;
+  const swap = (oldP, scale) => { const np = makeHumanNPC(scale, tints[ti++ % tints.length]); np.g.position.copy(oldP.g.position); np.g.rotation.y = oldP.g.rotation.y; scene.remove(oldP.g); scene.add(np.g); return np; };
+  for(const n of npcs) n.p = swap(n.p, 0.85);
+  for(const y of yardPeople) y.p = swap(y.p, 0.85);
+  for(const k of schoolKids) k.p = swap(k.p, 0.57);
+  for(let i=0;i<staticPeople.length;i++) staticPeople[i] = swap(staticPeople[i], 0.85);
 }
 // ---- smooth turning + sound helpers ----
 function turnTo(obj, target, dt, rate){
@@ -875,6 +911,7 @@ new GLTFLoader().load('character.glb', (gltf)=>{
     glbAction = glbMixer.clipAction(clip);
     glbAction.play();
   }
+  upgradeNPCs(); // V77: swap blocky NPCs for human models
 }, undefined, ()=>{ /* keep the old body if the GLB fails to load */ });
 bx(0.5,0.3,2.4,0xd32f2f,0,0.5,0,bikeG);
 bx(0.6,0.2,0.6,0x212121,0,0.7,-0.4,bikeG);
@@ -1231,7 +1268,10 @@ function startTaxi(){ if(taxi){ showMsg('🚕 Taxi ပို့နေဆဲ'); r
   const dl = dests[Math.floor(Math.random()*dests.length)];
   taxi = {stage:'pickup', px:pk.x, pz:pk.z, dx:dl.x, dz:dl.z, dlabel:dl.label};
   // V67: a visible passenger waits at the pickup point (was beacon-only)
-  if(!taxiPerson){ taxiPerson = makePerson(0xef6c00, 0x37474f, {skin:skins[0]}); taxiPerson.g.scale.setScalar(0.85); scene.add(taxiPerson.g); }
+  if(!taxiPerson){
+    if(glbBody && glbRest){ taxiPerson = makeHumanNPC(0.85, 0xffffff); scene.add(taxiPerson.g); }
+    else { taxiPerson = makePerson(0xef6c00, 0x37474f, {skin:skins[0]}); taxiPerson.g.scale.setScalar(0.85); scene.add(taxiPerson.g); }
+  }
   taxiPerson.g.position.set(pk.x, 0, pk.z); taxiPerson.g.visible = true;
   taxiBeacon.position.set(pk.x, 0, pk.z); showMsg('🚕 ခရီးသည် အဝါရောင်မီးတိုင်မှာ စောင့်နေတယ် — ကားနဲ့ သွားခေါ်'); }
 function startMatch(){ if(matchOn) return; matchOn = true; matchTime = 60; myScore = 0; oppScore = 0; ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; showMsg('⚽ ပွဲ စပြီ! ၆၀ စက္ကန့် — အနီအသင်းကို နိုင်အောင် ကန်ပါ'); }
@@ -1435,6 +1475,7 @@ let dragId = null, dragX = null, dragY = null;
 // camera pitch: drag up = LOOK UP (camera lower), drag down = LOOK DOWN (camera higher)
 // default pitch = atan((6.5-2.2)/16) = 15 degrees
 let camPitch = Math.atan(4.3/16);
+let smoothPitch = camPitch; // V77: lerped pitch — looking up glides instead of snapping (dizziness fix)
 canvas.addEventListener('pointerdown', e=>{
   if(dragId === null){ dragId = e.pointerId; dragX = e.clientX; dragY = e.clientY; }
 });
@@ -1444,7 +1485,7 @@ addEventListener('pointermove', e=>{
     // (old sign was inverted: camYaw increase turns the view left, so drag must subtract)
     camYaw -= (e.clientX - dragX)*0.005; dragX = e.clientX; targetCamYaw = camYaw;
     // pitch was inverted: drag up must LOOK UP (camera lower), drag down must LOOK DOWN (camera higher)
-    camPitch += (e.clientY - dragY)*0.005; dragY = e.clientY;
+    camPitch += (e.clientY - dragY)*0.003; dragY = e.clientY; // V77: was 0.005 — slower pitch drag, less dizzy
     camPitch = Math.max(-0.35, Math.min(1.22, camPitch)); // V76: -20deg (look up at towers) to 70deg; drag up = look up
   }
 });
@@ -1540,6 +1581,7 @@ const MASS_WALLS = [0xfff2cc,0xddeeff,0xffe0e0,0xe0ffe0,0xf5f5f5,0xfff8dc,0xffcc
 const MASS_ROOFS = [0xb3402a,0x37474f,0x6d4c41,0x8d6e63];
 const MASS_LANDMARKS = [[-100,60,16],[-20,-100,17],[100,-20,14],[100,60,10],[-20,100,10],[100,100,10],[100,-100,10],[95,-72,10],[12,-32,8],[-100,-100,14],[-100,100,14],[-120,120,20],[-18,-32,12],[18,32,12]];
 const MASS_FOOTPATHS = [[-100,-80,59,61],[80,100,79,81],[99,101,80,100]];
+const PLAZAS = [[20,70,280,340],[-70,-20,280,340],[20,70,-340,-280],[-70,-20,-340,-280]]; // V77: avenue tower plazas (mass-free)
 function massOk(x,z,mass){
   const hw = 11, hd = 9;
   if(x-hw < -795 || x+hw > 595 || z-hd < -595 || z+hd > 595) return false;
@@ -1554,6 +1596,7 @@ function massOk(x,z,mass){
   for(const mp of mountainPeaks){ if(Math.hypot(x-mp[0], z-mp[1]) < mp[2]+13) return false; }
   for(const lm of MASS_LANDMARKS){ if(Math.hypot(x-lm[0], z-lm[1]) < lm[2]+12) return false; }
   for(const fp of MASS_FOOTPATHS){ if(!(x+hw < fp[0] || x-hw > fp[1] || z+hd < fp[2] || z-hd > fp[3])) return false; }
+  for(const pz of PLAZAS){ if(!(x+hw < pz[0] || x-hw > pz[1] || z+hd < pz[2] || z-hd > pz[3])) return false; } // V77: tower plazas
   return true;
 }
 const massPlaced = [];
@@ -1599,6 +1642,15 @@ crowdBody.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 crowdHead.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 crowdBody.castShadow = true; crowdHead.castShadow = true;
 scene.add(crowdBody); scene.add(crowdHead);
+// V77: crowd limbs — merged arm/leg pairs, instanced like the bodies (2 more draw calls, no longer pills)
+const crowdArmGeo = mergeGeometries([new THREE.CapsuleGeometry(0.09, 0.5, 4, 8).translate(-0.38, 1.0, 0), new THREE.CapsuleGeometry(0.09, 0.5, 4, 8).translate(0.38, 1.0, 0)], false);
+const crowdLegGeo = mergeGeometries([new THREE.CapsuleGeometry(0.11, 0.5, 4, 8).translate(-0.15, 0.35, 0), new THREE.CapsuleGeometry(0.11, 0.5, 4, 8).translate(0.15, 0.35, 0)], false);
+const crowdArms = new THREE.InstancedMesh(crowdArmGeo, new THREE.MeshLambertMaterial({color:0xffffff}), CROWD_N);
+const crowdLegs = new THREE.InstancedMesh(crowdLegGeo, new THREE.MeshLambertMaterial({color:0xffffff}), CROWD_N);
+crowdArms.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+crowdLegs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+crowdArms.castShadow = true; crowdLegs.castShadow = true;
+scene.add(crowdArms); scene.add(crowdLegs);
 const crowd = [];
 {
   const shirts = [0xe53935,0x43a047,0xf9a825,0x8e24aa,0x00897b,0xef6c00,0x5c6bc0,0xec407a,0x7cb342,0xab47bc,0x26a69a,0xff7043];
@@ -1610,10 +1662,14 @@ const crowd = [];
     crowd.push({vert, line, along:-580 + crowdRnd()*1160, lane:(crowdRnd() < 0.5 ? -2 : 2), dir:(crowdRnd() < 0.5 ? -1 : 1), speed:3.5 + crowdRnd()*2, phase:crowdRnd()*6.28});
     dummy.position.set(0,0,0); dummy.updateMatrix();
     crowdBody.setMatrixAt(i, dummy.matrix); crowdHead.setMatrixAt(i, dummy.matrix);
+    crowdArms.setMatrixAt(i, dummy.matrix); crowdLegs.setMatrixAt(i, dummy.matrix);
     crowdBody.setColorAt(i, new THREE.Color(shirts[i % 12]));
     crowdHead.setColorAt(i, new THREE.Color(skins[i % 4]));
+    crowdArms.setColorAt(i, new THREE.Color(shirts[i % 12]));
+    crowdLegs.setColorAt(i, new THREE.Color(0x37474f));
   }
   crowdBody.instanceColor.needsUpdate = true; crowdHead.instanceColor.needsUpdate = true;
+  crowdArms.instanceColor.needsUpdate = true; crowdLegs.instanceColor.needsUpdate = true;
 }
 const crowdDummy = new THREE.Object3D();
 function updateCrowd(dt, gt){
@@ -1640,12 +1696,17 @@ function updateCrowd(dt, gt){
     const bob = Math.abs(Math.sin(gt*7 + c.phase)) * 0.06;
     if(c.vert) crowdDummy.position.set(c.line + c.lane, 0.1 + bob, c.along);
     else crowdDummy.position.set(c.along, 0.1 + bob, c.line + c.lane);
+    crowdDummy.rotation.y = c.vert ? 0 : Math.PI/2; // V77: limbs face along the walking direction
     crowdDummy.updateMatrix();
     crowdBody.setMatrixAt(i, crowdDummy.matrix);
     crowdHead.setMatrixAt(i, crowdDummy.matrix);
+    crowdArms.setMatrixAt(i, crowdDummy.matrix);
+    crowdLegs.setMatrixAt(i, crowdDummy.matrix);
   }
   crowdBody.instanceMatrix.needsUpdate = true;
   crowdHead.instanceMatrix.needsUpdate = true;
+  crowdArms.instanceMatrix.needsUpdate = true;
+  crowdLegs.instanceMatrix.needsUpdate = true;
 }
 // ---- V76: CITY — downtown high-rises, roadside shops, city buildings ----
 // Downtown = blocks between roads -160..160. Mass houses are excluded here (massOk V76) so towers own the blocks.
@@ -1683,11 +1744,23 @@ function towerMesh(x,z,w,h,d,tint,antenna){
 }
 tryPlace(-40, 120, 12, (x,z)=>{ towerMesh(x,z,16,75,16,0xffffff,true); });
 tryPlace(120, -120, 12, (x,z)=>{ towerMesh(x,z,16,85,16,0xe8e4da,true); });
+// V77: up to 2 towers per downtown block (was 1 — Zaw saw only one tall building) — center first, then corners
 for(const bx of [-120,-40,40,120]) for(const bz of [-120,-40,40,120]){
   const hh = Math.abs(bx*7 + bz*13);
-  const w = 16 + (hh % 7), d = 16 + (Math.abs(bx*3 + bz*5) % 7), h = 30 + (hh % 26);
   const tint = [0xffffff,0xe8e4da,0xdfe6ec,0xeee8dc][hh % 4];
-  tryPlace(bx, bz, Math.hypot(w,d)/2, (x,z)=>{ towerMesh(x,z,w,h,d,tint,false); });
+  let placed = 0;
+  const cands = [[0,0],[20,20],[-20,-20],[20,-20],[-20,20],[20,0],[-20,0],[0,20],[0,-20]];
+  for(let ci=0; ci<cands.length && placed<2; ci++){
+    const w = (placed===0 ? 16 + (hh % 7) : 14 + (hh % 5)), d = (placed===0 ? 16 + (Math.abs(bx*3 + bz*5) % 7) : 14 + (Math.abs(bx*5 + bz*3) % 5));
+    const h = (placed===0 ? 30 + (hh % 26) : 25 + (hh % 16));
+    if(tryPlace(bx + cands[ci][0], bz + cands[ci][1], Math.hypot(w,d)/2, (x,z)=>{ towerMesh(x,z,w,h,d,tint,false); })) placed++;
+  }
+}
+// V77: avenue tower plazas — 2 tall towers each, flanking the avenue north + south
+for(const pz of PLAZAS){
+  const cx = (pz[0]+pz[1])/2, cz = (pz[2]+pz[3])/2;
+  tryPlace(cx-12, cz-12, 12, (x,z)=>{ towerMesh(x,z,18,55,18,0xdfe6ec,false); });
+  tryPlace(cx+12, cz+12, 12, (x,z)=>{ towerMesh(x,z,18,40,18,0xeee8dc,false); });
 }
 // roadside shops: box + awning + sign facing the road + goods crate (exact roadside spot or skipped, never pushed mid-block)
 const SHOP_NAMES = ['ထမင်းဆိုင်','ကော်ဖီဆိုင်','ဖုန်းဆိုင်','အဝတ်ဆိုင်','မုန့်ဆိုင်','ဆေးဆိုင်','စတိုး','လက်ဖက်ရည်ဆိုင်'];
@@ -2159,8 +2232,10 @@ function animate(now){
   smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*8);
   // pitch: camera height follows pitch (drag up/down), default 15deg = smoothCamH
   // V76: looking up — camera drops to near ground (never below it) and the gaze rises toward tower tops
-  const upExtra = Math.max(0, 0.09 - camPitch) * 20;
-  let pitchH = smoothCamH + (Math.tan(camPitch) - Math.tan(Math.atan(4.3/16)))*smoothCamDist;
+  // V77: pitch is smoothed (lerped) so looking up glides instead of snapping — no more dizziness
+  smoothPitch += (camPitch - smoothPitch) * Math.min(1, dt*4);
+  const upExtra = Math.max(0, 0.09 - smoothPitch) * 20;
+  let pitchH = smoothCamH + (Math.tan(smoothPitch) - Math.tan(Math.atan(4.3/16)))*smoothCamDist;
   pitchH = Math.max(0.5, player.g.position.y + 0.2, pitchH);
   camera.position.set(player.g.position.x - cf.x*smoothCamDist, pitchH, player.g.position.z - cf.z*smoothCamDist);
   { const tf = drivingCar ? 55 + Math.abs(carSpeed)*0.4 : 55; if(Math.abs(camera.fov - tf) > 0.1){ camera.fov += (tf - camera.fov) * Math.min(1, dt*5); camera.updateProjectionMatrix(); } }
