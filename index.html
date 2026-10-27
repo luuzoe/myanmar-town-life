@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>မြန်မာမြို့လေး — Myanmar Town Life</title>
+<meta property="og:title" content="မြန်မာမြို့လေး — Myanmar Town Life">
+<meta property="og:description" content="မြန်မာမြို့ကြီးထဲမှာ လွတ်လပ်စွာ ဆော့ကစားပါ — လယ်ရိတ်၊ ဈေးရောင်း၊ ဆိုင်ဖွင့်၊ ကားမောင်း၊ ဘောလုံးကန်။ ဒေါင်းလုပ်မလို၊ browser ထဲမှာပဲ အခမဲ့ ဆော့လို့ရတယ်။">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://luuzoe.github.io/myanmar-town-life/">
+<meta property="og:image" content="https://luuzoe.github.io/myanmar-town-life/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#87ceeb;font-family:system-ui,sans-serif}
@@ -33,6 +39,9 @@
   #shop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px}
   #shop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto} /* V62: close button always reachable on small screens */
   #shop button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
+  #roadShop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px} /* V85: roadside shop menu (same look as main shop) */
+  #roadShop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto}
+  #roadShop button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
   .buy{background:#2e7d32;color:#fff}
   .close{background:#eee}
   #hint{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:12px;font-size:13px;z-index:5;white-space:nowrap}
@@ -76,9 +85,10 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V84</div>
+  <div style="font-size:12px;opacity:.6">V85</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
+  <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -102,6 +112,12 @@
   <button class="buy" id="musicBtn">🎵 ဂီတ: ပိတ်</button>
   <button class="buy" id="shirtBtn">👕 အင်္ကျီအရောင် ပြောင်း</button>
   <button class="close" id="closeShop">ပိတ်မယ်</button>
+</div></div>
+<div id="roadShop"><div class="card">
+  <h2 style="margin:0" id="roadShopTitle">🛍️ ဆိုင်</h2>
+  <p>လက်ရှိငွေ — <b id="roadShopMoney">0</b> ကျပ်</p>
+  <div id="roadShopGoods"></div>
+  <button class="close" id="closeRoadShop">ပိတ်မယ်</button>
 </div></div>
 <script type="module">
 import * as THREE from 'three';
@@ -1391,6 +1407,7 @@ function nearest(){
     {d:dist(100,-140), label:'🏍️ ဆိုင်ကယ်ဆိုင်ကြည့်မယ်', fn:()=>showMsg('🏍️ ဆိုင်ကယ်ဆိုင် — ဆိုင်ကယ်ပြင်လို့ရတယ်'), r:7.5},
     {d:dist(-120,120), label: (dayCount % 3 === 0 && !festivalClaimed) ? '🎉 ပွဲတော် ဆုယူမယ် (+၅၀၀)' : '🌳 ပန်းခြံကြည့်မယ်', fn:()=>{ if(dayCount % 3 === 0 && !festivalClaimed){ festivalClaimed = true; money += 500; gainXP(30); save(); refresh(); showMsg('🎉 ပွဲတော် ဆု +၅၀၀ ကျပ်!'); } else showMsg('🌳 ပန်းခြံ — ကစားကွင်းနဲ့ အနားယူလို့ရတယ်'); }, r:12},
   ];
+  for(const s of roadShops) opts.push({d:dist(s.x,s.z), label:'🛍️ '+s.name+' — ဈေးဝယ်မယ်', fn:()=>openRoadShop(s), r:6}); // V85: roadside shops are real shops now
   function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; driveWheels = wheels; driveBrakes = brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်'); } refresh(); }, r:5}; }
   opts.push(carOpt(parkedCar, parkedWheels, parkedBrakes, 30, 'ကား'));
   if(ownCarBought) opts.push(carOpt(ownCar, ownWheels, ownBrakes, 40 + carUpg*10, 'ကိုယ်ပိုင်ကား'));
@@ -1516,6 +1533,26 @@ document.getElementById('playBtn').addEventListener('click', async ()=>{
     try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
   }
   document.getElementById('start').style.display='none';
+  // V85: daily bonus — first play of the day (localStorage date, no server needed)
+  try{
+    const today = new Date().toISOString().slice(0,10);
+    if(localStorage.getItem('mtl_daily') !== today){
+      localStorage.setItem('mtl_daily', today);
+      money += 500; gainXP(10); save(); refresh();
+      showMsg('🎁 နေ့စဉ်ဆုကြေး +၅၀၀ ကျပ်! မနက်ဖြန် ပြန်လာယူပါ');
+    }
+  }catch(e){}
+});
+document.getElementById('shareBtn').addEventListener('click', async ()=>{ // V85: share the game link (system share on phones, copy link otherwise)
+  const url = 'https://luuzoe.github.io/myanmar-town-life/';
+  const btn = document.getElementById('shareBtn');
+  try{
+    if(navigator.share){ await navigator.share({title:'မြန်မာမြို့လေး — Myanmar Town Life', text:'မြန်မာမြို့ကြီးထဲမှာ အခမဲ့ ဆော့ကစားလို့ရတယ်!', url}); return; }
+    throw new Error('no-share');
+  }catch(e){
+    try{ await navigator.clipboard.writeText(url); btn.textContent = '✅ လင့်ခ်ကူးပြီးပြီ — သူငယ်ချင်းကို ပို့လို့ရပြီ'; }
+    catch(e2){ btn.textContent = '🔗 luuzoe.github.io/myanmar-town-life/'; }
+  }
 });
 document.getElementById('soundBtn').addEventListener('click', ()=>{
   ensureAudio(); soundOn = !soundOn;
@@ -1821,8 +1858,50 @@ for(const pz of PLAZAS){
 const SHOP_NAMES = ['ထမင်းဆိုင်','ကော်ဖီဆိုင်','ဖုန်းဆိုင်','အဝတ်ဆိုင်','မုန့်ဆိုင်','ဆေးဆိုင်','စတိုး','လက်ဖက်ရည်ဆိုင်'];
 const SHOP_COLORS = [0xfff3e0,0xe3f2fd,0xf3e5f5,0xe8f5e9,0xfff8e1,0xfce4ec,0xe0f2f1,0xede7f6];
 let shopIdx = 0;
+const roadShops = []; // V85: placed roadside shops (tryPlace skips some, so only recorded ones are buyable)
+// V85: roadside shop menus — every good states its exact effect; hp caps at 100, xp via gainXP, houseItem mirrors the main shop
+const ROAD_GOODS = {
+  'ထမင်းဆိုင်': {colors:[0xff7043,0xffca28,0x66bb6a], goods:[{label:'🍚 ထမင်း', price:250, hp:25}, {label:'🍱 ထမင်းအစုံ', price:500, hp:50, xp:10}]},
+  'ကော်ဖီဆိုင်': {colors:[0x4e342e,0xffcc80,0xffffff], goods:[{label:'☕ ကော်ဖီ', price:200, hp:15, xp:10}, {label:'🍰 ကိတ်မုန့်', price:350, hp:25, xp:15}]},
+  'ဖုန်းဆိုင်': {colors:[0x212121,0x90a4ae,0x1565c0], goods:[{label:'📱 ဖုန်းကာဗာ', price:600, xp:30}, {label:'🔋 ပါဝါဘန့်', price:900, xp:50}]},
+  'အဝတ်ဆိုင်': {colors:[0xe53935,0x1e88e5,0xf9a825], goods:[{label:'👕 အင်္ကျီ', price:500, xp:30}, {label:'🥻 ပုဆိုး', price:800, xp:50}]},
+  'မုန့်ဆိုင်': {colors:[0xff7043,0xfff176,0xef5350], goods:[{label:'🍜 မုန့်ဟင်းခါး', price:300, hp:30}, {label:'🍨 အချိုပွဲ', price:450, hp:40, xp:10}]},
+  'ဆေးဆိုင်': {colors:[0xffffff,0xef5350,0x66bb6a], goods:[{label:'💊 ဆေး', price:400, hp:60}, {label:'💪 အားဆေး', price:700, hp:100, xp:10}]},
+  'စတိုး': {colors:[0xffca28,0x66bb6a,0xef5350], goods:[{label:'💧 ရေသန့်', price:150, hp:10}, {label:'🪑 အိမ်ပစ္စည်း', price:1000, houseItem:true}]},
+  'လက်ဖက်ရည်ဆိုင်': {colors:[0x8d6e63,0xffcc80,0x4e342e], goods:[{label:'🍵 လက်ဖက်ရည်', price:150, hp:15}, {label:'🥗 အသုပ်', price:400, hp:35, xp:10}]},
+};
+function openRoadShop(s){
+  document.getElementById('roadShopTitle').textContent = '🛍️ ' + s.name;
+  document.getElementById('roadShopMoney').textContent = money;
+  const box = document.getElementById('roadShopGoods');
+  box.innerHTML = '';
+  for(const g of (ROAD_GOODS[s.name] || ROAD_GOODS['စတိုး']).goods){
+    const b = document.createElement('button');
+    b.className = 'buy';
+    let eff = '';
+    if(g.hp) eff += ' (+' + g.hp + ' ❤️)';
+    if(g.xp) eff += ' (+' + g.xp + ' ⭐)';
+    if(g.houseItem) eff += ' (ငှားခ +၅၀)';
+    b.textContent = g.label + eff + ' — ' + g.price + ' ကျပ်';
+    b.onclick = ()=>buyRoadGood(g);
+    box.appendChild(b);
+  }
+  document.getElementById('roadShop').style.display = 'flex';
+}
+function buyRoadGood(g){
+  if(money < g.price){ showMsg('ငွေမလုံလောက်ဘူး — ' + g.price + ' ကျပ် လိုတယ်'); return; }
+  money -= g.price;
+  if(g.hp) health = Math.min(100, health + g.hp);
+  if(g.xp) gainXP(g.xp);
+  if(g.houseItem){ houseItems++; gainXP(20); }
+  save(); refresh(); playCoin();
+  document.getElementById('roadShopMoney').textContent = money;
+  showMsg(g.label + ' ဝယ်ပြီးပြီ!');
+}
+document.getElementById('closeRoadShop').addEventListener('click', ()=>{ document.getElementById('roadShop').style.display = 'none'; });
 function roadShop(x,z,dir){
   const name = SHOP_NAMES[shopIdx % SHOP_NAMES.length], col = SHOP_COLORS[shopIdx % SHOP_COLORS.length]; shopIdx++;
+  roadShops.push({x, z, name}); // V85: record placed shops so nearest() can offer buying
   let ox = 0, oz = 0, rot = 0;
   if(dir==='W'){ ox = -1; rot = -Math.PI/2; } else if(dir==='E'){ ox = 1; rot = Math.PI/2; }
   else if(dir==='S'){ oz = 1; rot = 0; } else if(dir==='N'){ oz = -1; rot = Math.PI; }
@@ -1831,6 +1910,9 @@ function roadShop(x,z,dir){
   if(ox!==0) bx(2,0.2,5,0xe53935,x+ox*2.2,3.0,z); else bx(5,0.2,2,0xe53935,x,3.0,z+oz*2.2);
   const sg = signMesh(name, '#1565c0', '#ffffff', x+ox*2.35, 4.3, z+oz*2.0, 4.5, 1.1); sg.rotation.y = rot;
   bx(1.2,0.8,1.2,0x8d6e63,x+ox*2.6,0.4,z+oz*2.6);
+  // V85: visible goods on the crate (so shops no longer look empty) — colours by shop type, visual only, no new colliders
+  const gc = (ROAD_GOODS[name] || ROAD_GOODS['စတိုး']).colors;
+  for(let gi=0; gi<3; gi++) bx(0.32,0.32,0.32, gc[gi % gc.length], x+ox*2.6 + (gi-1)*0.38*(ox!==0?0:1), 0.95, z+oz*2.6 + (gi-1)*0.38*(ox!==0?1:0));
   colliders.push({x, z, r:2.5});
 }
 for(const mz of [-480,-320,-200,-120,-60,-20,20,60,120,200,320,480]){
