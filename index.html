@@ -81,10 +81,10 @@
   <p style="font-size:13px;color:#555">📱 joystick = ရွေ့ · လုပ် = အလုပ် · ဆွဲ = ကင်မရာ</p>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
-  <p style="font-size:13px"><a href="mongla.html?v=53">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm.html?v=53">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=53">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
-  <p style="font-size:13px"><a href="wanlone-street.html?v=53">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="mongla.html?v=54">🏙️ မိုင်းလားမြို့ ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm.html?v=54">🗺️ Wan Lone OSM Explorer (အသစ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-osm-2d.html?v=54">🗺️ Wan Lone OSM Explorer 2D (ဖုန်းတိုင်းမှာ ရတယ်) ဆော့မယ်</a></p>
+  <p style="font-size:13px"><a href="wanlone-street.html?v=54">📍 ဝမ်လုံလမ်း (Maps pin) — ဂိမ်းအသစ် ဆော့မယ်</a></p>
 </div></div>
 <div id="tutorial" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:40;display:none;align-items:center;justify-content:center;padding:20px"><div class="card" style="background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%">
   <h2 style="margin:0">📖 သင်ခန်းစာ</h2>
@@ -1545,9 +1545,9 @@ function animate(now){
     else if(Math.abs(tz-pz) > 0.8) mz = Math.sign(tz-pz);
     else { car.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
     car.g.position.x += mx*car.speed*dt; car.g.position.z += mz*car.speed*dt;
-    if(mx !== 0) car.g.position.z += (nearestLine(pz) + (mx>0?2.5:-2.5) - car.g.position.z) * Math.min(1, dt*4);
-    else car.g.position.x += (nearestLine(px) + (mz>0?-2.5:2.5) - car.g.position.x) * Math.min(1, dt*4);
-    turnTo(car.g, Math.atan2(mx,mz), dt, 6);
+    if(mx !== 0) car.g.position.z += (nearestLine(pz) + (mx>0?2:-2) - car.g.position.z) * Math.min(1, dt*4);
+    else car.g.position.x += (nearestLine(px) + (mz>0?-2:2) - car.g.position.x) * Math.min(1, dt*4);
+    car.g.rotation.y = Math.atan2(mx,mz); // V54: snap heading to road direction (no diagonal slide at corners)
     const fx = Math.sin(car.g.rotation.y), fz = Math.cos(car.g.rotation.y);
     carHitCheck(car.g.position.x, car.g.position.z, fx, fz, 2.75, 1.8);
   }
@@ -1556,9 +1556,9 @@ function animate(now){
     if(d2 < 3){ ridingBus = false; busDest = null; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဂိတ်ရောက်ပြီ!'); refresh(); }
     else { let mx = 0, mz = 0; if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
       bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
-      if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?2:-2) - bus.position.z) * Math.min(1, dt*4);
-      else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-2:2) - bus.position.x) * Math.min(1, dt*4);
-      turnTo(bus, Math.atan2(mx,mz), dt, 5);
+      if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?1.5:-1.5) - bus.position.z) * Math.min(1, dt*4);
+      else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-1.5:1.5) - bus.position.x) * Math.min(1, dt*4);
+      bus.rotation.y = Math.atan2(mx,mz); // V54: snap heading to road direction
       const fx = Math.sin(bus.rotation.y), fz = Math.cos(bus.rotation.y); carHitCheck(bus.position.x, bus.position.z, fx, fz, 6, 2.0); }
   } else {
     const bt = busRoute[busIdx];
@@ -1568,9 +1568,9 @@ function animate(now){
       let mx = 0, mz = 0;
       if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
       bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
-      if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?2:-2) - bus.position.z) * Math.min(1, dt*4);
-      else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-2:2) - bus.position.x) * Math.min(1, dt*4);
-      turnTo(bus, Math.atan2(mx,mz), dt, 5);
+      if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?1.5:-1.5) - bus.position.z) * Math.min(1, dt*4);
+      else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-1.5:1.5) - bus.position.x) * Math.min(1, dt*4);
+      bus.rotation.y = Math.atan2(mx,mz); // V54: snap heading to road direction
       const fx = Math.sin(bus.rotation.y), fz = Math.cos(bus.rotation.y);
       carHitCheck(bus.position.x, bus.position.z, fx, fz, 6, 2.0);
     }
