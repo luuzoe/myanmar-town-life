@@ -42,6 +42,9 @@
   #roadShop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px} /* V85: roadside shop menu (same look as main shop) */
   #roadShop .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto}
   #roadShop button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
+  #friendsBook{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:20;display:none;align-items:center;justify-content:center;padding:20px} /* V91: friends book modal */
+  #friendsBook .card{background:#fff;border-radius:20px;padding:20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto}
+  #friendsBook button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:12px;font-size:16px;font-weight:700}
   .buy{background:#2e7d32;color:#fff}
   .close{background:#eee}
   #hint{position:fixed;bottom:170px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.45);padding:6px 12px;border-radius:12px;font-size:13px;z-index:5;white-space:nowrap}
@@ -81,11 +84,12 @@
 <button id="soundBtn" style="position:fixed;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">🔊</button>
 <button id="pauseBtn" style="position:fixed;right:56px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">⏸</button>
 <button id="photoBtn" style="position:fixed;right:100px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">📸</button>
+<button id="friendsBtn" style="position:fixed;right:144px;top:12px;width:36px;height:36px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:18px;z-index:10">👥</button>
 <div id="flash" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9"></div>
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V90</div>
+  <div style="font-size:12px;opacity:.6">V91</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -98,6 +102,7 @@
 <div id="shop"><div class="card">
   <h2 style="margin:0">🛒 ဆိုင်</h2>
   <p>လက်ရှိငွေ — <b id="shopMoney">0</b> ကျပ်</p>
+  <p id="mayorRank">🏛️ ရာထူး: သာမန်မြို့သား</p>
   <button class="buy" id="buyBike">🏍️ ဆိုင်ကယ်မြန် (၂၀၀၀ ကျပ်)</button>
   <button class="buy" id="buyBasket">🧺 ခြင်းကြီး — ပို့ခ ၁.၅ ဆ (၃၀၀၀ ကျပ်)</button>
   <button class="buy" id="buyHouse">🏠 အိမ်ဝယ် (၅၀၀၀+ ကျပ်) — နေ့တိုင်း +၂၀၀</button>
@@ -108,6 +113,10 @@
   <button class="buy" id="buyOwnCar">🚗 ကိုယ်ပိုင်ကား ဝယ် (၁၅၀၀၀ ကျပ်)</button>
   <button class="buy" id="buyCarUpg">⚡ ကားမြန်နှုန်း မြှင့် (၅၀၀၀ ကျပ်)</button>
   <button class="buy" id="paintCarBtn">🎨 ကားအရောင် ပြောင်း</button>
+  <button class="buy" id="buyHat1">🎩 ဦးထုပ်မြင့် (၁၀၀၀ ကျပ်)</button>
+  <button class="buy" id="buyHat2">👒 ကောက်ရိုးဦးထုပ် (၂၀၀၀ ကျပ်)</button>
+  <button class="buy" id="buyHat3">👑 သရဖူ (၅၀၀၀ ကျပ်)</button>
+  <button class="buy" id="removeHat">🎩 ဦးထုပ် ချွတ်မယ်</button>
   <button class="buy" id="qualityBtn">🎮 အရည်အသွေး: အမြင့်</button>
   <button class="buy" id="musicBtn">🎵 ဂီတ: ပိတ်</button>
   <button class="buy" id="shirtBtn">👕 အင်္ကျီအရောင် ပြောင်း</button>
@@ -119,6 +128,12 @@
   <div id="roadShopGoods"></div>
   <div id="roadShopOwn"></div>
   <button class="close" id="closeRoadShop">ပိတ်မယ်</button>
+</div></div>
+<div id="friendsBook"><div class="card">
+  <h2 style="margin:0">👥 သူငယ်ချင်းစာအုပ်</h2>
+  <p id="friendsBookHead">စုနေတုန်း...</p>
+  <div id="friendsList"></div>
+  <button class="close" id="closeFriendsBook">ပိတ်မယ်</button>
 </div></div>
 <script type="module">
 import * as THREE from 'three';
@@ -682,6 +697,20 @@ scene.add(treasureMesh); treasureMesh.position.set(0,-20,0);
 let treasureTimer = 60, treasureActive = false, treasurePos = {x:0, z:0};
 function spawnTreasure(){ const it = intersections[Math.floor(Math.random()*intersections.length)]; treasurePos = {x:it.x, z:it.z}; treasureMesh.position.set(it.x, 0, it.z); treasureActive = true; treasureTimer = 150 + Math.floor(Math.random()*120); showMsg('✨ ရွှေရောင်အလင်းတန်း တစ်နေရာမှာ ပေါ်နေပြီ — သွားရှာပါ!'); }
 function collectTreasure(){ const rw = 300 + Math.floor(Math.random()*500); money += rw; gainXP(20); treasureActive = false; treasureMesh.position.set(0,-20,0); treasureTimer = 150 + Math.floor(Math.random()*120); save(); refresh(); playCoin(); showMsg('✨ ရတနာရပြီ +' + rw + ' ကျပ်!'); }
+// V91: race beacon (white) + hide-and-seek beacon (pink)
+const raceBeacon = new THREE.Group();
+const rbm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.MeshBasicMaterial({color:0xffffff}));
+rbm.position.y = 6; raceBeacon.add(rbm);
+const rbs = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8), new THREE.MeshBasicMaterial({color:0x212121}));
+rbs.position.y = 12.5; raceBeacon.add(rbs); scene.add(raceBeacon); raceBeacon.position.set(0,-20,0);
+const seekBeacon = new THREE.Group();
+const kbm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.MeshBasicMaterial({color:0xec407a}));
+kbm.position.y = 6; seekBeacon.add(kbm);
+const kbs = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8), new THREE.MeshBasicMaterial({color:0xec407a}));
+kbs.position.y = 12.5; seekBeacon.add(kbs); scene.add(seekBeacon); seekBeacon.position.set(0,-20,0);
+// V91: race start banner next to the parked cars (36,-20)
+cyl(0.15,0.15,4.5,0x9e9e9e,33,2.25,-20); cyl(0.15,0.15,4.5,0x9e9e9e,39,2.25,-20);
+const raceSign = signMesh('🏁 ပြိုင်ပွဲ စမှတ်', '#212121', '#ffffff', 36, 4.3, -20, 6, 1.2); raceSign.rotation.y = -Math.PI/2;
 // V47 taxi beacon (yellow pillar, hidden when no taxi)
 const taxiBeacon = new THREE.Group();
 { const tm = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,12,8), new THREE.MeshBasicMaterial({color:0xffeb3b, transparent:true, opacity:0.5})); tm.position.y = 6; taxiBeacon.add(tm);
@@ -1047,6 +1076,8 @@ const NPC_JOBS = [
   {x:92, z:-69, rot:1.2, kind:'vendor', place:'ဈေးကြီး'},
   {x:98, z:-75, rot:-1.5, kind:'vendor', place:'ဈေးကြီး'},
 ];
+function nearestHouse(x,z){ let best = null, bd = 1e9; for(const h of houseList){ const d = Math.hypot(h[0]-x, h[1]-z); if(d < bd){ bd = d; best = h; } } return best ? {x: best[0], z: best[1]+11, rot: Math.PI} : {x: x+15, z: z+15, rot: 0}; }
+for(const j of NPC_JOBS) j.home = nearestHouse(j.x, j.z); // V91: workers go home at night
 for(let i=0;i<96;i++){ // V90: road walkers 48 -> 96 (crowd deleted, replaced by real 20-pack walkers)
   const female = i % 3 === 0;
   const p = makePerson(npcShirts[i%12], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
@@ -1214,6 +1245,18 @@ let busIdx = 1;
 let money = parseInt(localStorage.getItem('mtl_money')||'1000',10) || 0; // V86: new players start with 1000 (existing saves unchanged)
 let winStreak = parseInt(localStorage.getItem('mtl_streak')||'0',10) || 0; // V86: football win streak
 let friends = {}; try{ friends = JSON.parse(localStorage.getItem('mtl_friends')||'{}') || {}; }catch(e){} // V86: NPC friendship levels
+let rankIdx = parseInt(localStorage.getItem('mtl_rank')||'0',10) || 0; // V91: mayor rank
+let tukBought = localStorage.getItem('mtl_tuk')==='1', truckBought = localStorage.getItem('mtl_truck')==='1'; // V91: extra vehicles
+let hatsOwned = []; try{ hatsOwned = JSON.parse(localStorage.getItem('mtl_hats')||'[]') || []; }catch(e){} // V91: owned hats (1,2,3)
+let hatIdx = parseInt(localStorage.getItem('mtl_hat')||'0',10) || 0; // V91: worn hat (0=none)
+// V91: buyable hats (symmetric so they sit right at any facing) — attached to the player group
+const HATS = [{label:'🎩 ဦးထုပ်မြင့်', price:1000}, {label:'👒 ကောက်ရိုးဦးထုပ်', price:2000}, {label:'👑 သရဖူ', price:5000}];
+const hatMeshes = [null];
+{ const h1 = new THREE.Group(); h1.position.y = 2.24; bx(0.96,0.08,0.96,0x212121,0,0,0,h1); cyl(0.34,0.34,0.5,0x212121,0,0.29,0,h1); h1.visible = false; player.g.add(h1); hatMeshes.push(h1);
+  const h2 = new THREE.Group(); h2.position.y = 2.24; cyl(0.42,0.42,0.18,0xffd54f,0,0.09,0,h2); bx(1.2,0.05,1.2,0xffd54f,0,0,0,h2); h2.visible = false; player.g.add(h2); hatMeshes.push(h2);
+  const h3 = new THREE.Group(); h3.position.y = 2.24; cyl(0.36,0.36,0.3,0xffc107,0,0.15,0,h3); for(let ki=0; ki<3; ki++){ const a = ki/3*Math.PI*2; bx(0.18,0.18,0.18,0xffc107,Math.cos(a)*0.3,0.34,Math.sin(a)*0.3,h3); } h3.visible = false; player.g.add(h3); hatMeshes.push(h3); }
+if(hatIdx > 0 && hatMeshes[hatIdx]) hatMeshes[hatIdx].visible = true;
+function wearHat(i){ hatIdx = i; hatMeshes.forEach((h,hi)=>{ if(h) h.visible = (hi === i); }); save(); refresh(); }
 let fastBike = localStorage.getItem('mtl_fast')==='1';
 let bigBasket = localStorage.getItem('mtl_basket')==='1';
 let riding = false;
@@ -1267,6 +1310,9 @@ let ownCarBought = localStorage.getItem('mtl_owncar')==='1';
 let carUpg = parseInt(localStorage.getItem('mtl_carupg')||'0',10) || 0; if(carUpg > 3) carUpg = 3;
 let carPaintIdx = parseInt(localStorage.getItem('mtl_carpaint')||'0',10) || 0; if(carPaintIdx >= CAR_PAINTS.length) carPaintIdx = 0;
 const ownCar = makeCar(CAR_PAINTS[carPaintIdx]); ownCar.position.set(30,0,-12); ownCar.visible = ownCarBought; scene.add(ownCar);
+// V91: buyable tuk-tuk + truck (parked near the free car, bought by walking up to them)
+const tukTuk = makeCar(0xffeb3b); tukTuk.scale.set(0.8,0.8,0.8); tukTuk.position.set(38,0,-20); scene.add(tukTuk);
+const truck = makeCar(0xffffff); truck.scale.set(1.2,1.1,1.3); truck.position.set(30,0,-32); scene.add(truck);
 let driveCar = null, driveWheels = [], driveBrakes = [], driveMax = 30;
 const BUS_STOPS = [{label:'ဘတ်စ်ဂိတ်',x:100,z:-100},{label:'ကျောင်း',x:-100,z:60},{label:'ဆေးရုံ',x:100,z:-20},{label:'ဈေးကြီး',x:95,z:-72},{label:'ဘုရား',x:100,z:100},{label:'ပန်းခြံ',x:-120,z:120}];
 let busDest = null, busDestIdx = 0;
@@ -1314,7 +1360,7 @@ function headCone(parent, z){ const cm = new THREE.Mesh(new THREE.ConeGeometry(1
   pool.rotation.x = -Math.PI/2; pool.position.set(0,0.16,z+1); pool.visible = false; parent.add(pool); carLights.push(pool);
   return cm; }
 for(const c of cars) headCone(c.g, 4.5);
-headCone(bus, 8); headCone(bikeG, 2.5); headCone(parkedCar, 4.5); headCone(ownCar, 4.5);
+headCone(bus, 8); headCone(bikeG, 2.5); headCone(parkedCar, 4.5); headCone(ownCar, 4.5); headCone(tukTuk, 4.5); headCone(truck, 4.5);
 // V48: street lamps along both main avenues (glow at night via shared lampMat)
 const lampMat = new THREE.MeshBasicMaterial({color:0x424242});
 for(const lz of [-140,-120,-60,-20,60,100,120,180]){ cyl(0.12,0.12,5,0x37474f,7,2.5,lz); const lg = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6), lampMat); lg.position.set(7,5.2,lz); scene.add(lg); } // V63: mid-block only, was on crosswalk lines
@@ -1335,6 +1381,11 @@ const ownWheels = [], ownBrakes = [];
 for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Group(); wg.position.set(wx,0.45,wz); ownCar.add(wg);
   bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); ownWheels.push(wg); }
 for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; ownCar.add(bm); ownBrakes.push(bm); }
+const tukWheels = [], tukBrakes = [], truckWheels = [], truckBrakes = [];
+for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Group(); wg.position.set(wx,0.45,wz); tukTuk.add(wg); bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); tukWheels.push(wg); }
+for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; tukTuk.add(bm); tukBrakes.push(bm); }
+for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Group(); wg.position.set(wx,0.45,wz); truck.add(wg); bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); truckWheels.push(wg); }
+for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; truck.add(bm); truckBrakes.push(bm); }
 // player vest (shirt colour, changeable in shop)
 // V47: one interior room per owned house (first 6 owned houses, each own room)
 function buildRoom(rx, rz){
@@ -1371,9 +1422,11 @@ function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.
   localStorage.setItem('mtl_music', musicOn?'1':'0'); localStorage.setItem('mtl_quality', lowQuality?'1':'0');
   localStorage.setItem('mtl_owncar', ownCarBought?'1':'0'); localStorage.setItem('mtl_carupg', String(carUpg)); localStorage.setItem('mtl_carpaint', String(carPaintIdx));
   try{ localStorage.setItem('mtl_ownedlist', JSON.stringify(ownedList)); localStorage.setItem('mtl_owncarpos', JSON.stringify({x:ownCar.position.x, z:ownCar.position.z, rot:ownCar.rotation.y})); }catch(e){}
-  try{ localStorage.setItem('mtl_carpos', JSON.stringify({x:parkedCar.position.x, z:parkedCar.position.z, rot:parkedCar.rotation.y})); localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); localStorage.setItem('mtl_streak', String(winStreak)); localStorage.setItem('mtl_friends', JSON.stringify(friends)); localStorage.setItem('mtl_roadshops', JSON.stringify(roadShops.map(s=>({x:s.x, z:s.z, owned:!!s.owned, lvl:s.lvl||1})))); }catch(e){} }
+  try{ localStorage.setItem('mtl_carpos', JSON.stringify({x:parkedCar.position.x, z:parkedCar.position.z, rot:parkedCar.rotation.y})); localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); localStorage.setItem('mtl_streak', String(winStreak)); localStorage.setItem('mtl_friends', JSON.stringify(friends)); localStorage.setItem('mtl_roadshops', JSON.stringify(roadShops.map(s=>({x:s.x, z:s.z, owned:!!s.owned, lvl:s.lvl||1})))); localStorage.setItem('mtl_tuk', tukBought?'1':'0'); localStorage.setItem('mtl_truck', truckBought?'1':'0'); localStorage.setItem('mtl_hats', JSON.stringify(hatsOwned)); localStorage.setItem('mtl_hat', String(hatIdx)); localStorage.setItem('mtl_rank', String(rankIdx)); }catch(e){} }
 function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ level = nl; const lb = 500*level; money += lb; showMsg('⭐ Level '+level+' ရောက်ပြီ! ဆု +'+lb+' ကျပ်'); playChime(); } save(); refresh(); }
 let dayEvent = 'none'; // V88: daily event — 'fair' day pays +300 per sale
+const MAYOR_RANKS = [{money:10000, houses:1, level:1, title:'🏘️ ရပ်ကွက်လူကြီး', bonus:2000}, {money:50000, houses:3, level:3, title:'🏙️ မြို့လူကြီး', bonus:5000}, {money:200000, houses:5, level:5, title:'🏛️ မြို့တော်ဝန်', bonus:10000}];
+function checkMayor(){ let nr = rankIdx; for(let i=0;i<MAYOR_RANKS.length;i++){ const r = MAYOR_RANKS[i]; if(money >= r.money && ownedHouses >= r.houses && level >= r.level) nr = i+1; } if(nr > rankIdx){ rankIdx = nr; const r = MAYOR_RANKS[nr-1]; money += r.bonus; showMsg('🏆 ရာထူးတက်ပြီ! ' + r.title + ' — ဆု +' + r.bonus + ' ကျပ်'); playChime(); save(); } }
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
   save(); refresh(); }
@@ -1405,8 +1458,10 @@ function buyOwnShop(){ if(ownShop){ showMsg('ကိုယ်ပိုင်ဆ�
 function hireHelper(){ if(money < 3000){ showMsg('ငွေမလုံလောက်ဘူး'); return; } money -= 3000; helpers++;
   staticPerson([0x43a047,0x1565c0,0xe53935,0xef6c00][helpers % 4], 18, -28, Math.PI, {}); gainXP(30); save(); refresh(); showMsg('👨‍🌾 အကူ ငှားပြီ! နေ့တိုင်း +၁၀၀'); }
 function refresh(){
+  checkMayor();
   moneyEl.textContent = money.toLocaleString();
   document.getElementById('shopMoney').textContent = money.toLocaleString();
+  const mr = document.getElementById('mayorRank'); if(mr) mr.textContent = '🏛️ ရာထူး: ' + (rankIdx > 0 ? MAYOR_RANKS[rankIdx-1].title : 'သာမန်မြို့သား');
   speedEl.textContent = riding ? (fastBike?'ဆိုင်ကယ်မြန်':'ဆိုင်ကယ်') : 'လမ်းလျှောက်';
   document.getElementById('buyBike').textContent = fastBike ? '✅ ဆိုင်ကယ်မြန် ဝယ်ပြီးပြီ' : '🏍️ ဆိုင်ကယ်မြန် (၂၀၀၀ ကျပ်)';
   document.getElementById('buyBasket').textContent = bigBasket ? '✅ ခြင်းကြီး ဝယ်ပြီးပြီ' : '🧺 ခြင်းကြီး — ပို့ခ ၁.၅ ဆ (၃၀၀၀ ကျပ်)';
@@ -1428,6 +1483,7 @@ function refresh(){
   const oc = document.getElementById('buyOwnCar'); if(oc) oc.textContent = ownCarBought ? '✅ ကိုယ်ပိုင်ကား ရှိပြီ' : '🚗 ကိုယ်ပိုင်ကား ဝယ် (၁၅၀၀၀ ကျပ်)';
   const cu = document.getElementById('buyCarUpg'); if(cu) cu.textContent = !ownCarBought ? '⚡ ကားမြန်နှုန်း မြှင့် (ကိုယ်ပိုင်ကား အရင်ဝယ်)' : (carUpg >= 3 ? '✅ ကားမြန်နှုန်း အမြင့်ဆုံး' : '⚡ ကားမြန်နှုန်း မြှင့် (၅၀၀၀ ကျပ်) — အဆင့် ' + carUpg + '/3');
   const pc = document.getElementById('paintCarBtn'); if(pc) pc.textContent = ownCarBought ? '🎨 ကားအရောင် ပြောင်း (' + (carPaintIdx+1) + '/6)' : '🎨 ကားအရောင် ပြောင်း (ကိုယ်ပိုင်ကား အရင်ဝယ်)';
+  for(let hi=1; hi<=3; hi++){ const hb = document.getElementById('buyHat'+hi); if(hb) hb.textContent = hatsOwned.includes(hi) ? (hatIdx === hi ? '✅ ' + HATS[hi-1].label + ' ဝတ်ထားတယ်' : HATS[hi-1].label + ' ဝတ်မယ်') : HATS[hi-1].label + ' (' + HATS[hi-1].price + ' ကျပ်)'; }
 }
 function dist(x,z){ return Math.hypot(player.g.position.x-x, player.g.position.z-z); }
 function nearest(){
@@ -1457,8 +1513,13 @@ function nearest(){
   ];
   for(const s of roadShops) opts.push({d:dist(s.x,s.z), label:'🛍️ '+s.name+' — ဈေးဝယ်မယ်', fn:()=>openRoadShop(s), r:6}); // V85: roadside shops are real shops now
   if(treasureActive) opts.push({d:dist(treasurePos.x,treasurePos.z), label:'✨ ရတနာကောက်မယ်', fn:collectTreasure, r:6}); // V86: treasure hunt
+  opts.push({d:dist(36,-20), label: raceOn ? '🏁 ပြိုင်ပွဲ ရပ်မယ်' : '🏁 ပြိုင်ပွဲစ (၄ ဂိတ်)', fn: raceOn ? cancelRace : startRace, r:8}); // V91: race start
+  if(thiefActive) opts.push({d:dist(thiefP.g.position.x, thiefP.g.position.z), label:'🚨 သူခိုး ဖမ်းမယ်', fn:catchThief, r:6}); // V91: thief chase
+  if(seekActive) opts.push({d:dist(seekP.g.position.x, seekP.g.position.z), label:'👧 ကလေးကို တွေ့ပြီ!', fn:foundSeek, r:8}); // V91: hide-and-seek
   function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; driveWheels = wheels; driveBrakes = brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်'); } refresh(); }, r:5}; }
   opts.push(carOpt(parkedCar, parkedWheels, parkedBrakes, 30, 'ကား'));
+  opts.push(tukBought ? carOpt(tukTuk, tukWheels, tukBrakes, 32, 'တူတူ') : {d:dist(tukTuk.position.x, tukTuk.position.z), label:'🛺 တူတူ ဝယ် (၈၀၀၀ ကျပ်)', fn:()=>{ if(money < 8000){ showMsg('ငွေမလုံလောက်ဘူး — ၈၀၀၀ ကျပ် လိုတယ်'); return; } money -= 8000; tukBought = true; save(); refresh(); showMsg('🛺 တူတူ ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
+  opts.push(truckBought ? carOpt(truck, truckWheels, truckBrakes, 24, 'ထရပ်') : {d:dist(truck.position.x, truck.position.z), label:'🚚 ထရပ် ဝယ် (၁၅၀၀၀ ကျပ်)', fn:()=>{ if(money < 15000){ showMsg('ငွေမလုံလောက်ဘူး — ၁၅၀၀၀ ကျပ် လိုတယ်'); return; } money -= 15000; truckBought = true; save(); refresh(); showMsg('🚚 ထရပ် ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
   if(ownCarBought) opts.push(carOpt(ownCar, ownWheels, ownBrakes, 40 + carUpg*10, 'ကိုယ်ပိုင်ကား'));
   ownedList.forEach((hi, oi)=>{ const h = houseList[hi]; if(!h) return;
     if(!(delivery && delivery.x===h[0] && delivery.z===h[1])) opts.push({d:dist(h[0],h[1]), label: inHouse ? '🏠 အိမ်ထဲ ရောက်နေပြီ' : '🏠 အိမ်ထဲ ဝင်မယ်', fn:()=>{ if(inHouse) return; inHouse = true; currentRoom = Math.min(oi, ROOMS.length-1); returnPos = {x:player.g.position.x, z:player.g.position.z}; player.g.position.set(ROOMS[currentRoom][0], 0, ROOMS[currentRoom][1]); showMsg('🏠 အိမ်ထဲ ရောက်ပြီ'); }, r:12}); });
@@ -1510,6 +1571,17 @@ function fish(){
   if(fishTimer > 0){ showMsg('ငါးမလာသေးဘူး၊ '+Math.ceil(fishTimer)+' စက္ကန့်စောင့်'); return; }
   fishTimer = 10; const fr = Math.random(), fpay = fr < 0.12 ? 2000 : fr < 0.45 ? 500 : fr < 0.75 ? 300 : 150; money += fpay; gainXP(15); questProgress('fish'); save(); refresh(); playCoin(); showMsg(fr < 0.12 ? '🐟 ရွှေငါးရှားရပြီ! +၂၀၀၀ ကျပ်' : '🎣 ငါးရပြီ +' + fpay + ' ကျပ်');
 }
+// V91: race / thief / hide-and-seek
+const RACE_CPS = [{x:0,z:160},{x:160,z:160},{x:160,z:-160},{x:0,z:-160}];
+let raceOn = false, raceCPs = [], raceIdx = 0, raceT = 0;
+function startRace(){ raceOn = true; raceT = 0; let best = 0, bd = 1e9; const px = player.g.position.x, pz = player.g.position.z; RACE_CPS.forEach((c,i)=>{ const d = Math.hypot(c.x-px, c.z-pz); if(d < bd){ bd = d; best = i; } }); raceCPs = []; for(let k=0;k<4;k++) raceCPs.push(RACE_CPS[(best+k)%4]); raceIdx = 0; raceBeacon.position.set(raceCPs[0].x, 0, raceCPs[0].z); showMsg('🏁 ပြိုင်ပွဲစ! ၄ ဂိတ်ကို အမြန်ဆုံး ဖြတ်ပါ'); }
+function cancelRace(){ raceOn = false; raceBeacon.position.set(0,-20,0); showMsg('🏁 ပြိုင်ပွဲ ရပ်လိုက်ပြီ'); }
+let thiefTimer = 240, thiefActive = false, thiefT = 0, thiefP = null;
+function spawnThief(){ if(!glbBody || !glbRest) return; if(!thiefP){ thiefP = makeHumanNPC(0.85, 0x37474f); scene.add(thiefP.g); } const a = Math.random()*Math.PI*2; thiefP.g.position.set(player.g.position.x + Math.cos(a)*20, 0, player.g.position.z + Math.sin(a)*20); thiefP.g.visible = true; thiefActive = true; thiefT = 30; const stolen = Math.min(200, money); money -= stolen; save(); refresh(); showMsg('🚨 သူခိုး ပိုက်ဆံ ' + stolen + ' ကျပ် ခိုးသွားပြီ! လိုက်ဖမ်းပါ (၃၀ စက္ကန့်)'); }
+function catchThief(){ money += 500; thiefActive = false; thiefP.g.visible = false; thiefTimer = 300 + Math.floor(Math.random()*180); save(); refresh(); playCoin(); showMsg('🚨 သူခိုးကို ဖမ်းမိပြီ! +၅၀၀ ကျပ် (ခိုးသွားတာ ပြန်ရ + ဆု ၃၀၀)'); }
+let seekTimer = 420, seekActive = false, seekP = null;
+function spawnSeek(){ if(!glbBody || !glbRest) return; if(!seekP){ seekP = makeHumanNPC(0.57, 0xec407a); scene.add(seekP.g); } const it = intersections[Math.floor(Math.random()*intersections.length)]; seekP.g.position.set(it.x, 0, it.z); seekP.g.visible = true; seekBeacon.position.set(it.x, 0, it.z); seekActive = true; showMsg('👧 ကလေးတစ်ယောက် ပုန်းနေတယ် — ပန်းရောင်အလင်းတန်း ဆီ သွားရှာပါ!'); }
+function foundSeek(){ money += 300; gainXP(20); seekActive = false; seekP.g.visible = false; seekBeacon.position.set(0,-20,0); seekTimer = 480 + Math.floor(Math.random()*240); save(); refresh(); playCoin(); showMsg('👧 ကလေးကို တွေ့ပြီ! +၃၀၀ ကျပ် +၂၀ ⭐'); }
 let deliveryT = 0; // V86: delivery accept timestamp (speed bonus)
 let libTimer = 0; // V86: library read cooldown
 function readBook(){ if(libTimer > 0){ showMsg('စာဖတ်ပြီးပြီ၊ '+Math.ceil(libTimer)+' စက္ကန့်စောင့်'); return; } libTimer = 30; gainXP(15); save(); refresh(); showMsg('📚 စာဖတ်ပြီ +၁၅ ⭐'); }
@@ -1593,6 +1665,11 @@ document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCa
 document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
 document.getElementById('musicBtn').addEventListener('click', ()=>{ musicOn = !musicOn; save(); refresh(); showMsg('🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်')); });
 document.getElementById('shirtBtn').addEventListener('click', ()=>{ showMsg('👕 ဇာတ်ကောင်အသစ်မှာ အင်္ကျီအရောင် ပြောင်းမရသေးဘူး'); }); // V64: vest deleted with the old character
+document.getElementById('buyHat1').addEventListener('click', ()=>buyHat(1));
+document.getElementById('buyHat2').addEventListener('click', ()=>buyHat(2));
+document.getElementById('buyHat3').addEventListener('click', ()=>buyHat(3));
+document.getElementById('removeHat').addEventListener('click', ()=>{ wearHat(0); showMsg('🎩 ဦးထုပ် ချွတ်လိုက်ပြီ'); });
+function buyHat(i){ const h = HATS[i-1]; if(hatsOwned.includes(i)){ wearHat(i); showMsg(h.label + ' ဝတ်လိုက်ပြီ'); return; } if(money < h.price){ showMsg('ငွေမလုံလောက်ဘူး — ' + h.price + ' ကျပ် လိုတယ်'); return; } money -= h.price; hatsOwned.push(i); wearHat(i); showMsg(h.label + ' ဝယ်ပြီးပြီ!'); }
 document.getElementById('playBtn').addEventListener('click', async ()=>{
   ensureAudio();
   // phone only: one tap = auto fullscreen + auto landscape; desktop: no forced fullscreen
@@ -1897,6 +1974,9 @@ function buyRoadShop(s){ if(money < 5000){ showMsg('ငွေမလုံလေ�
 function upgradeRoadShop(s){ if(money < 3000){ showMsg('ငွေမလုံလောက်ဘူး — ၃၀၀၀ ကျပ် လိုတယ်'); return; } money -= 3000; s.lvl++; save(); refresh(); playCoin(); openRoadShop(s); showMsg('⬆️ ' + s.name + ' အဆင့် ' + s.lvl + ' — နေ့တိုင်း +' + (300*s.lvl) + ' ကျပ်'); }
 function roadShopDaily(){ let t = 0; for(const s of roadShops) if(s.owned) t += 300*(s.lvl || 1); return t; }
 document.getElementById('closeRoadShop').addEventListener('click', ()=>{ document.getElementById('roadShop').style.display = 'none'; });
+function openFriendsBook(){ let met = 0, rows = ''; for(const nm of NPC_NAMES){ let total = 0; for(const k in friends){ if(npcName(k) === nm) total += friends[k]; } if(total > 0) met++; rows += '<div style="padding:8px 0;border-bottom:1px solid #eee">' + (total > 0 ? '✅ ' : '❓ ') + nm + (total > 0 ? ' — စကား ' + total + ' ကြိမ်' : ' — မတွေ့သေးပါ') + '</div>'; } document.getElementById('friendsBookHead').textContent = '👥 သူငယ်ချင်း ' + met + '/20 ယောက် တွေ့ပြီ'; document.getElementById('friendsList').innerHTML = rows; document.getElementById('friendsBook').style.display = 'flex'; }
+document.getElementById('friendsBtn').addEventListener('click', openFriendsBook);
+document.getElementById('closeFriendsBook').addEventListener('click', ()=>{ document.getElementById('friendsBook').style.display = 'none'; });
 function roadShop(x,z,dir){
   const name = SHOP_NAMES[shopIdx % SHOP_NAMES.length], col = SHOP_COLORS[shopIdx % SHOP_COLORS.length]; shopIdx++;
   roadShops.push({x, z, name, owned:false, lvl:1}); // V85: record placed shops so nearest() can offer buying; V86: ownable
@@ -1927,8 +2007,11 @@ try{ const rs = JSON.parse(localStorage.getItem('mtl_roadshops')||'[]'); for(con
 const nearShops = roadShops.filter(s=>Math.hypot(s.x, s.z) < 80).slice(0,4);
 (nearShops.length ? nearShops : roadShops.slice(0,4)).forEach((s,si)=>{
   const w = npcs[1 + si*4];
-  if(w) w.job = {x: s.x + (s.x >= 0 ? 3.2 : -3.2), z: s.z, rot: s.x >= 0 ? -Math.PI/2 : Math.PI/2, kind:'vendor', place: s.name};
+  if(w) w.job = {x: s.x + (s.x >= 0 ? 3.2 : -3.2), z: s.z, rot: s.x >= 0 ? -Math.PI/2 : Math.PI/2, kind:'vendor', place: s.name, home: nearestHouse(s.x, s.z)};
 });
+// V91: bus waiters — 6 walkers wait at route-side spots (bus passes within ~6u, so boarding triggers)
+const WAITER_SPOTS = [{x:6,z:-160},{x:166,z:-160},{x:166,z:160},{x:-566,z:160},{x:-566,z:-160},{x:-166,z:-160}];
+[2,10,18,26,34,42].forEach((wi,si)=>{ const w = npcs[wi]; if(w && !w.job){ w.busStop = si; w.busTimer = 0; const ws = WAITER_SPOTS[si]; w.p.g.position.set(ws.x, 0, ws.z); } });
 // city buildings: gas station, bank, hotel, mall (+ parking), billboards, bus shelters, food carts
 tryPlace(40, -200, 10, (x,z)=>{
   for(const px of [-4,4]) for(const pz of [-3,3]) cyl(0.25,0.25,4,0x9e9e9e,x+px,2,z+pz);
@@ -2037,6 +2120,8 @@ function animate(now){
   if(fishTimer > 0) fishTimer -= dt;
   if(libTimer > 0) libTimer -= dt;
   treasureTimer -= dt; if(treasureTimer <= 0 && !treasureActive) spawnTreasure();
+  if(thiefTimer > 0){ thiefTimer -= dt; if(thiefTimer <= 0 && !thiefActive) spawnThief(); }
+  if(seekTimer > 0){ seekTimer -= dt; if(seekTimer <= 0 && !seekActive) spawnSeek(); }
   dayT += dt;
   // day 5 min + night 5 min = 600s cycle, day = sun above horizon (180 deg), night = below
   const phase = (dayT % 600) / 600, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
@@ -2168,7 +2253,12 @@ function animate(now){
   if(townTimer <= 0){ playTownAmbient(dayF); townTimer = 6 + Math.random()*8; }
   if(riding && moving){ bikeTimer -= dt; if(bikeTimer <= 0){ tone(55 + (fastBike ? 20 : 0), 0.3, 0.04, 'triangle'); bikeTimer = 0.4; } }
   for(const n of npcs){
-    if(n.job){ n.p.g.position.set(n.job.x, 0, n.job.z); n.p.g.rotation.y = n.job.rot; if(!animateNpcModel(n.p, false, dt)) animatePerson(n.p, false, 0, gt, false); animateWork(n.p, gt, n.job.kind); continue; }
+    if(n.busStop !== undefined){ // V91: bus waiters — wait at route-side spots, board (vanish) when the bus passes, reappear at another stop later
+      if(n.busTimer > 0){ n.busTimer -= dt; if(n.busTimer <= 0){ n.busStop = Math.floor(Math.random()*WAITER_SPOTS.length); const ws = WAITER_SPOTS[n.busStop]; n.p.g.position.set(ws.x, 0, ws.z); n.p.g.visible = true; } }
+      else { const ws = WAITER_SPOTS[n.busStop]; n.p.g.position.set(ws.x, 0, ws.z); n.p.g.rotation.y = 0; if(!animateNpcModel(n.p, false, dt)) animatePerson(n.p, false, 0, gt, false); if(Math.hypot(bus.position.x-ws.x, bus.position.z-ws.z) < 12){ n.busTimer = 45; n.p.g.position.set(9999, 0, 9999); n.p.g.visible = false; } }
+      continue;
+    }
+    if(n.job){ const atWork = dayF > 0.5; const spot = atWork ? n.job : (n.job.home || n.job); n.p.g.position.set(spot.x, 0, spot.z); n.p.g.rotation.y = spot.rot; if(!animateNpcModel(n.p, false, dt)) animatePerson(n.p, false, 0, gt, false); if(atWork) animateWork(n.p, gt, n.job.kind); else { n.p.g.rotation.x = 0; n.p.g.rotation.z = 0; } continue; }
     const tx = n.target.x, tz = n.target.z;
     const px = n.p.g.position.x, pz = n.p.g.position.z;
     let mx = 0, mz = 0;
@@ -2340,6 +2430,9 @@ function animate(now){
   // V47: match timer + opponents + taxi
   if(matchOn){ matchTime -= dt; if(matchTime <= 0){ matchOn = false; let rw = 0; if(myScore > oppScore){ rw = 1000; winStreak++; } else winStreak = 0; if(myScore === oppScore) rw = 300; if(myScore > oppScore) questProgress('matchwin'); const trophy = (winStreak > 0 && winStreak % 3 === 0) ? 1500 : 0; if(rw > 0 || trophy > 0){ money += rw + trophy; gainXP(myScore > oppScore ? 50 : 20); save(); refresh(); playCoin(); } showMsg('⚽ ပွဲပြီးပြီ! သင် ' + myScore + ' - ' + oppScore + ' ပြိုင်ဘက် — ' + ((rw + trophy) > 0 ? '+'+(rw+trophy)+' ကျပ်' + (trophy ? ' 🏆 '+winStreak+' ပွဲဆက်နိုင်ဖလား!' : '') : 'ဆုမရပါ')); ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; for(let oi=0; oi<oppPlayers.length; oi++) oppPlayers[oi].g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); } }
   for(const op of oppPlayers){ if(matchOn){ const dx = ball.position.x - op.g.position.x, dz = ball.position.z - op.g.position.z, dl = Math.hypot(dx,dz)||1; if(dl > 2){ op.g.position.x += dx/dl*6*dt; op.g.position.z += dz/dl*6*dt; turnTo(op.g, Math.atan2(dx,dz), dt, 8); } op.kickT -= dt; if(dl < 1.6 && op.kickT <= 0){ const gx = -113, gx2 = gx-ball.position.x, gz = 100-ball.position.z, gl = Math.hypot(gx2,gz)||1; ballVx = gx2/gl*14; ballVz = gz/gl*14; op.kickT = 1.5; } if(!animateNpcModel(op, dl > 2, dt)) animatePerson(op, dl > 2, walkT, gt, false); } else if(!animateNpcModel(op, false, dt)) animatePerson(op, false, walkT, gt, false); }
+  if(raceOn){ raceT += dt; const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z; const cp = raceCPs[raceIdx]; if(Math.hypot(cx-cp.x, cz-cp.z) < 12){ raceIdx++; if(raceIdx >= raceCPs.length){ const rw = raceT < 120 ? 2000 : raceT < 180 ? 1000 : 500; money += rw; gainXP(50); raceOn = false; raceBeacon.position.set(0,-20,0); save(); refresh(); playCoin(); showMsg('🏁 ပြိုင်ပွဲပြီးပြီ! အချိန် ' + Math.ceil(raceT) + ' စက္ကန့် — +' + rw + ' ကျပ်'); } else { raceBeacon.position.set(raceCPs[raceIdx].x, 0, raceCPs[raceIdx].z); showMsg('🏁 ဂိတ် ' + raceIdx + '/4 ဖြတ်ပြီ!'); } } }
+  if(thiefActive){ const px = player.g.position.x, pz = player.g.position.z; const dx = thiefP.g.position.x - px, dz = thiefP.g.position.z - pz, dl = Math.hypot(dx,dz)||1; thiefP.g.position.x += dx/dl*7*dt; thiefP.g.position.z += dz/dl*7*dt; turnTo(thiefP.g, Math.atan2(dx,dz), dt, 8); animatePerson(thiefP, true, gt*7, gt, false); thiefT -= dt; if(thiefT <= 0){ thiefActive = false; thiefP.g.visible = false; thiefTimer = 300 + Math.floor(Math.random()*180); showMsg('🚨 သူခိုး ထွက်ပြေးသွားပြီ...'); } }
+  if(seekActive) animatePerson(seekP, false, 0, gt, false);
   if(taxi){ const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z;
     if(taxi.stage === 'pickup'){ if(drivingCar && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; if(taxiPerson) taxiPerson.g.visible = false; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
     else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ money += 1200; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +၁၂၀၀ ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
