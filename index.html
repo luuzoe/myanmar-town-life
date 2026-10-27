@@ -1312,7 +1312,7 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 12, smoothCamH = 5.0, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 9, smoothCamH = 4.0, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
   const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
@@ -1515,7 +1515,7 @@ function animate(now){
   }
   animatePerson(player, moving, walkT, gt, riding);
   player.g.position.y = groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
-  if(glbMixer) glbMixer.update((moving && !riding) ? dt * 6.0 * (raining ? 0.8 : 1) : 0); // V59: steps must keep up with fast movement (old blocky char did ~5 steps/s; clip is 2.37s/cycle)
+  if(glbMixer) glbMixer.update((moving && !riding) ? dt * 3.0 * (raining ? 0.8 : 1) : 0); // V60: 1x too slow, 6x too fast — 3x middle
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
     if(stepIdx !== lastStep){ lastStep = stepIdx; playStep(); }
@@ -1708,7 +1708,7 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 12, targetH = drivingCar ? 6.5 : 5.0; // V58: walking camera closer
+  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 9, targetH = drivingCar ? 6.5 : 4.0; // V60: walking camera closer again
   for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
