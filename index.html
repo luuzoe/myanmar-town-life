@@ -229,6 +229,30 @@ for(const r of [-160,160]){
 // dirt footpaths: to school (west) and to pagoda (L-shaped, east)
 bx(20,0.1,2,0x8d6e63,-90,0.12,60);
 bx(20,0.1,2,0x8d6e63,90,0.12,80); bx(2,0.1,20,0x8d6e63,100,0.12,90);
+// V58: surface heights — roads sit 0.10 above grass, sidewalks 0.12, footpaths 0.17,
+// bridge 0.35. The player used to stand at y=0 everywhere, so feet sank into every
+// raised surface (most visible on sidewalks with the slim GLB feet).
+function groundHeight(x,z){
+  if(Math.abs(x-175) < 13 && Math.abs(z) < 4) return 0.35;
+  let h = 0;
+  for(const r of roadLines){
+    const w = (r===0 ? 12 : 7), sw = w/2 + 1;
+    if(Math.abs(x) <= 200 && Math.abs(z-r) <= w/2) h = Math.max(h, 0.10);
+    if(Math.abs(x) <= 200 && (Math.abs(z-(r+sw)) <= 1 || Math.abs(z-(r-sw)) <= 1)) h = Math.max(h, 0.12);
+    if(Math.abs(z) <= 200 && Math.abs(x-r) <= w/2) h = Math.max(h, 0.10);
+    if(Math.abs(z) <= 200 && (Math.abs(x-(r+sw)) <= 1 || Math.abs(x-(r-sw)) <= 1)) h = Math.max(h, 0.12);
+  }
+  for(const r of [-160,160]){
+    if(Math.abs(x) <= 200 && Math.abs(z-r) <= 3.5) h = Math.max(h, 0.10);
+    if(Math.abs(x) <= 200 && (Math.abs(z-(r+4.5)) <= 1 || Math.abs(z-(r-4.5)) <= 1)) h = Math.max(h, 0.12);
+    if(Math.abs(z) <= 200 && Math.abs(x-r) <= 3.5) h = Math.max(h, 0.10);
+    if(Math.abs(z) <= 200 && (Math.abs(x-(r+4.5)) <= 1 || Math.abs(x-(r-4.5)) <= 1)) h = Math.max(h, 0.12);
+  }
+  if(Math.abs(x+90) <= 10 && Math.abs(z-60) <= 1) h = Math.max(h, 0.17);
+  if(Math.abs(x-90) <= 10 && Math.abs(z-80) <= 1) h = Math.max(h, 0.17);
+  if(Math.abs(x-100) <= 1 && Math.abs(z-90) <= 10) h = Math.max(h, 0.17);
+  return h;
+}
 const colliders = [];
 const houseDoors = [];
 function house(x,z,wall,roof,storeys){
@@ -765,6 +789,7 @@ new GLTFLoader().load('character.glb', (gltf)=>{
   const body = gltf.scene;
   body.scale.setScalar(2.40); // GLB height 1.0 -> world 0.85*2.40 = 2.04, same as the old player
   body.rotation.y = -Math.PI/2; // GLB faces +x; the game faces +z
+  body.position.y = 0.05; // V58: walk-cycle dip (~0.04 world) so feet never sink below the surface
   body.traverse((o)=>{ if(o.isMesh) o.castShadow = true; });
   for(const ch of [...player.g.children]){ if(ch !== bikeG) ch.visible = false; }
   player.g.add(body);
@@ -1287,7 +1312,7 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 16, smoothCamH = 6.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 12, smoothCamH = 5.0, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
   const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -195 && sp.x <= 540 && sp.z >= -195 && sp.z <= 195){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
@@ -1486,11 +1511,11 @@ function animate(now){
       if(d < c.r+0.8 && d > 0.01){ player.g.position.x = c.x + ddx/d*(c.r+0.8); player.g.position.z = c.z + ddz/d*(c.r+0.8); }
       else if(d <= 0.01){ player.g.position.x = c.x + c.r+0.8; player.g.position.z = c.z; } // never stay stuck at a collider centre
     }
-    player.g.position.y = (Math.abs(player.g.position.x-175) < 13 && Math.abs(player.g.position.z) < 4) ? 0.35 : 0;
     walkT += sp*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
-  if(glbMixer) glbMixer.update((moving && !riding) ? dt : 0); // GLB walk plays only while walking
+  player.g.position.y = groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
+  if(glbMixer) glbMixer.update((moving && !riding) ? dt * 3.0 * (raining ? 0.8 : 1) : 0); // V58: GLB walk clip is 2.37s/cycle, 1x looked slow-motion
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
     if(stepIdx !== lastStep){ lastStep = stepIdx; playStep(); }
@@ -1683,7 +1708,7 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 16, targetH = 6.5;
+  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 12, targetH = drivingCar ? 6.5 : 5.0; // V58: walking camera closer
   for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
