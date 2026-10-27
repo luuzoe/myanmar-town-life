@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V98</div>
+  <div style="font-size:12px;opacity:.6">V99</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -144,7 +144,7 @@ const canvas = document.getElementById('game');
 const isMobile = innerWidth <= 700 || (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15; renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -202,8 +202,8 @@ function fenceRect(cx,cz,hw,hd,gateW,gateX,color){
   // V75: NO fence-post colliders — the post line + a body circle made 1-unit prisons (player wedged between circle and posts, oscillating, couldn't move).
   // The rails are low (0.9) and step-over-able; houses themselves still block via their body circles. Removing posts also frees mass-house-vs-fence gaps.
 }
-function sph(r,color,x,y,z,parent){ return mesh(new THREE.SphereGeometry(r,8,6), color, x, y, z, parent); }
-function cyl(rt,rb,h,color,x,y,z,parent){ return mesh(new THREE.CylinderGeometry(rt,rb,h,8), color, x, y, z, parent); }
+function sph(r,color,x,y,z,parent){ const m = mesh(new THREE.SphereGeometry(r,8,6), color, x, y, z, parent); m.castShadow = false; return m; }
+function cyl(rt,rb,h,color,x,y,z,parent){ const m = mesh(new THREE.CylinderGeometry(rt,rb,h,8), color, x, y, z, parent); m.castShadow = false; return m; }
 function cap(r,len,color,x,y,z,parent){
   const m = new THREE.Mesh(new THREE.CapsuleGeometry(r,len,4,8), M(color));
   m.position.set(x,y,z); (parent || scene).add(m);
@@ -953,7 +953,7 @@ function applyNpcModel(k){
 // V84: real-model NPC animation — play the model's own walk/idle clips; returns false for player-clone/blocky NPCs (old animatePerson path)
 function animateNpcModel(p, moving, dt){
   if(!p || !p.realModel || !p.mixer) return false;
-  if(Math.hypot(p.g.position.x - player.g.position.x, p.g.position.z - player.g.position.z) > 120) return true; // V96: far NPCs freeze (no mixer update) — walkers already had this guard, yard/kids/statics/workers did not
+  if(Math.hypot(p.g.position.x - player.g.position.x, p.g.position.z - player.g.position.z) > 90) return true; // V96: far NPCs freeze (no mixer update) — walkers already had this guard, yard/kids/statics/workers did not
   const want = moving ? 'walk' : 'idle';
   if(p.curClip !== want){
     const from = p.curClip === 'walk' ? p.walkA : p.idleA;
@@ -1272,6 +1272,8 @@ function makeCar(color, type){
   }
   g.children.forEach(ch=>ch.userData.procMesh = true); // V94: tag code-drawn body so the GLB swap can hide it (blob shadow below stays visible)
   blobShadow(g, 1.4, 3.0);
+// V99: cars cast no shadows — the shadow pass was re-rendering ~200 car meshes every frame
+  g.traverse(o=>{ if(o.isMesh) o.castShadow = false; });
   return g;
 }
 // V94: Kenney Car Kit GLB cars (CC0) — real car models replace code-drawn bodies; procedural stays as fallback until each GLB loads
@@ -1288,7 +1290,7 @@ function swapCarGlb(t){
   const s = 4.2 / (lenZ * (g.scale.z || 1));
   clone.scale.setScalar(s);
   clone.position.set(-(bb.max.x + bb.min.x)/2, -bb.min.y, -(bb.max.z + bb.min.z)/2);
-  clone.traverse(o=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = false; if(o.material && o.material.isMeshStandardMaterial){ if(!carLambertCache.has(o.material)) carLambertCache.set(o.material, new THREE.MeshLambertMaterial({map: o.material.map})); o.material = carLambertCache.get(o.material); } } }); // V96: Lambert (same map) is much cheaper on phone GPUs; blob shadows ground the cars
+  clone.traverse(o=>{ if(o.isMesh){ o.castShadow = false; o.receiveShadow = false; if(o.material && o.material.isMeshStandardMaterial){ if(!carLambertCache.has(o.material)) carLambertCache.set(o.material, new THREE.MeshLambertMaterial({map: o.material.map})); o.material = carLambertCache.get(o.material); } } }); // V96: Lambert (same map) is much cheaper on phone GPUs; blob shadows ground the cars
   g.children.forEach(ch=>{ if(ch.userData.procMesh) ch.visible = false; });
   for(const sp of (g.userData.spokes || [])) sp.visible = false;
   for(const br of (g.userData.brakes || [])) br.visible = false;
@@ -1417,11 +1419,11 @@ ownedHouses = ownedList.length;
 // truck + tuk-tuk traffic
 { const tr = new THREE.Group(); bx(2.4,1.0,2.5,0x1565c0,0,0.8,2.5,tr); bx(2.4,0.6,2.5,0x90caf9,0,1.5,2.5,tr); bx(2.4,1.2,5,0x8d6e63,0,0.9,-1.5,tr);
   for(const wx of [-1.2,1.2]) for(const wz of [-3,0,3]){ const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,tr); w.rotation.z = Math.PI/2; (tr.userData.procWheels = tr.userData.procWheels || []).push(w); const hc = cyl(0.2,0.2,0.32,0x9e9e9e,wx,0.45,wz,tr); hc.rotation.z = Math.PI/2; } // V69: truck hubcaps; V97: wheels tagged for spin
-  tr.position.set(-160,0,0); scene.add(tr); cars.push({g:tr, target:intersections[0], speed:14}); }
+  tr.position.set(-160,0,0); scene.add(tr); cars.push({g:tr, target:intersections[0], speed:14}); tr.traverse(o=>{ if(o.isMesh) o.castShadow = false; }); }
 { const tk = new THREE.Group(); bx(1.4,0.6,2.2,0xffeb3b,0,0.5,0,tk); bx(1.4,0.5,1.4,0x212121,0,1.0,-0.2,tk); glassBx(1.2,0.4,0.06,0,1.0,0.55,tk);
   for(const wx of [-0.7,0.7]){ const w = cyl(0.35,0.35,0.25,0x212121,wx,0.35,0.8,tk); w.rotation.z = Math.PI/2; (tk.userData.procWheels = tk.userData.procWheels || []).push(w); } // V97: wheels tagged for spin
   const wf = cyl(0.35,0.35,0.25,0x212121,0,0.35,-0.9,tk); wf.rotation.z = Math.PI/2; (tk.userData.procWheels = tk.userData.procWheels || []).push(wf); // V97: front wheel tagged for spin
-  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:16}); }
+  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:16}); tk.traverse(o=>{ if(o.isMesh) o.castShadow = false; }); }
 // traffic lights at (0,0): NS pole at (8,8), EW pole at (-8,-8)
 function trafficLight(x,z){ cyl(0.12,0.12,4.5,0x455a64,x,2.25,z); bx(0.6,1.6,0.3,0x212121,x,4.2,z);
   const mats = [new THREE.MeshBasicMaterial({color:0x550000}), new THREE.MeshBasicMaterial({color:0x554400}), new THREE.MeshBasicMaterial({color:0x003300})];
@@ -1753,7 +1755,7 @@ document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = 
   for(const id of ['hud','job','joy','btns','rotL','rotR','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
   showMsg(photoMode ? '📸 ဓာတ်ပုံမုဒ် — ပြန်ထွက်ချင် 📸 နှိပ်' : '📸 ဓာတ်ပုံမုဒ် ပိတ်ပြီ'); });
 document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCar) return; tone(420,0.3,0.08,'square'); setTimeout(()=>tone(520,0.3,0.08,'square'),120); showMsg('📣 ဟွန်း!'); });
-document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.5)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
+document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.25)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
 document.getElementById('musicBtn').addEventListener('click', ()=>{ musicOn = !musicOn; save(); refresh(); showMsg('🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်')); });
 document.getElementById('shirtBtn').addEventListener('click', ()=>{ showMsg('👕 ဇာတ်ကောင်အသစ်မှာ အင်္ကျီအရောင် ပြောင်းမရသေးဘူး'); }); // V64: vest deleted with the old character
 document.getElementById('buyHat1').addEventListener('click', ()=>buyHat(1));
