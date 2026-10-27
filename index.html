@@ -85,7 +85,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V88</div>
+  <div style="font-size:12px;opacity:.6">V89</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -882,6 +882,7 @@ function applyNpcModel(k){
   for(const y of yardPeople) if(y.modelIdx === k) y.p = swapToRealModel(y.p, M);
   for(const kk of schoolKids) if(kk.modelIdx === k) kk.p = swapToRealModel(kk.p, M);
   for(let i=0;i<staticPeople.length;i++) if(staticPeople[i].modelIdx === k) staticPeople[i] = swapToRealModel(staticPeople[i], M);
+  for(let i=0;i<oppPlayers.length;i++) if(oppPlayers[i].modelIdx === k){ const kt = oppPlayers[i].kickT || 0; oppPlayers[i] = swapToRealModel(oppPlayers[i], M); oppPlayers[i].kickT = kt; } // V89: opponents swap to pack models too
 }
 // V84: real-model NPC animation — play the model's own walk/idle clips; returns false for player-clone/blocky NPCs (old animatePerson path)
 function animateNpcModel(p, moving, dt){
@@ -1273,7 +1274,7 @@ let taxi = null, taxiPerson = null;
 const TAXI_LANDMARKS = BUS_STOPS;
 let matchOn = false, matchTime = 0, myScore = 0, oppScore = 0;
 const oppPlayers = [];
-for(let oi=0; oi<5; oi++){ const op = makePerson(0xe53935, 0x212121, {}); op.g.scale.setScalar(0.85); op.g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); op.kickT = 0; scene.add(op.g); oppPlayers.push(op); }
+for(let oi=0; oi<5; oi++){ const op = makePerson(0xe53935, 0x212121, {}); op.g.scale.setScalar(0.85); op.g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); op.kickT = 0; op.modelIdx = oi + 1; scene.add(op.g); oppPlayers.push(op); } // V89: opponents get NPC pack models 1-5 (blocky only until their model loads)
 const ROOMS = [[500,150],[520,150],[500,170],[520,170],[500,190],[520,190]];
 let currentRoom = 0;
 let ownedList = [];
@@ -2415,7 +2416,7 @@ function animate(now){
   for(const hd of houseDoors){ const dd = Math.hypot(player.g.position.x-hd.x, player.g.position.z-hd.z); const target = dd < 13 ? -1.9 : 0; hd.g.rotation.y += (target - hd.g.rotation.y) * Math.min(1, dt*6); }
   // V47: match timer + opponents + taxi
   if(matchOn){ matchTime -= dt; if(matchTime <= 0){ matchOn = false; let rw = 0; if(myScore > oppScore){ rw = 1000; winStreak++; } else winStreak = 0; if(myScore === oppScore) rw = 300; if(myScore > oppScore) questProgress('matchwin'); const trophy = (winStreak > 0 && winStreak % 3 === 0) ? 1500 : 0; if(rw > 0 || trophy > 0){ money += rw + trophy; gainXP(myScore > oppScore ? 50 : 20); save(); refresh(); playCoin(); } showMsg('⚽ ပွဲပြီးပြီ! သင် ' + myScore + ' - ' + oppScore + ' ပြိုင်ဘက် — ' + ((rw + trophy) > 0 ? '+'+(rw+trophy)+' ကျပ်' + (trophy ? ' 🏆 '+winStreak+' ပွဲဆက်နိုင်ဖလား!' : '') : 'ဆုမရပါ')); ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; for(let oi=0; oi<oppPlayers.length; oi++) oppPlayers[oi].g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); } }
-  for(const op of oppPlayers){ if(matchOn){ const dx = ball.position.x - op.g.position.x, dz = ball.position.z - op.g.position.z, dl = Math.hypot(dx,dz)||1; if(dl > 2){ op.g.position.x += dx/dl*6*dt; op.g.position.z += dz/dl*6*dt; turnTo(op.g, Math.atan2(dx,dz), dt, 8); } op.kickT -= dt; if(dl < 1.6 && op.kickT <= 0){ const gx = -113, gx2 = gx-ball.position.x, gz = 100-ball.position.z, gl = Math.hypot(gx2,gz)||1; ballVx = gx2/gl*14; ballVz = gz/gl*14; op.kickT = 1.5; } animatePerson(op, dl > 2, walkT, gt, false); } else animatePerson(op, false, walkT, gt, false); }
+  for(const op of oppPlayers){ if(matchOn){ const dx = ball.position.x - op.g.position.x, dz = ball.position.z - op.g.position.z, dl = Math.hypot(dx,dz)||1; if(dl > 2){ op.g.position.x += dx/dl*6*dt; op.g.position.z += dz/dl*6*dt; turnTo(op.g, Math.atan2(dx,dz), dt, 8); } op.kickT -= dt; if(dl < 1.6 && op.kickT <= 0){ const gx = -113, gx2 = gx-ball.position.x, gz = 100-ball.position.z, gl = Math.hypot(gx2,gz)||1; ballVx = gx2/gl*14; ballVz = gz/gl*14; op.kickT = 1.5; } if(!animateNpcModel(op, dl > 2, dt)) animatePerson(op, dl > 2, walkT, gt, false); } else if(!animateNpcModel(op, false, dt)) animatePerson(op, false, walkT, gt, false); }
   if(taxi){ const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z;
     if(taxi.stage === 'pickup'){ if(drivingCar && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; if(taxiPerson) taxiPerson.g.visible = false; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
     else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ money += 1200; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +၁၂၀၀ ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
