@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V94</div>
+  <div style="font-size:12px;opacity:.6">V95</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1266,6 +1266,7 @@ function makeCar(color, type){
   return g;
 }
 // V94: Kenney Car Kit GLB cars (CC0) — real car models replace code-drawn bodies; procedural stays as fallback until each GLB loads
+// V95: car skins — Textures/colormap.png deployed (V94 GLBs referenced it but the file was missing, so cars rendered flat gray)
 const CAR_GLB_MODELS = ['sedan','suv','truck','van','taxi','police'];
 const carGlbTargets = []; // {g, model} — filled at car creation sites below
 const carGlbScenes = {};
