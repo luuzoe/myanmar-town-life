@@ -258,6 +258,8 @@ function groundHeight(x,z){
       if(Math.abs(z-s) <= 0.25 && Math.abs(x-r) <= 1) h = Math.max(h, 0.18);
     }
   }
+  // V63: east fields (top 0.3) so feet sit on the field slabs, not inside them
+  for(const f of fieldCenters){ if(Math.abs(x-f[0]) <= 11 && Math.abs(z-f[1]) <= 14) h = Math.max(h, 0.3); }
   return h;
 }
 const colliders = [];
@@ -490,7 +492,7 @@ for(let i=0;i<5;i++){
 }
 // ---- EAST: fields + forest belt, north-south stream, bridge, mountain range ----
 bx(60,0.1,7,0x8d6e63,160,0.12,0); // east road is dirt, raised above main road so it does not z-fight
-const fieldCenters = [[148,-90],[148,-45],[148,45],[148,90]];
+const fieldCenters = [[220,-90],[220,-45],[220,45],[220,90]]; // V63: moved east past the stream (x 209..231) — old x=148 fields sat ON the east-west roads at z=±40/±80
 for(const f of fieldCenters){
   bx(22,0.3,28,0x8d5a2b,f[0],0.15,f[1]);
   for(const rz of [-8,0,8]) bx(18,0.4,1,0x2e7d32,f[0],0.4,f[1]+rz);
@@ -1048,8 +1050,8 @@ for(const c of cars) headCone(c.g, 4.5);
 headCone(bus, 8); headCone(bikeG, 2.5); headCone(parkedCar, 4.5); headCone(ownCar, 4.5);
 // V48: street lamps along both main avenues (glow at night via shared lampMat)
 const lampMat = new THREE.MeshBasicMaterial({color:0x424242});
-for(const lz of [-160,-120,-80,-40,40,80,120,160]){ cyl(0.12,0.12,5,0x37474f,7,2.5,lz); const lg = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6), lampMat); lg.position.set(7,5.2,lz); scene.add(lg); }
-for(const lx of [-160,-120,-80,-40,40,80,120,160]){ cyl(0.12,0.12,5,0x37474f,lx,2.5,7); const lg = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6), lampMat); lg.position.set(lx,5.2,7); scene.add(lg); }
+for(const lz of [-140,-120,-60,-20,60,100,120,180]){ cyl(0.12,0.12,5,0x37474f,7,2.5,lz); const lg = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6), lampMat); lg.position.set(7,5.2,lz); scene.add(lg); } // V63: mid-block only, was on crosswalk lines
+for(const lx of [-140,-120,-60,-20,60,100,120,180]){ cyl(0.12,0.12,5,0x37474f,lx,2.5,7); const lg = new THREE.Mesh(new THREE.SphereGeometry(0.35,8,6), lampMat); lg.position.set(lx,5.2,7); scene.add(lg); } // V63: mid-block only, was on crosswalk lines
 // V48: flowers + bushes on grass (never on roads, houses, stream, pond, field)
 { const flowerCols = [0xec407a,0xffeb3b,0xffffff,0xab47bc,0xff7043]; let placed = 0, tries = 0;
   while(placed < 80 && tries < 600){ tries++; const fx = -190 + Math.random()*380, fz = -190 + Math.random()*380;
