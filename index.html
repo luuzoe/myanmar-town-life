@@ -803,12 +803,13 @@ player.g.position.set(0,0,10); player.g.scale.setScalar(0.85); player.g.rotation
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 // V57: realistic GLB player character, PERSON-SIZED (not giant). The old blocky body
 // stays as fallback and is hidden only after the GLB loads successfully.
-let glbMixer = null, glbAction = null, glbBody = null, glbBones = null;
+let glbMixer = null, glbAction = null, glbBody = null, glbBones = null, glbRest = null, idleBlend = 0;
 // V66: seated bike pose — extrapolated from the walk clip itself (thigh forward 1.35 rad, calf flex 1.80 rad), quaternions (x,y,z,w)
 const SEAT_POSE = {
   L_Thigh: [0.8341, 0.2163, -0.1708, -0.4778], R_Thigh: [0.7529, -0.0486, 0.2737, 0.5966],
   L_Calf: [-0.8274, 0.0036, -0.0012, 0.5616], R_Calf: [-0.8266, -0.0052, 0.0218, 0.5624]
 };
+const _brQ = new THREE.Quaternion(), _brAxis = new THREE.Vector3(1,0,0); // V71: breathing rotation temp
 // V61: idle pose time = 0.667s into the walk clip, the passing pose where the two
 // feet are closest together (measured from the clip: 0.087 GLB units apart).
 new GLTFLoader().load('character.glb', (gltf)=>{
@@ -819,6 +820,7 @@ new GLTFLoader().load('character.glb', (gltf)=>{
   body.position.y = 0.05; // V58: walk-cycle dip (~0.04 world) so feet never sink below the surface
   body.traverse((o)=>{ if(o.isMesh) o.castShadow = true; });
   glbBones = {}; body.traverse((o)=>{ if(o.isBone) glbBones[o.name] = o; });
+  glbRest = {}; body.traverse((o)=>{ if(o.isBone) glbRest[o.name] = {p:o.position.clone(), q:o.quaternion.clone()}; }); // V71: rest pose = true standing pose, captured before the mixer ever runs
   player.g.add(body);
   if(gltf.animations.length){
     glbMixer = new THREE.AnimationMixer(body);
@@ -1701,13 +1703,29 @@ function animate(now){
   animatePerson(player, moving, walkT, gt, riding);
   player.g.position.y = groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
   if(glbMixer){
-    if(moving && !riding) glbMixer.update(dt * 3.0 * (raining ? 0.8 : 1)); // V60: 3x walk rate
-    else { if(glbAction) glbAction.time = 0.667; glbMixer.update(0); } // V61: standing = feet together, never frozen mid-stride
+    if(moving && !riding){ glbMixer.update(dt * 3.0 * (raining ? 0.8 : 1)); idleBlend = 0; } // V60: 3x walk rate
+    else if(riding){ if(glbAction) glbAction.time = 0.667; glbMixer.update(0); idleBlend = 0; }
+    else { if(glbAction) glbAction.time = 0.667; if(!glbRest) glbMixer.update(0); } // V71: idle skips the mixer so bones blend from the true last pose
     // V66: seated pose while riding — otherwise the standing pose looks like standing ON the bike
     if(riding && glbBones){
       for(const k in SEAT_POSE){ const b = glbBones[k]; if(b) b.quaternion.fromArray(SEAT_POSE[k]); }
       if(glbBody) glbBody.position.y = -0.35; // hips down to seat height
-    } else if(glbBody) glbBody.position.y = 0.05;
+    } else if(glbBody){
+      glbBody.position.y = 0.05;
+      // V71: idle = true rest pose + breathing, NOT a frozen walk frame (at 0.667 the arms were swung 0.5+ rad mid-stride — looked like a statue)
+      if(!moving && glbRest && glbBones){
+        idleBlend = Math.min(1, idleBlend + dt*5);
+        for(const name in glbRest){
+          const b = glbBones[name]; if(!b) continue;
+          b.position.lerp(glbRest[name].p, idleBlend);
+          b.quaternion.slerp(glbRest[name].q, idleBlend);
+        }
+        const sp = glbBones['Spine02'];
+        if(sp) sp.quaternion.multiply(_brQ.setFromAxisAngle(_brAxis, Math.sin(gt*1.6)*0.012)); // breathing
+        const hip = glbBones['Hip'];
+        if(hip) hip.position.x += Math.sin(gt*0.8)*0.012; // gentle weight shift
+      }
+    }
   }
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
