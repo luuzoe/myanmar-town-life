@@ -801,15 +801,22 @@ player.g.position.set(0,0,10); player.g.scale.setScalar(0.85); player.g.rotation
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 // V57: realistic GLB player character, PERSON-SIZED (not giant). The old blocky body
 // stays as fallback and is hidden only after the GLB loads successfully.
-let glbMixer = null, glbAction = null;
+let glbMixer = null, glbAction = null, glbBody = null, glbBones = null;
+// V66: seated bike pose — extrapolated from the walk clip itself (thigh forward 1.35 rad, calf flex 1.80 rad), quaternions (x,y,z,w)
+const SEAT_POSE = {
+  L_Thigh: [0.8341, 0.2163, -0.1708, -0.4778], R_Thigh: [0.7529, -0.0486, 0.2737, 0.5966],
+  L_Calf: [-0.8274, 0.0036, -0.0012, 0.5616], R_Calf: [-0.8266, -0.0052, 0.0218, 0.5624]
+};
 // V61: idle pose time = 0.667s into the walk clip, the passing pose where the two
 // feet are closest together (measured from the clip: 0.087 GLB units apart).
 new GLTFLoader().load('character.glb', (gltf)=>{
   const body = gltf.scene;
+  glbBody = body;
   body.scale.setScalar(2.40); // GLB height 1.0 -> world 0.85*2.40 = 2.04, person-sized
   body.rotation.y = -Math.PI/2; // GLB faces +x; the game faces +z
   body.position.y = 0.05; // V58: walk-cycle dip (~0.04 world) so feet never sink below the surface
   body.traverse((o)=>{ if(o.isMesh) o.castShadow = true; });
+  glbBones = {}; body.traverse((o)=>{ if(o.isBone) glbBones[o.name] = o; });
   player.g.add(body);
   if(gltf.animations.length){
     glbMixer = new THREE.AnimationMixer(body);
@@ -1546,6 +1553,11 @@ function animate(now){
   if(glbMixer){
     if(moving && !riding) glbMixer.update(dt * 3.0 * (raining ? 0.8 : 1)); // V60: 3x walk rate
     else { if(glbAction) glbAction.time = 0.667; glbMixer.update(0); } // V61: standing = feet together, never frozen mid-stride
+    // V66: seated pose while riding — otherwise the standing pose looks like standing ON the bike
+    if(riding && glbBones){
+      for(const k in SEAT_POSE){ const b = glbBones[k]; if(b) b.quaternion.fromArray(SEAT_POSE[k]); }
+      if(glbBody) glbBody.position.y = -0.35; // hips down to seat height
+    } else if(glbBody) glbBody.position.y = 0.05;
   }
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
