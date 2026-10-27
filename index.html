@@ -251,6 +251,13 @@ function groundHeight(x,z){
   if(Math.abs(x+90) <= 10 && Math.abs(z-60) <= 1) h = Math.max(h, 0.17);
   if(Math.abs(x-90) <= 10 && Math.abs(z-80) <= 1) h = Math.max(h, 0.17);
   if(Math.abs(x-100) <= 1 && Math.abs(z-90) <= 10) h = Math.max(h, 0.17);
+  // zebra crosswalks across the main avenue (top 0.18, not road 0.10)
+  for(const r of [-160,-80,-40,40,80,160]){
+    for(const s of [-5.5,-3.5,-1.5,1.5,3.5,5.5]){
+      if(Math.abs(x-s) <= 0.25 && Math.abs(z-r) <= 1) h = Math.max(h, 0.18);
+      if(Math.abs(z-s) <= 0.25 && Math.abs(x-r) <= 1) h = Math.max(h, 0.18);
+    }
+  }
   return h;
 }
 const colliders = [];
@@ -784,7 +791,9 @@ player.g.position.set(0,0,10); player.g.scale.setScalar(0.85); player.g.rotation
 const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 // V57: realistic GLB player character, PERSON-SIZED (not giant). The old blocky body
 // stays as fallback and is hidden only after the GLB loads successfully.
-let glbMixer = null;
+let glbMixer = null, glbAction = null;
+// V61: idle pose time = 0.667s into the walk clip, the passing pose where the two
+// feet are closest together (measured from the clip: 0.087 GLB units apart).
 new GLTFLoader().load('character.glb', (gltf)=>{
   const body = gltf.scene;
   body.scale.setScalar(2.40); // GLB height 1.0 -> world 0.85*2.40 = 2.04, same as the old player
@@ -796,7 +805,8 @@ new GLTFLoader().load('character.glb', (gltf)=>{
   if(gltf.animations.length){
     glbMixer = new THREE.AnimationMixer(body);
     const clip = gltf.animations.find((a)=>/walk/i.test(a.name)) || gltf.animations[0];
-    glbMixer.clipAction(clip).play();
+    glbAction = glbMixer.clipAction(clip);
+    glbAction.play();
   }
 }, undefined, ()=>{ /* keep the old body if the GLB fails to load */ });
 bx(0.5,0.3,2.4,0xd32f2f,0,0.5,0,bikeG);
@@ -1515,7 +1525,10 @@ function animate(now){
   }
   animatePerson(player, moving, walkT, gt, riding);
   player.g.position.y = groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
-  if(glbMixer) glbMixer.update((moving && !riding) ? dt * 3.0 * (raining ? 0.8 : 1) : 0); // V60: 1x too slow, 6x too fast — 3x middle
+  if(glbMixer){
+    if(moving && !riding) glbMixer.update(dt * 3.0 * (raining ? 0.8 : 1)); // V60: 3x walk rate
+    else { if(glbAction) glbAction.time = 0.667; glbMixer.update(0); } // V61: standing = feet together, never frozen mid-stride
+  }
   if(moving && !riding){
     const stepIdx = Math.floor(walkT / 1.9);
     if(stepIdx !== lastStep){ lastStep = stepIdx; playStep(); }
