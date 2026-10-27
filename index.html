@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V92</div>
+  <div style="font-size:12px;opacity:.6">V93</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -241,42 +241,49 @@ ground.rotation.x = -Math.PI/2; ground.position.set(-100,0,0); ground.receiveSha
 // V70: separate vertical (x) and horizontal (z) road lines; avenue x=0/z=0 stays 12 wide
 const roadLinesX = [-720,-560,-400,-240,-160,-80,-40,0,40,80,160];
 const roadLinesZ = [-560,-400,-240,-160,-80,-40,0,40,80,160,240,400,560];
+// V93: sidewalk segments stop at intersections — helper splits [lo,hi] by gap intervals
+function splitSegs(lo, hi, gaps){ const iv = []; let cur = lo; const sorted = gaps.slice().sort((a,b)=>a[0]-b[0]); for(const [g0,g1] of sorted){ if(g1 <= lo || g0 >= hi) continue; if(g0 > cur) iv.push([cur, Math.min(g0, hi)]); cur = Math.max(cur, g1); if(cur >= hi) break; } if(cur < hi) iv.push([cur, hi]); return iv.filter(([a,b]) => b - a > 1); }
+const zGapList = roadLinesZ.map(l => [l - ((l===0 ? 12 : 7)/2 + 1.5), l + ((l===0 ? 12 : 7)/2 + 1.5)]);
+const xGapList = roadLinesX.map(l => [l - ((l===0 ? 12 : 7)/2 + 1.5), l + ((l===0 ? 12 : 7)/2 + 1.5)]);
+const walkGeos = []; // V93: all sidewalk strips merged into one mesh (was a mesh per strip)
 for(const r of roadLinesX){
   const w = (r===0 ? 12 : 7), sw = w/2 + 1;
   bx(w,0.1,1200,0x444444,r,0.05,0).material = asphaltMat;
-  bx(1.0,0.12,1200,0x9e9e9e,r+sw,0.06,0).material = sidewalkMat; bx(1.0,0.12,1200,0x9e9e9e,r-sw,0.06,0).material = sidewalkMat; // V92: sidewalks halved (2 -> 1.0)
+  for(const [a,b] of splitSegs(-600, 600, zGapList)){ walkGeos.push(new THREE.BoxGeometry(1.0,0.12,b-a).translate(r+sw,0.06,(a+b)/2)); walkGeos.push(new THREE.BoxGeometry(1.0,0.12,b-a).translate(r-sw,0.06,(a+b)/2)); }
 }
 for(const r of roadLinesZ){
   const w = (r===0 ? 12 : 7), sw = w/2 + 1;
   if(r === 0){
     bx(1400,0.1,w,0x444444,-100,0.05,r).material = asphaltMat;
-    bx(1400,0.12,1.0,0x9e9e9e,-100,0.06,r+sw).material = sidewalkMat; bx(1400,0.12,1.0,0x9e9e9e,-100,0.06,r-sw).material = sidewalkMat; // V92: sidewalks halved
+    for(const [s0,s1] of [[-800,162],[188,600]]) for(const [a,b] of splitSegs(s0, s1, xGapList)){ walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r+sw)); walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r-sw)); } // V93: sidewalks stop at intersections + stream gap (no more strips floating over water beside the bridge)
   } else {
     // V73: no causeway through the stream — split at the banks (162/188); only the z=0 bridge road crosses
     for(const [cx, len] of [[-319,962],[394,412]]){
       bx(len,0.1,w,0x444444,cx,0.05,r).material = asphaltMat;
-      bx(len,0.12,1.0,0x9e9e9e,cx,0.06,r+sw).material = sidewalkMat; bx(len,0.12,1.0,0x9e9e9e,cx,0.06,r-sw).material = sidewalkMat; // V92: sidewalks halved
+      const s0 = cx - len/2, s1 = cx + len/2;
+      for(const [a,b] of splitSegs(s0, s1, xGapList)){ walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r+sw)); walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r-sw)); } // V93: sidewalks stop at intersections
     }
   }
 }
+{ const walkMesh = new THREE.Mesh(mergeGeometries(walkGeos, false), sidewalkMat); walkMesh.castShadow = true; walkMesh.receiveShadow = true; scene.add(walkMesh); }
 // V92: road paint — white dashes on every non-avenue road + edge lines everywhere, merged into ONE mesh
 { const paint = [];
   const nearCross = (v, lines) => lines.some(l => Math.abs(v-l) < 6);
   for(const r of roadLinesX){ if(r === 0) continue; for(let z=-596; z<=596; z+=8){ if(nearCross(z, roadLinesZ)) continue; paint.push(new THREE.BoxGeometry(0.35,0.02,3).translate(r,0.115,z)); } }
   for(const r of roadLinesZ){ if(r === 0) continue; for(let x=-796; x<=596; x+=8){ if(nearCross(x, roadLinesX)) continue; if(x > 158 && x < 192) continue; paint.push(new THREE.BoxGeometry(3,0.02,0.35).translate(x,0.115,r)); } }
-  for(const r of roadLinesX){ const w = (r===0 ? 12 : 7); paint.push(new THREE.BoxGeometry(0.25,0.02,1200).translate(r-(w/2-0.35),0.115,0)); paint.push(new THREE.BoxGeometry(0.25,0.02,1200).translate(r+(w/2-0.35),0.115,0)); }
-  for(const r of roadLinesZ){ const w = (r===0 ? 12 : 7); const segs = (r === 0) ? [[-100,1400]] : [[-319,962],[394,412]]; for(const [cx,len] of segs){ paint.push(new THREE.BoxGeometry(len,0.02,0.25).translate(cx,0.115,r-(w/2-0.35))); paint.push(new THREE.BoxGeometry(len,0.02,0.25).translate(cx,0.115,r+(w/2-0.35))); } }
+  // V93: edge lines STOP at intersections (V92 ran them full-length, so white strips crossed every junction)
+  const gapsFor = (lines) => lines.map(l => [l - ((l===0 ? 12 : 7)/2 + 1.5), l + ((l===0 ? 12 : 7)/2 + 1.5)]);
+  const intervals = (lo, hi, gaps) => { const iv = []; let cur = lo; for(const [g0,g1] of gaps.slice().sort((a,b)=>a[0]-b[0])){ if(g1 <= lo || g0 >= hi) continue; if(g0 > cur) iv.push([cur, Math.min(g0, hi)]); cur = Math.max(cur, g1); if(cur >= hi) break; } if(cur < hi) iv.push([cur, hi]); return iv.filter(([a,b]) => b - a > 1); };
+  const zGaps = gapsFor(roadLinesZ), xGaps = gapsFor(roadLinesX);
+  for(const r of roadLinesX){ const w = (r===0 ? 12 : 7); for(const [a,b] of intervals(-600, 600, zGaps)){ paint.push(new THREE.BoxGeometry(0.25,0.02,b-a).translate(r-(w/2-0.35),0.115,(a+b)/2)); paint.push(new THREE.BoxGeometry(0.25,0.02,b-a).translate(r+(w/2-0.35),0.115,(a+b)/2)); } }
+  for(const r of roadLinesZ){ const w = (r===0 ? 12 : 7); const segs = [[-800,162],[188,600]]; for(const [s0,s1] of segs){ for(const [a,b] of intervals(s0, s1, xGaps)){ paint.push(new THREE.BoxGeometry(b-a,0.02,0.25).translate((a+b)/2,0.115,r-(w/2-0.35))); paint.push(new THREE.BoxGeometry(b-a,0.02,0.25).translate((a+b)/2,0.115,r+(w/2-0.35))); } } } // V93: z=0 edge lines also gap at the stream (were floating over water beside the bridge)
   const paintMesh = new THREE.Mesh(mergeGeometries(paint, false), new THREE.MeshLambertMaterial({color:0xf5f5f5})); paintMesh.receiveShadow = true; scene.add(paintMesh);
 }
-for(let d=-590; d<=590; d+=20){
-  bx(0.4,0.12,3,0xffeb3b,0,0.12,d);
-  bx(3,0.12,0.4,0xffeb3b,d,0.12,0);
-}
-// zebra crosswalks across both avenues at every side-road intersection
-for(const r of [-720,-560,-400,-240,-160,-80,-40,40,80,160,240,400,560]){
-  for(const sx of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) bx(0.5,0.12,2,0xffffff,sx,0.12,r);
-  for(const sz of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) bx(2,0.12,0.5,0xffffff,r,0.12,sz);
-}
+// V93: yellow avenue dashes + zebra crosswalks merged (was 252 separate meshes — part of the lag)
+{ const yGeos = []; for(let d=-590; d<=590; d+=20){ yGeos.push(new THREE.BoxGeometry(0.4,0.12,3).translate(0,0.12,d)); yGeos.push(new THREE.BoxGeometry(3,0.12,0.4).translate(d,0.12,0)); }
+  const yMesh = new THREE.Mesh(mergeGeometries(yGeos, false), new THREE.MeshLambertMaterial({color:0xffeb3b})); yMesh.receiveShadow = true; scene.add(yMesh);
+  const zGeos = []; for(const r of [-720,-560,-400,-240,-160,-80,-40,40,80,160,240,400,560]){ for(const sx of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) zGeos.push(new THREE.BoxGeometry(0.5,0.12,2).translate(sx,0.12,r)); for(const sz of [-5.5,-3.5,-1.5,1.5,3.5,5.5]) zGeos.push(new THREE.BoxGeometry(2,0.12,0.5).translate(r,0.12,sz)); }
+  const zMesh = new THREE.Mesh(mergeGeometries(zGeos, false), new THREE.MeshLambertMaterial({color:0xffffff})); zMesh.receiveShadow = true; scene.add(zMesh); }
 // dirt footpaths: to school (west) and to pagoda (L-shaped, east)
 bx(20,0.1,2,0x8d6e63,-90,0.12,60);
 bx(20,0.1,2,0x8d6e63,90,0.12,80); bx(2,0.1,20,0x8d6e63,100,0.12,90);
@@ -322,9 +329,9 @@ function house(x,z,wall,roof,storeys){
   const wm = bx(16,wallH,12,wall,x,0.5+wallH/2,z); wm.material = new THREE.MeshLambertMaterial({map:wallTex, color:wall});
   const r = mesh(new THREE.ConeGeometry(12,4.5,4), roof, x, wallTop+2.25, z);
   r.rotation.y = Math.PI/4; r.scale.x = 1.3; r.material = RM(roof); // V92: tiled roof
-  bx(3.4,0.15,1.8,roof,x,3.5,z+6.9); // V92: porch roof over the door
-  bx(0.18,3.4,0.18,0xffffff,x-1.4,1.7,z+7.6); bx(0.18,3.4,0.18,0xffffff,x+1.4,1.7,z+7.6); // V92: porch posts
-  bx(2.4,0.3,1.4,0x9e9e9e,x,0.15,z+6.9); // V92: door step
+  (porchGeos[roof] = porchGeos[roof] || []).push(new THREE.BoxGeometry(3.4,0.15,1.8).translate(x,3.5,z+6.9)); // V93: porch merged (was a mesh per house)
+  whiteGeos.push(new THREE.BoxGeometry(0.18,3.4,0.18).translate(x-1.4,1.7,z+7.6)); whiteGeos.push(new THREE.BoxGeometry(0.18,3.4,0.18).translate(x+1.4,1.7,z+7.6)); // V93: posts merged
+  stepGeos.push(new THREE.BoxGeometry(2.4,0.3,1.4).translate(x,0.15,z+6.9)); // V93: steps merged
   bx(1.3,2.6,0.1,0x212121,x,1.8,z+6.01);
   { const dg = new THREE.Group(); dg.position.set(x-0.65,0,z+6.05); scene.add(dg);
     mesh(new THREE.BoxGeometry(1.3,2.6,0.15), 0x6d4c41, 0.65, 1.8, 0, dg);
@@ -336,7 +343,7 @@ function house(x,z,wall,roof,storeys){
       bx(2.7,2.7,0.10,0xffffff,wx+x,wy,z+6.05);
       glassBx(2.5,2.5,0.12,wx+x,wy,z+6.05);
     }
-    for(const sd of [-1,1]){ bx(0.10,2.7,2.7,0xffffff,x+sd*8.05,wy,z); glassBx(0.12,2.5,2.5,x+sd*8.05,wy,z); } // V92: side window frames (front already had them)
+    for(const sd of [-1,1]){ whiteGeos.push(new THREE.BoxGeometry(0.10,2.7,2.7).translate(x+sd*8.05,wy,z)); glassBx(0.12,2.5,2.5,x+sd*8.05,wy,z); } // V93: frames merged (was a mesh per window)
   }
   bx(1,3,1,0x9e9e9e,x+5,wallTop+1.5,z-3);
   fenceRect(x,z,11,9,6); // V69: 4-wide gates were blocked by their own r1.5 posts (player r0.8 needs an opening > 4.6)
@@ -369,7 +376,11 @@ const houseList = [
   [-180,-120,0xfff2cc,0xb3402a],[-180,-20,0xddeeff,0x37474f],[-180,100,0xffe0e0,0x6d4c41],[-180,130,0xe0ffe0,0xb3402a],
   [250,186,0xf5f5f5,0x37474f],[310,186,0xfff8dc,0x6d4c41],[370,186,0xfff2cc,0xb3402a]
 ]; // V69: +7 houses (81 total) — west band x=-180 + south band z=186, all audit-clear (roads/houses/fields/mountains, corridors >= 6)
+const porchGeos = {}, whiteGeos = [], stepGeos = []; // V93: V92 house details collected here, merged below (was ~650 meshes — the lag)
 for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1)); }
+for(const rc in porchGeos){ const pm = new THREE.Mesh(mergeGeometries(porchGeos[rc], false), RM(Number(rc))); pm.castShadow = true; pm.receiveShadow = true; scene.add(pm); }
+{ const wm = new THREE.Mesh(mergeGeometries(whiteGeos, false), M(0xffffff)); wm.castShadow = true; wm.receiveShadow = true; scene.add(wm); }
+{ const sm = new THREE.Mesh(mergeGeometries(stepGeos, false), M(0x9e9e9e)); sm.castShadow = true; sm.receiveShadow = true; scene.add(sm); }
 // ---- school (big, 2 floors), hospital (was clinic) ----
 bx(30,0.5,16,0x9e9e9e,-100,0.25,60);
 bx(28,10,14,0xfff9c4,-100,5.5,60);
@@ -1767,7 +1778,7 @@ function endDrag(e){ if(e.pointerId === dragId){ dragId = null; dragX = null; dr
 addEventListener('pointerup', endDrag);
 addEventListener('pointercancel', endDrag);
 refresh();
-let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 5, smoothCamH = 2.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
+let last = performance.now(), walkT = 0, dayT = 0, camYaw = Math.PI, smoothCamDist = 5, smoothCamH = 3.5, lastStep = -1, birdTimer = 10, mapFrame = 0, carHitCooldown = 0, townTimer = 5, bikeTimer = 0;
 try{ const dl = JSON.parse(localStorage.getItem('mtl_delivery')||'null'); if(dl){ const t = targets.find(t=>t.x===dl.x && t.z===dl.z); if(t){ delivery = t; beacon.position.set(t.x, 0, t.z); shopBeacon.position.set(0,-20,0); } }
   if(lowQuality){ renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; }
   const sp = JSON.parse(localStorage.getItem('mtl_pos')||'null'); if(sp && sp.x >= -795 && sp.x <= 595 && sp.z >= -595 && sp.z <= 595){ player.g.position.set(sp.x, 0, sp.z); for(let ri=0; ri<ROOMS.length; ri++){ const rm = ROOMS[ri]; if(sp.x >= rm[0]-10 && sp.x <= rm[0]+10 && sp.z >= rm[1]-8 && sp.z <= rm[1]+8){ inHouse = true; currentRoom = ri; returnPos = {x:-18, z:-8}; break; } } }
@@ -2496,7 +2507,7 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 5, targetH = drivingCar ? 6.5 : 2.5; // V68: walking camera closer again (driving unchanged)
+  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 5, targetH = drivingCar ? 6.5 : 3.5; // V93: walking camera raised 2.5 -> 3.5 (felt too low); driving unchanged
   for(let a=0; a<12; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
