@@ -1047,7 +1047,7 @@ function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ 
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
   save(); refresh(); }
-function toggleBus(){ if(ridingBus){ ridingBus = false; busDest = null; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဘတ်စ်က ဆင်းပြီ'); }
+function toggleBus(){ if(ridingBus){ ridingBus = false; busDest = null; bus.leg = 'x'; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဘတ်စ်က ဆင်းပြီ'); }
   else { if(money < 200){ showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် လိုတယ်'); return; } money -= 200; ridingBus = true; riding = false; bikeG.visible = false; player.g.visible = false; gainXP(10); save(); showMsg('🚌 ဘတ်စ်ခ ၂၀၀ ကျပ် — ဂိတ်ရွေးချင် 🚌 ခလုတ် နှိပ်'); } refresh(); }
 function startTaxi(){ if(taxi){ showMsg('🚕 Taxi ပို့နေဆဲ'); return; }
   const pk = intersections[Math.floor(Math.random()*intersections.length)];
@@ -1220,7 +1220,7 @@ document.getElementById('hireHelper').addEventListener('click', hireHelper);
 document.getElementById('buyOwnCar').addEventListener('click', ()=>{ if(ownCarBought){ showMsg('🚗 ကိုယ်ပိုင်ကား ရှိပြီးပြီ'); return; } if(money < 15000){ showMsg('ငွေမလုံလောက်ဘူး — ၁၅၀၀၀ လိုတယ်'); return; } money -= 15000; ownCarBought = true; ownCar.visible = true; save(); refresh(); showMsg('🚗 ကိုယ်ပိုင်ကား ရပြီ! ကားအဟောင်းနား (30,-12) မှာ ရပ်ထားတယ်'); });
 document.getElementById('buyCarUpg').addEventListener('click', ()=>{ if(!ownCarBought){ showMsg('ကိုယ်ပိုင်ကား အရင်ဝယ်ပါ'); return; } if(carUpg >= 3){ showMsg('ကားမြန်နှုန်း အမြင့်ဆုံးရောက်ပြီ'); return; } if(money < 5000){ showMsg('ငွေမလုံလောက်ဘူး'); return; } money -= 5000; carUpg++; save(); refresh(); showMsg('⚡ ကားမြန်နှုန်း တက်ပြီ — အခု ' + (40 + carUpg*10) + ' အထိ'); });
 document.getElementById('paintCarBtn').addEventListener('click', ()=>{ if(!ownCarBought){ showMsg('ကိုယ်ပိုင်ကား အရင်ဝယ်ပါ'); return; } carPaintIdx = (carPaintIdx + 1) % CAR_PAINTS.length; const c = M(CAR_PAINTS[carPaintIdx]); ownCar.children[0].material = c; ownCar.children[1].material = c; ownCar.children[2].material = c; save(); refresh(); showMsg('🎨 ကားအရောင် ပြောင်းပြီ'); });
-document.getElementById('busDestBtn').addEventListener('click', ()=>{ if(!ridingBus) return; busDest = BUS_STOPS[busDestIdx]; busDestIdx = (busDestIdx + 1) % BUS_STOPS.length; document.getElementById('busDestBtn').textContent = '🚌 ' + busDest.label; showMsg('🚌 ဂိတ်: ' + busDest.label + ' — ရောက်ရင် အလိုလို ဆင်းမယ်'); });
+document.getElementById('busDestBtn').addEventListener('click', ()=>{ if(!ridingBus) return; busDest = BUS_STOPS[busDestIdx]; bus.leg = 'x'; busDestIdx = (busDestIdx + 1) % BUS_STOPS.length; document.getElementById('busDestBtn').textContent = '🚌 ' + busDest.label; showMsg('🚌 ဂိတ်: ' + busDest.label + ' — ရောက်ရင် အလိုလို ဆင်းမယ်'); });
 document.getElementById('pauseBtn').addEventListener('click', ()=>{ paused = !paused; document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸'; showMsg(paused ? '⏸ ရပ်ထားတယ်' : '▶ ပြန်ဆော့နေပြီ'); });
 document.getElementById('tutorialBtn').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='flex'; });
 document.getElementById('closeTutorial').addEventListener('click', ()=>{ document.getElementById('tutorial').style.display='none'; });
@@ -1531,12 +1531,24 @@ function animate(now){
   trafficTimer -= dt; if(trafficTimer <= 0){ trafficNSGreen = !trafficNSGreen; trafficTimer = 15; setLights(); }
   for(const car of cars){
     const tx = car.target.x, tz = car.target.z;
-    if(Math.hypot(car.g.position.x, car.g.position.z) < 12){ const movingX = Math.abs(tx-car.g.position.x) > 0.8; if((movingX && trafficNSGreen) || (!movingX && !trafficNSGreen)) continue; }
+    // V56: latched lane-corner turn. cornerX is fixed while the car is on its x-leg
+    // (turn direction read from the road line, never the live position), so the car turns
+    // squarely at the lane corner and can't flip-flop near arrival.
+    if(car.leg !== 'z'){
+      const Lz = nearestLine(car.g.position.z);
+      car.cornerX = Math.abs(tz - Lz) > 20 ? tx + (tz > Lz ? -2 : 2) : tx;
+    }
+    if(Math.hypot(car.g.position.x, car.g.position.z) < 12){ const movingX = car.leg !== 'z'; if((movingX && trafficNSGreen) || (!movingX && !trafficNSGreen)) continue; }
     const px = car.g.position.x, pz = car.g.position.z;
     let mx = 0, mz = 0;
-    if(Math.abs(tx-px) > 0.8) mx = Math.sign(tx-px);
-    else if(Math.abs(tz-pz) > 0.8) mz = Math.sign(tz-pz);
-    else { car.target = intersections[Math.floor(Math.random()*intersections.length)]; continue; }
+    if(car.leg !== 'z'){
+      if(Math.abs(car.cornerX-px) > 0.8) mx = Math.sign(car.cornerX-px);
+      else car.leg = 'z';
+    }
+    if(mx === 0 && car.leg === 'z'){
+      if(Math.abs(tz-pz) > 0.8) mz = Math.sign(tz-pz);
+      else { car.target = intersections[Math.floor(Math.random()*intersections.length)]; car.leg = 'x'; continue; }
+    }
     car.g.position.x += mx*car.speed*dt; car.g.position.z += mz*car.speed*dt;
     if(mx !== 0) car.g.position.z += (nearestLine(pz) + (mx>0?2:-2) - car.g.position.z) * Math.min(1, dt*4);
     else car.g.position.x += (nearestLine(px) + (mz>0?-2:2) - car.g.position.x) * Math.min(1, dt*4);
@@ -1546,8 +1558,14 @@ function animate(now){
   }
   if(ridingBus && busDest){
     const dx2 = busDest.x - bus.position.x, dz2 = busDest.z - bus.position.z, d2 = Math.hypot(dx2,dz2);
-    if(d2 < 3){ ridingBus = false; busDest = null; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဂိတ်ရောက်ပြီ!'); refresh(); }
-    else { let mx = 0, mz = 0; if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
+    if(d2 < 3){ ridingBus = false; busDest = null; bus.leg = 'x'; player.g.visible = true; player.g.position.set(bus.position.x + 4, 0, bus.position.z); showMsg('🚌 ဂိတ်ရောက်ပြီ!'); refresh(); }
+    else { let mx = 0, mz = 0;
+      if(bus.leg !== 'z'){ const Lz = nearestLine(bus.position.z); bus.cornerX = Math.abs(busDest.z - Lz) > 20 ? busDest.x + (busDest.z > Lz ? -1.5 : 1.5) : busDest.x; } // V56 lane corner
+      if(bus.leg !== 'z'){
+        if(Math.abs(bus.cornerX-bus.position.x) > 1.5) mx = Math.sign(bus.cornerX-bus.position.x);
+        else bus.leg = 'z';
+      }
+      if(mx === 0 && bus.leg === 'z' && Math.abs(dz2) > 0.5) mz = Math.sign(dz2);
       bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
       if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?1.5:-1.5) - bus.position.z) * Math.min(1, dt*4);
       else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-1.5:1.5) - bus.position.x) * Math.min(1, dt*4);
@@ -1556,10 +1574,15 @@ function animate(now){
   } else {
     const bt = busRoute[busIdx];
     const dx2 = bt.x - bus.position.x, dz2 = bt.z - bus.position.z, d2 = Math.hypot(dx2,dz2);
-    if(d2 < 1.5){ busIdx = (busIdx+1) % busRoute.length; }
+    if(d2 < 1.5){ busIdx = (busIdx+1) % busRoute.length; bus.leg = 'x'; }
     else {
       let mx = 0, mz = 0;
-      if(Math.abs(dx2) > 1.5) mx = Math.sign(dx2); else mz = Math.sign(dz2);
+      if(bus.leg !== 'z'){ const Lz = nearestLine(bus.position.z); bus.cornerX = Math.abs(bt.z - Lz) > 20 ? bt.x + (bt.z > Lz ? -1.5 : 1.5) : bt.x; } // V56 lane corner
+      if(bus.leg !== 'z'){
+        if(Math.abs(bus.cornerX-bus.position.x) > 1.5) mx = Math.sign(bus.cornerX-bus.position.x);
+        else bus.leg = 'z';
+      }
+      if(mx === 0 && bus.leg === 'z' && Math.abs(dz2) > 0.5) mz = Math.sign(dz2);
       bus.position.x += mx*10*dt; bus.position.z += mz*10*dt;
       if(mx !== 0) bus.position.z += (nearestLine(bus.position.z) + (mx>0?1.5:-1.5) - bus.position.z) * Math.min(1, dt*4);
       else bus.position.x += (nearestLine(bus.position.x) + (mz>0?-1.5:1.5) - bus.position.x) * Math.min(1, dt*4);
