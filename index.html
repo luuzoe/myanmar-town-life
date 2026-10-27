@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V96</div>
+  <div style="font-size:12px;opacity:.6">V97</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1115,7 +1115,7 @@ for(let i=0;i<96;i++){ // V90: road walkers 48 -> 96 (crowd deleted, replaced by
   const start = intersections[(i*3) % intersections.length]; // V84: spread starts across the whole map (was i*2 — only the first ~100 crossings, never the east)
   p.g.position.set(start.x, 0, start.z);
   scene.add(p.g);
-  npcs.push({p, target: intersections[(i*3+71) % intersections.length], speed: 4.5, job: (i % 4 === 0 && (i/4) < NPC_JOBS.length) ? NPC_JOBS[i/4] : null}); // V84: targets on the opposite side of the map (retarget is random anyway); V88: every 4th walker works a job; V90: capped to 9 unique job spots (no more two workers standing in one body)
+  npcs.push({p, target: intersections[(i*3+71) % intersections.length], speed: 3.5, job: (i % 4 === 0 && (i/4) < NPC_JOBS.length) ? NPC_JOBS[i/4] : null}); // V84: targets on the opposite side of the map (retarget is random anyway); V88: every 4th walker works a job; V90: capped to 9 unique job spots (no more two workers standing in one body)
 }
 const yardPeople = [];
 for(let i=0;i<5;i++){
@@ -1259,7 +1259,7 @@ function makeCar(color, type){
   bx(0.35,0.2,0.06,0xef6c00,-1.15,0.6,2.78,g); bx(0.35,0.2,0.06,0xef6c00,1.15,0.6,2.78,g);
   bx(0.18,0.25,0.3,0x212121,-1.2,1.3,0.9,g); bx(0.18,0.25,0.3,0x212121,1.2,1.3,0.9,g);
   for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){
-    const w = new THREE.Mesh(new THREE.TorusGeometry(0.32,0.13,6,12), M(0x212121)); w.position.set(wx,0.45,wz); w.rotation.y = Math.PI/2; w.castShadow = true; g.add(w);
+    const w = new THREE.Mesh(new THREE.TorusGeometry(0.32,0.13,6,12), M(0x212121)); w.position.set(wx,0.45,wz); w.rotation.y = Math.PI/2; w.castShadow = true; g.add(w); (g.userData.procWheels = g.userData.procWheels || []).push(w); // V97: traffic wheel spin
     const hc = cyl(0.24,0.24,0.34,0x9e9e9e,wx,0.45,wz,g); hc.rotation.z = Math.PI/2;
   }
   g.children.forEach(ch=>ch.userData.procMesh = true); // V94: tag code-drawn body so the GLB swap can hide it (blob shadow below stays visible)
@@ -1300,7 +1300,7 @@ for(let i=0;i<24;i++){ // V70: traffic 8 -> 24 cars for the big city
   const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a,0x00acc1,0x8d6e63,0x78909c,0xd81b60,0x3949ab,0x00897b,0xc0ca33,0x5e35b1][i%16], ['sedan','suv','pickup'][i%3]); // V92: traffic variety
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
-  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 8 + (i % 3)}); carGlbTargets.push({g:car, model:CAR_GLB_MODELS[i%6]});
+  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 15 + (i % 3) * 2}); carGlbTargets.push({g:car, model:CAR_GLB_MODELS[i%6]});
 }
 // V70: parked street cars in the new districts (curb-side, not driveable)
 [[-566,100,0],[-394,-300,Math.PI],[-234,400,0],[166,-400,Math.PI],[-566,-400,0],[-394,200,Math.PI],[246,300,0],[406,-100,Math.PI]].forEach((p,i)=>{
@@ -1408,12 +1408,12 @@ if(ownedHouses > 0 && ownedList.length === 0){ for(let i=0;i<ownedHouses && i<ho
 ownedHouses = ownedList.length;
 // truck + tuk-tuk traffic
 { const tr = new THREE.Group(); bx(2.4,1.0,2.5,0x1565c0,0,0.8,2.5,tr); bx(2.4,0.6,2.5,0x90caf9,0,1.5,2.5,tr); bx(2.4,1.2,5,0x8d6e63,0,0.9,-1.5,tr);
-  for(const wx of [-1.2,1.2]) for(const wz of [-3,0,3]){ const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,tr); w.rotation.z = Math.PI/2; const hc = cyl(0.2,0.2,0.32,0x9e9e9e,wx,0.45,wz,tr); hc.rotation.z = Math.PI/2; } // V69: truck hubcaps
-  tr.position.set(-160,0,0); scene.add(tr); cars.push({g:tr, target:intersections[0], speed:7}); }
+  for(const wx of [-1.2,1.2]) for(const wz of [-3,0,3]){ const w = cyl(0.45,0.45,0.3,0x212121,wx,0.45,wz,tr); w.rotation.z = Math.PI/2; (tr.userData.procWheels = tr.userData.procWheels || []).push(w); const hc = cyl(0.2,0.2,0.32,0x9e9e9e,wx,0.45,wz,tr); hc.rotation.z = Math.PI/2; } // V69: truck hubcaps; V97: wheels tagged for spin
+  tr.position.set(-160,0,0); scene.add(tr); cars.push({g:tr, target:intersections[0], speed:14}); }
 { const tk = new THREE.Group(); bx(1.4,0.6,2.2,0xffeb3b,0,0.5,0,tk); bx(1.4,0.5,1.4,0x212121,0,1.0,-0.2,tk); glassBx(1.2,0.4,0.06,0,1.0,0.55,tk);
-  for(const wx of [-0.7,0.7]){ const w = cyl(0.35,0.35,0.25,0x212121,wx,0.35,0.8,tk); w.rotation.z = Math.PI/2; }
-  const wf = cyl(0.35,0.35,0.25,0x212121,0,0.35,-0.9,tk); wf.rotation.z = Math.PI/2;
-  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:10}); }
+  for(const wx of [-0.7,0.7]){ const w = cyl(0.35,0.35,0.25,0x212121,wx,0.35,0.8,tk); w.rotation.z = Math.PI/2; (tk.userData.procWheels = tk.userData.procWheels || []).push(w); } // V97: wheels tagged for spin
+  const wf = cyl(0.35,0.35,0.25,0x212121,0,0.35,-0.9,tk); wf.rotation.z = Math.PI/2; (tk.userData.procWheels = tk.userData.procWheels || []).push(wf); // V97: front wheel tagged for spin
+  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:16}); }
 // traffic lights at (0,0): NS pole at (8,8), EW pole at (-8,-8)
 function trafficLight(x,z){ cyl(0.12,0.12,4.5,0x455a64,x,2.25,z); bx(0.6,1.6,0.3,0x212121,x,4.2,z);
   const mats = [new THREE.MeshBasicMaterial({color:0x550000}), new THREE.MeshBasicMaterial({color:0x554400}), new THREE.MeshBasicMaterial({color:0x003300})];
@@ -2412,6 +2412,7 @@ function animate(now){
     if(mx !== 0) car.g.position.z += (nearestLine(pz) + (mx>0?2:-2) - car.g.position.z) * Math.min(1, dt*4);
     else car.g.position.x += (nearestLine(px) + (mz>0?-2:2) - car.g.position.x) * Math.min(1, dt*4);
     car.g.rotation.y = Math.atan2(mx,mz); // V54: snap heading to road direction (no diagonal slide at corners)
+    { const ws = (car.g.userData.glbWheels && car.g.userData.glbWheels.length) ? car.g.userData.glbWheels : (car.g.userData.procWheels || []); for(const w of ws) w.rotation.x += car.speed*dt/0.45; } // V97: traffic wheels spin (they never did — GLB wheels made it obvious)
     const fx = Math.sin(car.g.rotation.y), fz = Math.cos(car.g.rotation.y);
     carHitCheck(car.g.position.x, car.g.position.z, fx, fz, 2.75, 1.8);
   }
