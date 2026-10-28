@@ -33,11 +33,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 </div>
 <div id="start"><div id="card">
 <h1>🏙️ မိုင်းလား အစစ်</h1>
-<div style="font-size:12px;opacity:.6">V1</div>
+<div style="font-size:12px;opacity:.6">V1.1</div>
 <p>OpenStreetMap လမ်းအစစ်ပေါ် လမ်းလျှောက်၊ ကားမောင်း၊ ပျံသန်း။<br>လမ်းနာမည်အစစ်တွေ၊ နေရာအစစ်တွေ ပါပါတယ်။<br>အဆောက်အဦး/သစ်ပင် model တွေက နောက်မှ ထပ်ထည့်မယ်။</p>
 <button id="playBtn">▶ ဆော့မယ်</button>
 </div></div>
 <div id="joy"><div id="knob"></div></div>
+<script>document.getElementById('playBtn').addEventListener('click', function(){ document.getElementById('start').style.display = 'none'; });</script>
 <div id="modes">
 <button id="btnWalk" class="on">🚶 လမ်း</button>
 <button id="btnCar">🚗 ကား</button>
