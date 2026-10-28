@@ -68,6 +68,7 @@
   <div class="pill">⭐ Lv <b id="level">1</b> · <span id="xp">0</span>/500</div>
   <div class="pill">❤️ <b id="health">100</b></div>
   <div class="pill">🎯 <span id="questPill">—</span></div>
+  <div class="pill">🏛️ <span id="goalPill">—</span></div>
 </div>
 <div id="job"><span id="jobText">ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ</span></div>
 <div id="msg"></div>
@@ -89,7 +90,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V101</div>
+  <div style="font-size:12px;opacity:.6">V102</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -737,9 +738,9 @@ tbs.position.y = 30; treasureMesh.add(tbs);
 const tbg = new THREE.Mesh(new THREE.BoxGeometry(1.4,0.9,0.9), new THREE.MeshBasicMaterial({color:0xffc107}));
 tbg.position.y = 1; treasureMesh.add(tbg);
 scene.add(treasureMesh); treasureMesh.position.set(0,-20,0);
-let treasureTimer = 60, treasureActive = false, treasurePos = {x:0, z:0};
-function spawnTreasure(){ const it = intersections[Math.floor(Math.random()*intersections.length)]; treasurePos = {x:it.x, z:it.z}; treasureMesh.position.set(it.x, 0, it.z); treasureActive = true; treasureTimer = 150 + Math.floor(Math.random()*120); showMsg('✨ ရွှေရောင်အလင်းတန်း တစ်နေရာမှာ ပေါ်နေပြီ — သွားရှာပါ!'); }
-function collectTreasure(){ const rw = 300 + Math.floor(Math.random()*500); money += rw; gainXP(20); treasureActive = false; treasureMesh.position.set(0,-20,0); treasureTimer = 150 + Math.floor(Math.random()*120); save(); refresh(); playCoin(); showMsg('✨ ရတနာရပြီ +' + rw + ' ကျပ်!'); }
+let treasureTimer = 30, treasureActive = false, treasurePos = {x:0, z:0};
+function spawnTreasure(){ const it = intersections[Math.floor(Math.random()*intersections.length)]; treasurePos = {x:it.x, z:it.z}; treasureMesh.position.set(it.x, 0, it.z); treasureActive = true; treasureTimer = 120 + Math.floor(Math.random()*80); showMsg('✨ ရွှေရောင်အလင်းတန်း တစ်နေရာမှာ ပေါ်နေပြီ — သွားရှာပါ!'); }
+function collectTreasure(){ const rw = 300 + Math.floor(Math.random()*500); money += rw; gainXP(20); treasureActive = false; treasureMesh.position.set(0,-20,0); treasureTimer = 120 + Math.floor(Math.random()*80); save(); refresh(); playCoin(); showMsg('✨ ရတနာရပြီ +' + rw + ' ကျပ်!'); }
 // V91: race beacon (white) + hide-and-seek beacon (pink)
 const raceBeacon = new THREE.Group();
 const rbm = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12), new THREE.MeshBasicMaterial({color:0xffffff}));
@@ -1512,7 +1513,7 @@ const moneyEl = document.getElementById('money'), jobEl = document.getElementByI
   speedEl = document.getElementById('speedLabel'), timeEl = document.getElementById('timePill');
 let msgTimer = null, lastTimeText = '';
 function showMsg(t){ msgEl.textContent = t; msgEl.style.display='block'; clearTimeout(msgTimer); msgTimer=setTimeout(()=>msgEl.style.display='none',2600); }
-function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.setItem('mtl_fast', fastBike?'1':'0'); localStorage.setItem('mtl_basket', bigBasket?'1':'0');
+function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.setItem('mtl_fast', fastBike?'1':'0'); localStorage.setItem('mtl_basket', bigBasket?'1':'0'); localStorage.setItem('mtl_hotjob', hotJob);
   localStorage.setItem('mtl_xp', String(xp)); localStorage.setItem('mtl_houses', String(ownedHouses)); localStorage.setItem('mtl_items', String(houseItems));
   localStorage.setItem('mtl_stall', stallUpg?'1':'0'); localStorage.setItem('mtl_ownshop', ownShop?'1':'0'); localStorage.setItem('mtl_helpers', String(helpers));
   localStorage.setItem('mtl_quest', String(questIdx)); localStorage.setItem('mtl_qprog', String(questProg));
@@ -1523,6 +1524,8 @@ function save(){ localStorage.setItem('mtl_money', String(money)); localStorage.
   try{ localStorage.setItem('mtl_carpos', JSON.stringify({x:parkedCar.position.x, z:parkedCar.position.z, rot:parkedCar.rotation.y})); localStorage.setItem('mtl_delivery', delivery ? JSON.stringify(delivery) : ''); localStorage.setItem('mtl_pos', JSON.stringify({x:player.g.position.x, z:player.g.position.z})); localStorage.setItem('mtl_day', String(dayT)); localStorage.setItem('mtl_streak', String(winStreak)); localStorage.setItem('mtl_friends', JSON.stringify(friends)); localStorage.setItem('mtl_roadshops', JSON.stringify(roadShops.map(s=>({x:s.x, z:s.z, owned:!!s.owned, lvl:s.lvl||1})))); localStorage.setItem('mtl_tuk', tukBought?'1':'0'); localStorage.setItem('mtl_truck', truckBought?'1':'0'); localStorage.setItem('mtl_hats', JSON.stringify(hatsOwned)); localStorage.setItem('mtl_hat', String(hatIdx)); localStorage.setItem('mtl_rank', String(rankIdx)); }catch(e){} }
 function gainXP(n){ xp += n; const nl = 1 + Math.floor(xp/500); if(nl > level){ level = nl; const lb = 500*level; money += lb; showMsg('⭐ Level '+level+' ရောက်ပြီ! ဆု +'+lb+' ကျပ်'); playChime(); } save(); refresh(); }
 let dayEvent = 'none'; // V88: daily event — 'fair' day pays +300 per sale
+const HOT_JOBS = [{k:'sell', label:'🏪 ရောင်းတာ'}, {k:'deliver', label:'📦 ပို့တာ'}, {k:'taxi', label:'🚕 Taxi'}, {k:'fish', label:'🎣 ငါးဖမ်းတာ'}];
+const _hj = localStorage.getItem('mtl_hotjob'); let hotJob = HOT_JOBS.some(h=>h.k===_hj) ? _hj : 'sell';
 const MAYOR_RANKS = [{money:10000, houses:1, level:1, title:'🏘️ ရပ်ကွက်လူကြီး', bonus:2000}, {money:50000, houses:3, level:3, title:'🏙️ မြို့လူကြီး', bonus:5000}, {money:200000, houses:5, level:5, title:'🏛️ မြို့တော်ဝန်', bonus:10000}];
 function checkMayor(){ let nr = rankIdx; for(let i=0;i<MAYOR_RANKS.length;i++){ const r = MAYOR_RANKS[i]; if(money >= r.money && ownedHouses >= r.houses && level >= r.level) nr = i+1; } if(nr > rankIdx){ rankIdx = nr; const r = MAYOR_RANKS[nr-1]; money += r.bonus; showMsg('🏆 ရာထူးတက်ပြီ! ' + r.title + ' — ဆု +' + r.bonus + ' ကျပ်'); playChime(); save(); } }
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
@@ -1569,6 +1572,7 @@ function refresh(){
   const lvEl = document.getElementById('level'); if(lvEl) lvEl.textContent = level;
   const xpEl = document.getElementById('xp'); if(xpEl) xpEl.textContent = xp % 500;
   const qEl = document.getElementById('questPill'); if(qEl && QUESTS[questIdx]) qEl.textContent = QUESTS[questIdx].label + ' ' + questProg + '/' + QUESTS[questIdx].target;
+  const gEl = document.getElementById('goalPill'); if(gEl){ const nr = MAYOR_RANKS[rankIdx]; gEl.textContent = nr ? ('နောက် ' + nr.title + ' · ငွေ ' + money.toLocaleString() + '/' + nr.money.toLocaleString() + ' · အိမ် ' + ownedHouses + '/' + nr.houses + ' · Lv' + level + '/' + nr.level) : '🏛️ မြို့တော်ဝန် ဖြစ်ပြီ!'; }
   const bh = document.getElementById('buyHouse'); if(bh) bh.textContent = '🏠 အိမ်ဝယ် (' + (5000 + ownedHouses*3000) + ' ကျပ်) — ပိုင်ဆိုင် ' + ownedHouses;
   const bi = document.getElementById('buyHouseItem'); if(bi) bi.textContent = '🪑 အိမ်ပစ္စည်း (၁၀၀၀ ကျပ်) — ရှိ ' + houseItems;
   const bs = document.getElementById('buyStall'); if(bs) bs.textContent = stallUpg ? '✅ ဈေးဆိုင်ကြီး upgrade ပြီးပြီ' : '🏪 ဈေးဆိုင်ကြီး upgrade (၄၀၀၀ ကျပ်) — ရောင်းခ ၁၂၀၀';
@@ -1663,23 +1667,23 @@ function harvest(){
 }
 function sell(){
   if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
-  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; if(dayEvent === 'fair') sp += 300; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
+  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; if(dayEvent === 'fair') sp += 300; if(hotJob === 'sell') sp *= 2; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
 }
 function fish(){
   if(fishTimer > 0){ showMsg('ငါးမလာသေးဘူး၊ '+Math.ceil(fishTimer)+' စက္ကန့်စောင့်'); return; }
-  fishTimer = 10; const fr = Math.random(), fpay = fr < 0.12 ? 2000 : fr < 0.45 ? 500 : fr < 0.75 ? 300 : 150; money += fpay; gainXP(15); questProgress('fish'); save(); refresh(); playCoin(); showMsg(fr < 0.12 ? '🐟 ရွှေငါးရှားရပြီ! +၂၀၀၀ ကျပ်' : '🎣 ငါးရပြီ +' + fpay + ' ကျပ်');
+  fishTimer = 10; const fr = Math.random(); let fpay = fr < 0.12 ? 2000 : fr < 0.45 ? 500 : fr < 0.75 ? 300 : 150; if(hotJob === 'fish') fpay *= 2; money += fpay; gainXP(15); questProgress('fish'); save(); refresh(); playCoin(); showMsg(fr < 0.12 ? '🐟 ရွှေငါးရှားရပြီ! +' + fpay + ' ကျပ်' : '🎣 ငါးရပြီ +' + fpay + ' ကျပ်');
 }
 // V91: race / thief / hide-and-seek
 const RACE_CPS = [{x:0,z:160},{x:160,z:160},{x:160,z:-160},{x:0,z:-160}];
 let raceOn = false, raceCPs = [], raceIdx = 0, raceT = 0;
 function startRace(){ raceOn = true; raceT = 0; let best = 0, bd = 1e9; const px = player.g.position.x, pz = player.g.position.z; RACE_CPS.forEach((c,i)=>{ const d = Math.hypot(c.x-px, c.z-pz); if(d < bd){ bd = d; best = i; } }); raceCPs = []; for(let k=0;k<4;k++) raceCPs.push(RACE_CPS[(best+k)%4]); raceIdx = 0; raceBeacon.position.set(raceCPs[0].x, 0, raceCPs[0].z); showMsg('🏁 ပြိုင်ပွဲစ! ၄ ဂိတ်ကို အမြန်ဆုံး ဖြတ်ပါ'); }
 function cancelRace(){ raceOn = false; raceBeacon.position.set(0,-20,0); showMsg('🏁 ပြိုင်ပွဲ ရပ်လိုက်ပြီ'); }
-let thiefTimer = 240, thiefActive = false, thiefT = 0, thiefP = null;
+let thiefTimer = 120, thiefActive = false, thiefT = 0, thiefP = null;
 function spawnThief(){ if(!glbBody || !glbRest) return; if(!thiefP){ thiefP = makeHumanNPC(0.85, 0x37474f); scene.add(thiefP.g); } const a = Math.random()*Math.PI*2; thiefP.g.position.set(player.g.position.x + Math.cos(a)*20, 0, player.g.position.z + Math.sin(a)*20); thiefP.g.visible = true; thiefActive = true; thiefT = 30; const stolen = Math.min(200, money); money -= stolen; save(); refresh(); showMsg('🚨 သူခိုး ပိုက်ဆံ ' + stolen + ' ကျပ် ခိုးသွားပြီ! လိုက်ဖမ်းပါ (၃၀ စက္ကန့်)'); }
-function catchThief(){ money += 500; thiefActive = false; thiefP.g.visible = false; thiefTimer = 300 + Math.floor(Math.random()*180); save(); refresh(); playCoin(); showMsg('🚨 သူခိုးကို ဖမ်းမိပြီ! +၅၀၀ ကျပ် (ခိုးသွားတာ ပြန်ရ + ဆု ၃၀၀)'); }
-let seekTimer = 420, seekActive = false, seekP = null;
+function catchThief(){ money += 500; thiefActive = false; thiefP.g.visible = false; thiefTimer = 180 + Math.floor(Math.random()*120); save(); refresh(); playCoin(); showMsg('🚨 သူခိုးကို ဖမ်းမိပြီ! +၅၀၀ ကျပ် (ခိုးသွားတာ ပြန်ရ + ဆု ၃၀၀)'); }
+let seekTimer = 180, seekActive = false, seekP = null;
 function spawnSeek(){ if(!glbBody || !glbRest) return; if(!seekP){ seekP = makeHumanNPC(0.57, 0xec407a); scene.add(seekP.g); } const it = intersections[Math.floor(Math.random()*intersections.length)]; seekP.g.position.set(it.x, 0, it.z); seekP.g.visible = true; seekBeacon.position.set(it.x, 0, it.z); seekActive = true; showMsg('👧 ကလေးတစ်ယောက် ပုန်းနေတယ် — ပန်းရောင်အလင်းတန်း ဆီ သွားရှာပါ!'); }
-function foundSeek(){ money += 300; gainXP(20); seekActive = false; seekP.g.visible = false; seekBeacon.position.set(0,-20,0); seekTimer = 480 + Math.floor(Math.random()*240); save(); refresh(); playCoin(); showMsg('👧 ကလေးကို တွေ့ပြီ! +၃၀၀ ကျပ် +၂၀ ⭐'); }
+function foundSeek(){ money += 300; gainXP(20); seekActive = false; seekP.g.visible = false; seekBeacon.position.set(0,-20,0); seekTimer = 240 + Math.floor(Math.random()*120); save(); refresh(); playCoin(); showMsg('👧 ကလေးကို တွေ့ပြီ! +၃၀၀ ကျပ် +၂၀ ⭐'); }
 let deliveryT = 0; // V86: delivery accept timestamp (speed bonus)
 let libTimer = 0; // V86: library read cooldown
 function readBook(){ if(libTimer > 0){ showMsg('စာဖတ်ပြီးပြီ၊ '+Math.ceil(libTimer)+' စက္ကန့်စောင့်'); return; } libTimer = 30; gainXP(15); save(); refresh(); showMsg('📚 စာဖတ်ပြီ +၁၅ ⭐'); }
@@ -1694,7 +1698,7 @@ function accept(){
 }
 function deliver(){
   if(!delivery) return;
-  let pay = bigBasket ? 1500 : 1000; const bonus = (deliveryT && Date.now()-deliveryT < 90000) ? Math.round(pay/2) : 0;
+  let pay = bigBasket ? 1500 : 1000; if(hotJob === 'deliver') pay *= 2; const bonus = (deliveryT && Date.now()-deliveryT < 90000) ? Math.round(pay/2) : 0;
   money += pay + bonus; gainXP(40); questProgress('deliver'); save(); playCoin();
   showMsg('📦 ပို့ပြီးပြီ +'+pay+' ကျပ်' + (bonus ? ' + အမြန်ဆု '+bonus+' ကျပ်!' : ''));
   delivery = null; deliveryT = 0; beacon.position.set(0,-20,0); shopBeacon.position.set(12, 0, -32); refresh();
@@ -2483,7 +2487,7 @@ function animate(now){
   if(player.g.position.x > 340 && !mountainRewarded){ mountainRewarded = true; money += 500; gainXP(50); questProgress('mountain'); save(); refresh(); playCoin(); showMsg('⛰️ တောင်တန်းရောက်ပြီ! +၅၀၀ ကျပ်'); }
   if(player.g.position.x < 200) mountainRewarded = false;
   // V40: day wrap = passive income + festival day; weather cycle; football; doors; rain
-  if(phase < prevPhase){ dayCount++; festivalClaimed = false; marketFactor = Math.round((0.8 + Math.random()*0.4)*10)/10; showMsg('🏪 ဈေးနှုန်း ပြောင်းပြီ x' + marketFactor); dayEvent = Math.random() < 0.35 ? 'fair' : 'none'; if(dayEvent === 'fair') showMsg('🎪 ဒီနေ့ ဈေးပွဲတော်နေ့! ရောင်းဈေး +၃၀၀ ကျပ်');
+  if(phase < prevPhase){ dayCount++; festivalClaimed = false; marketFactor = Math.round((0.8 + Math.random()*0.4)*10)/10; showMsg('🏪 ဈေးနှုန်း ပြောင်းပြီ x' + marketFactor); dayEvent = Math.random() < 0.35 ? 'fair' : 'none'; hotJob = HOT_JOBS[Math.floor(Math.random()*HOT_JOBS.length)].k; showMsg('🔥 ဒီနေ့ အလုပ်ဈေးကောင်း: ' + HOT_JOBS.find(h=>h.k===hotJob).label + ' 2ဆ!'); if(dayEvent === 'fair') showMsg('🎪 ဒီနေ့ ဈေးပွဲတော်နေ့! ရောင်းဈေး +၃၀၀ ကျပ်');
     const passive = ownedHouses*200 + houseItems*50 + (ownShop ? 300 : 0) + helpers*100 + roadShopDaily();
     if(passive > 0){ money += passive; save(); refresh(); playCoin(); showMsg('💰 နေ့သစ် ဝင်ငွေ +' + passive + ' ကျပ်'); }
     if(dayCount % 3 === 0) showMsg('🎉 ဒီနေ့ ပွဲတော်နေ့! ပန်းခြံကို သွားပါ'); }
@@ -2525,11 +2529,11 @@ function animate(now){
   if(matchOn){ matchTime -= dt; if(matchTime <= 0){ matchOn = false; let rw = 0; if(myScore > oppScore){ rw = 1000; winStreak++; } else winStreak = 0; if(myScore === oppScore) rw = 300; if(myScore > oppScore) questProgress('matchwin'); const trophy = (winStreak > 0 && winStreak % 3 === 0) ? 1500 : 0; if(rw > 0 || trophy > 0){ money += rw + trophy; gainXP(myScore > oppScore ? 50 : 20); save(); refresh(); playCoin(); } showMsg('⚽ ပွဲပြီးပြီ! သင် ' + myScore + ' - ' + oppScore + ' ပြိုင်ဘက် — ' + ((rw + trophy) > 0 ? '+'+(rw+trophy)+' ကျပ်' + (trophy ? ' 🏆 '+winStreak+' ပွဲဆက်နိုင်ဖလား!' : '') : 'ဆုမရပါ')); ball.position.set(-100, 0.6, 100); ballVx = 0; ballVz = 0; for(let oi=0; oi<oppPlayers.length; oi++) oppPlayers[oi].g.position.set(-92 + (oi%2)*3, 0, 94 + oi*3); } }
   for(const op of oppPlayers){ if(matchOn){ const dx = ball.position.x - op.g.position.x, dz = ball.position.z - op.g.position.z, dl = Math.hypot(dx,dz)||1; if(dl > 2){ op.g.position.x += dx/dl*6*dt; op.g.position.z += dz/dl*6*dt; turnTo(op.g, Math.atan2(dx,dz), dt, 8); } op.kickT -= dt; if(dl < 1.6 && op.kickT <= 0){ const gx = -113, gx2 = gx-ball.position.x, gz = 100-ball.position.z, gl = Math.hypot(gx2,gz)||1; ballVx = gx2/gl*14; ballVz = gz/gl*14; op.kickT = 1.5; } if(!animateNpcModel(op, dl > 2, dt)) animatePerson(op, dl > 2, walkT, gt, false); } else if(!animateNpcModel(op, false, dt)) animatePerson(op, false, walkT, gt, false); }
   if(raceOn){ raceT += dt; const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z; const cp = raceCPs[raceIdx]; if(Math.hypot(cx-cp.x, cz-cp.z) < 12){ raceIdx++; if(raceIdx >= raceCPs.length){ const rw = raceT < 120 ? 2000 : raceT < 180 ? 1000 : 500; money += rw; gainXP(50); raceOn = false; raceBeacon.position.set(0,-20,0); save(); refresh(); playCoin(); showMsg('🏁 ပြိုင်ပွဲပြီးပြီ! အချိန် ' + Math.ceil(raceT) + ' စက္ကန့် — +' + rw + ' ကျပ်'); } else { raceBeacon.position.set(raceCPs[raceIdx].x, 0, raceCPs[raceIdx].z); showMsg('🏁 ဂိတ် ' + raceIdx + '/4 ဖြတ်ပြီ!'); } } }
-  if(thiefActive){ const px = player.g.position.x, pz = player.g.position.z; const dx = thiefP.g.position.x - px, dz = thiefP.g.position.z - pz, dl = Math.hypot(dx,dz)||1; thiefP.g.position.x += dx/dl*7*dt; thiefP.g.position.z += dz/dl*7*dt; turnTo(thiefP.g, Math.atan2(dx,dz), dt, 8); animatePerson(thiefP, true, gt*7, gt, false); thiefT -= dt; if(thiefT <= 0){ thiefActive = false; thiefP.g.visible = false; thiefTimer = 300 + Math.floor(Math.random()*180); showMsg('🚨 သူခိုး ထွက်ပြေးသွားပြီ...'); } }
+  if(thiefActive){ const px = player.g.position.x, pz = player.g.position.z; const dx = thiefP.g.position.x - px, dz = thiefP.g.position.z - pz, dl = Math.hypot(dx,dz)||1; thiefP.g.position.x += dx/dl*7*dt; thiefP.g.position.z += dz/dl*7*dt; turnTo(thiefP.g, Math.atan2(dx,dz), dt, 8); animatePerson(thiefP, true, gt*7, gt, false); thiefT -= dt; if(thiefT <= 0){ thiefActive = false; thiefP.g.visible = false; thiefTimer = 180 + Math.floor(Math.random()*120); showMsg('🚨 သူခိုး ထွက်ပြေးသွားပြီ...'); } }
   if(seekActive) animatePerson(seekP, false, 0, gt, false);
   if(taxi){ const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z;
     if(taxi.stage === 'pickup'){ if(drivingCar && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; if(taxiPerson) taxiPerson.g.visible = false; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
-    else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ money += 1200; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +၁၂၀၀ ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
+    else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ const tpay = hotJob === 'taxi' ? 2400 : 1200; money += tpay; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +' + tpay + ' ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
   taxiBeacon.rotation.y += dt*2; if(taxi) taxiBeacon.position.y = Math.sin(now/300)*0.6;
   { const bd = document.getElementById('busDestBtn'); if(bd) bd.style.display = ridingBus ? 'block' : 'none'; }
   // objective distance in job text so the player always knows how far the shop / delivery is
