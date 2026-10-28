@@ -89,7 +89,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V100</div>
+  <div style="font-size:12px;opacity:.6">V101</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -237,6 +237,12 @@ const grassMat = new THREE.MeshLambertMaterial({map:grassTex});
 new THREE.TextureLoader().load('Textures/grass004.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40, 34); t.colorSpace = THREE.SRGBColorSpace; grassMat.map = t; grassMat.needsUpdate = true; });
 const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat, no texture (texture streaked on 400-long boxes)
 const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
+// V101: real CC0 photo surfaces (ambientCG) — plaster walls, gray roof tiles, asphalt roads
+new THREE.TextureLoader().load('Textures/plaster001.jpg', t => { wallTex.image = t.image; wallTex.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/rooftile-gray.jpg', t => { roofTileTex.image = t.image; roofTileTex.needsUpdate = true; });
+const asphaltMatH = new THREE.MeshLambertMaterial({color:0x444444});
+new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 150); t.colorSpace = THREE.SRGBColorSpace; asphaltMat.map = t; asphaltMat.color.set(0xffffff); asphaltMat.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(150, 2); t.colorSpace = THREE.SRGBColorSpace; asphaltMatH.map = t; asphaltMatH.color.set(0xffffff); asphaltMatH.needsUpdate = true; });
 // ---- map (V70: big city — ground x -800..600, z -600..600) ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400,1200), grassMat);
 ground.rotation.x = -Math.PI/2; ground.position.set(-100,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
@@ -256,12 +262,12 @@ for(const r of roadLinesX){
 for(const r of roadLinesZ){
   const w = (r===0 ? 12 : 7), sw = w/2 + 1;
   if(r === 0){
-    bx(1400,0.1,w,0x444444,-100,0.05,r).material = asphaltMat;
+    bx(1400,0.1,w,0x444444,-100,0.05,r).material = asphaltMatH;
     for(const [s0,s1] of [[-800,162],[188,600]]) for(const [a,b] of splitSegs(s0, s1, xGapList)){ walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r+sw)); walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r-sw)); } // V93: sidewalks stop at intersections + stream gap (no more strips floating over water beside the bridge)
   } else {
     // V73: no causeway through the stream — split at the banks (162/188); only the z=0 bridge road crosses
     for(const [cx, len] of [[-319,962],[394,412]]){
-      bx(len,0.1,w,0x444444,cx,0.05,r).material = asphaltMat;
+      bx(len,0.1,w,0x444444,cx,0.05,r).material = asphaltMatH;
       const s0 = cx - len/2, s1 = cx + len/2;
       for(const [a,b] of splitSegs(s0, s1, xGapList)){ walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r+sw)); walkGeos.push(new THREE.BoxGeometry(b-a,0.12,1.0).translate((a+b)/2,0.06,r-sw)); } // V93: sidewalks stop at intersections
     }
