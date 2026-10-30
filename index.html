@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V106</div>
+  <div style="font-size:12px;opacity:.6">V107</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1584,6 +1584,20 @@ let dayEvent = 'none'; // V88: daily event — 'fair' day pays +300 per sale
 const HOT_JOBS = [{k:'sell', label:'🏪 ရောင်းတာ'}, {k:'deliver', label:'📦 ပို့တာ'}, {k:'taxi', label:'🚕 Taxi'}, {k:'fish', label:'🎣 ငါးဖမ်းတာ'}];
 const _hj = localStorage.getItem('mtl_hotjob'); let hotJob = HOT_JOBS.some(h=>h.k===_hj) ? _hj : 'sell';
 const MAYOR_RANKS = [{money:10000, houses:1, level:1, title:'🏘️ ရပ်ကွက်လူကြီး', bonus:2000}, {money:50000, houses:3, level:3, title:'🏙️ မြို့လူကြီး', bonus:5000}, {money:200000, houses:5, level:5, title:'🏛️ မြို့တော်ဝန်', bonus:10000}];
+// V107: story + garden state MUST live before the top-level refresh() below — V106 declared them after it and refresh() TDZ-crashed the whole game (blank canvas, quest/goal stuck at —)
+let storyIdx = parseInt(localStorage.getItem('mtl_story')||'0',10) || 0;
+const STORY_STAGES = [
+  '📖 ပွဲတော်: ဈေးသည်နဲ့ စကားပြော',
+  '📖 ပွဲတော်: လယ် ၁ ခါရိတ်',
+  '📖 ပွဲတော်: ဈေး ၁ ခါရောင်း',
+  '📖 ပွဲတော်: ငါး ၁ ကောင်ဖမ်း',
+  '📖 ပွဲတော်: ပန်းခြံမှာ ရွာသားနဲ့ စကားပြော',
+];
+const RANK_GARDENS = [
+  [[-136,112],[-104,112],[-136,134],[-104,134],[-120,106],[-120,138]],
+  [[88,88],[112,88],[88,112],[112,112],[100,84],[84,100]],
+  [[88,-112],[112,-112],[88,-88],[112,-88],[100,-114],[86,-100]],
+];
 function checkMayor(){ let nr = rankIdx; for(let i=0;i<MAYOR_RANKS.length;i++){ const r = MAYOR_RANKS[i]; if(money >= r.money && ownedHouses >= r.houses && level >= r.level) nr = i+1; } if(nr > rankIdx){ const oldRank = rankIdx; rankIdx = nr; for(let k=oldRank;k<nr && k<RANK_GARDENS.length;k++) plantRankGarden(k, true); const r = MAYOR_RANKS[nr-1]; money += r.bonus; showMsg('🏆 ရာထူးတက်ပြီ! ' + r.title + ' — ဆု +' + r.bonus + ' ကျပ်'); playChime(); save(); } }
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
@@ -2245,14 +2259,6 @@ for(const cc of [[8.5,100],[-8.5,-100],[8.5,140],[-8.5,-140]]){
 // so a point query only checks its own cell and a camera segment only its sampled cells.
 // V106: festival story chain + rank gardens (town visibly grows with rank)
 let isNight = false;
-let storyIdx = parseInt(localStorage.getItem('mtl_story')||'0',10) || 0;
-const STORY_STAGES = [
-  '📖 ပွဲတော်: ဈေးသည်နဲ့ စကားပြော',
-  '📖 ပွဲတော်: လယ် ၁ ခါရိတ်',
-  '📖 ပွဲတော်: ဈေး ၁ ခါရောင်း',
-  '📖 ပွဲတော်: ငါး ၁ ကောင်ဖမ်း',
-  '📖 ပွဲတော်: ပန်းခြံမှာ ရွာသားနဲ့ စကားပြော',
-];
 function storyAdvance(){
   if(storyIdx >= 5) return null;
   storyIdx++;
@@ -2267,11 +2273,6 @@ function storyTalked(){
   return null;
 }
 function storyAct(stage){ return storyIdx === stage ? storyAdvance() : null; }
-const RANK_GARDENS = [
-  [[-136,112],[-104,112],[-136,134],[-104,134],[-120,106],[-120,138]],
-  [[88,88],[112,88],[88,112],[112,112],[100,84],[84,100]],
-  [[88,-112],[112,-112],[88,-88],[112,-88],[100,-114],[86,-100]],
-];
 function plantRankGarden(k, live){
   const bc = colliders.length, bb = treeBlockers.length;
   const fcols = [0xec407a,0xffeb3b,0xffffff,0xab47bc,0xff7043];
