@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V114</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks (CC-BY)</div>
+  <div style="font-size:12px;opacity:.6">V115</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks (CC-BY)</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -419,10 +419,95 @@ for(const hi in HERO_HOUSES){
     scene.add(g);
   }, undefined, ()=>{});
 }
-for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; if(HERO_HOUSES[hi]){ colliders.push({x:h[0], z:h[1], r:11}); continue; } const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1), hi); }
+// V115: whole-town real houses — simplified Sketchfab models as InstancedMesh per (region, model, material)
+const pending81 = [];
+const REAL_HOUSE_FILES = ['house-real-1s.glb','house-real-2s.glb','house-real-3s.glb'];
+const realHouseBuilt = {};
+function realHouseRegion(x, z){ return (x < 0 ? 0 : 1) + (z < 0 ? 0 : 2); }
+function buildRealHousesForModel(mi, sc){
+  if(realHouseBuilt[mi]) return; realHouseBuilt[mi] = true;
+  sc.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(sc);
+  const s = 13 / Math.max(0.1, bb.max.x - bb.min.x, bb.max.z - bb.min.z);
+  const norm = new THREE.Matrix4().makeTranslation(-(bb.max.x + bb.min.x) / 2, -bb.min.y, -(bb.max.z + bb.min.z) / 2);
+  const perMat = {};
+  const meshes = [];
+  sc.traverse((o)=>{ if(o.isMesh && !o.isSkinnedMesh) meshes.push(o); });
+  for(const o of meshes){
+    const g = o.geometry.clone();
+    for(const a of Object.keys(g.attributes)){ if(a !== 'position' && a !== 'normal' && a !== 'uv') g.deleteAttribute(a); }
+    if(!g.index) continue;
+    if(g.morphAttributes.position && g.morphAttributes.position.length) continue;
+    if(!g.attributes.normal) g.computeVertexNormals();
+    if(!g.attributes.uv){ const n = g.attributes.position.count; g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2)); }
+    g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(norm, o.matrixWorld));
+    let mat = o.material;
+    if(mat && mat.isMeshStandardMaterial){ if(!carLambertCache.has(mat)) carLambertCache.set(mat, new THREE.MeshLambertMaterial({map: mat.map})); mat = carLambertCache.get(mat); }
+    const key = mat ? (mat.name || mat.uuid) : 'nomat';
+    (perMat[key] = perMat[key] || {geos: [], mat}).geos.push(g);
+  }
+  const modelGeos = {};
+  for(const key in perMat){
+    const merged = mergeGeometries(perMat[key].geos, false);
+    if(merged) modelGeos[key] = {geo: merged, mat: perMat[key].mat};
+  }
+  const insts = [[], [], [], []];
+  for(const p of massPlaced){ const hh = Math.abs(Math.floor(p[0]*31 + p[1]*17)); if(hh % 3 === mi) insts[realHouseRegion(p[0], p[1])].push([p[0], p[1], hh]); }
+  for(const lot of pending81){ if(lot.hi % 3 === mi) insts[realHouseRegion(lot.x, lot.z)].push([lot.x, lot.z, lot.hi * 7919]); }
+  for(let r = 0; r < 4; r++){
+    if(!insts[r].length) continue;
+    for(const key in modelGeos){
+      const im = new THREE.InstancedMesh(modelGeos[key].geo, modelGeos[key].mat, insts[r].length);
+      let idx = 0;
+      for(const [x, z, hh] of insts[r]){
+        const rot = (Math.abs(hh) % 4) * Math.PI / 2;
+        const sc2 = s * (0.9 + (Math.abs(hh) % 5) * 0.05);
+        const m = new THREE.Matrix4().makeTranslation(x, groundHeight(x, z), z)
+          .multiply(new THREE.Matrix4().makeRotationY(rot))
+          .multiply(new THREE.Matrix4().makeScale(sc2, sc2, sc2));
+        im.setMatrixAt(idx++, m);
+      }
+      im.castShadow = true; im.receiveShadow = true;
+      im.computeBoundingSphere();
+      scene.add(im);
+    }
+  }
+}
+function buildCodeHousesForModel(mi){
+  const wallGeos = {}, roofGeos = {}, winGeos = [], doorGeos = [];
+  for(const p of massPlaced){
+    const hh = Math.abs(Math.floor(p[0]*31 + p[1]*17)); if(hh % 3 !== mi) continue;
+    const x = p[0], z = p[1];
+    const wall = MASS_WALLS[hh % 8];
+    const roof = MASS_ROOFS[Math.abs(Math.floor(x*13 + z*29)) % 4];
+    const storeys = 1 + (Math.abs(Math.floor(x*7 + z*11)) % 3);
+    const w = 12 + (Math.abs(Math.floor(x*3 + z*5)) % 5);
+    const d = 10 + (Math.abs(Math.floor(x*5 + z*3)) % 3);
+    const wallH = 4 + storeys*4;
+    const sgn = (Math.abs(Math.floor(x*17 + z*7)) % 10) < 7 ? 1 : -1;
+    (wallGeos[wall] = wallGeos[wall] || []).push(new THREE.BoxGeometry(w, wallH, d).translate(x, wallH/2, z));
+    const rg = new THREE.ConeGeometry(Math.hypot(w,d)/2*1.15, 4.5, 4);
+    rg.rotateY(Math.PI/4); rg.scale(1.3,1,1); rg.translate(x, wallH+2.25, z);
+    (roofGeos[roof] = roofGeos[roof] || []).push(rg);
+    for(let f=0; f<storeys; f++){
+      const wy = 4.5 + f*4;
+      for(const wx of [-w*0.28, w*0.28]) winGeos.push(new THREE.BoxGeometry(2.2,2.2,0.1).translate(x+wx, wy, z + sgn*(d/2+0.06)));
+    }
+    doorGeos.push(new THREE.BoxGeometry(1.3,2.6,0.15).translate(x, 1.3, z + sgn*(d/2+0.08)));
+  }
+  for(const lot of pending81){ if(lot.hi % 3 === mi) house(lot.x, lot.z, lot.wall, lot.roof, Math.hypot(lot.x, lot.z) < 40 ? 3 : (lot.hi % 3 === 0 ? 2 : 1), lot.hi); }
+  for(const c in wallGeos){ const mm = new THREE.Mesh(mergeGeometries(wallGeos[c], false), MMW(+c)); mm.castShadow = true; mm.receiveShadow = true; scene.add(mm); }
+  for(const c in roofGeos){ const mm = new THREE.Mesh(mergeGeometries(roofGeos[c], false), MMR(+c)); mm.castShadow = true; mm.receiveShadow = true; scene.add(mm); }
+  if(winGeos.length){ const mm = new THREE.Mesh(mergeGeometries(winGeos, false), glassMat); scene.add(mm); }
+  if(doorGeos.length){ const mm = new THREE.Mesh(mergeGeometries(doorGeos, false), M(0x6d4c41)); scene.add(mm); }
+}
+for(let mi = 0; mi < 3; mi++){
+  new GLTFLoader().load(REAL_HOUSE_FILES[mi], (gltf)=>{ buildRealHousesForModel(mi, gltf.scene); }, undefined, ()=>{ buildCodeHousesForModel(mi); });
+}
+for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; if(HERO_HOUSES[hi]){ colliders.push({x:h[0], z:h[1], r:11}); continue; } colliders.push({x:h[0], z:h[1], r:11}); pending81.push({hi, x:h[0], z:h[1], wall:h[2], roof:h[3]}); }
 for(const rc in porchGeos){ const pm = new THREE.Mesh(mergeGeometries(porchGeos[rc], false), RM(Number(rc))); pm.castShadow = true; pm.receiveShadow = true; scene.add(pm); }
-{ const wm = new THREE.Mesh(mergeGeometries(whiteGeos, false), M(0xffffff)); wm.castShadow = true; wm.receiveShadow = true; scene.add(wm); }
-{ const sm = new THREE.Mesh(mergeGeometries(stepGeos, false), M(0x9e9e9e)); sm.castShadow = true; sm.receiveShadow = true; scene.add(sm); }
+if(whiteGeos.length){ const wm = new THREE.Mesh(mergeGeometries(whiteGeos, false), M(0xffffff)); wm.castShadow = true; wm.receiveShadow = true; scene.add(wm); }
+if(stepGeos.length){ const sm = new THREE.Mesh(mergeGeometries(stepGeos, false), M(0x9e9e9e)); sm.castShadow = true; sm.receiveShadow = true; scene.add(sm); }
 // ---- school (big, 2 floors), hospital (was clinic) ----
 bx(30,0.5,16,0x9e9e9e,-100,0.25,60);
 bx(28,10,14,0xfff9c4,-100,5.5,60);
@@ -1293,6 +1378,7 @@ function makeCar(color, type){
   // V92: sedan/SUV/pickup shapes — sloped hood + windshield, torus tires, distinct silhouettes (V42 box car replaced)
   type = type || 'sedan';
   const g = new THREE.Group();
+  g.userData.carColor = color;
   const glass = (w,h,d,x,y,z,rx)=>{ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), glassMat); m.position.set(x,y,z); if(rx) m.rotation.x = rx; g.add(m); return m; };
   if(type === 'suv'){
     bx(2.2,0.7,5.2,color,0,0.6,0,g);
@@ -1355,16 +1441,13 @@ function swapCarGlb(t){
   for(const sp of (g.userData.spokes || [])) sp.visible = false;
   for(const br of (g.userData.brakes || [])) br.visible = false;
   const wheels = [];
-  clone.traverse(o=>{ if(o.isMesh){
+  clone.traverse(o=>{
     if(t.model === 'real-sedan'){
-      if(/(generic-wheel|generic-tire)/i.test(o.name)){
-        o.geometry.computeBoundingBox();
-        const c = o.geometry.boundingBox.getCenter(new THREE.Vector3());
-        if(c.length() < 0.3 && Math.abs(o.rotation.x) < 0.01 && Math.abs(o.rotation.y) < 0.01 && Math.abs(o.rotation.z) < 0.01) wheels.push(o);
-      }
-    } else if(/wheel-(front|back)-(left|right)/.test(o.name)) wheels.push(o);
-  } });
+      if(/DEF-Wheel\.(Ft|Bk)\.(L|R)/.test(o.name)){ o.rotation.y = 0; wheels.push(o); }
+    } else if(o.isMesh && /wheel-(front|back)-(left|right)/.test(o.name)) wheels.push(o);
+  });
   clone.traverse(o=>{ if(o.isMesh && o.name === 'body') g.userData.glbBody = o; });
+  if(t.model === 'real-sedan-s' && g.userData.glbBody && g.userData.carColor !== undefined){ g.userData.glbBody.material = g.userData.glbBody.material.clone(); g.userData.glbBody.material.color.set(g.userData.carColor); }
   g.add(clone);
   g.userData.glbWheels = wheels; g.userData.glbApplied = true;
   const halfLen = lenZ * s * (g.scale.z || 1) / 2;
@@ -1378,10 +1461,11 @@ let realSedanFront = 1;
 new GLTFLoader().load('car-real-sedan.glb', (gltf)=>{
   const sc = gltf.scene; sc.updateMatrixWorld(true);
   let fz = 0, rz = 0, fn = 0, rn = 0;
-  sc.traverse((o)=>{ if(o.isMesh){ const w = new THREE.Vector3(); o.getWorldPosition(w); if(/door-front/i.test(o.name)){ fz += w.z; fn++; } if(/door-rear/i.test(o.name)){ rz += w.z; rn++; } } });
+  sc.traverse((o)=>{ const w = new THREE.Vector3(); o.getWorldPosition(w); if(/door-front/i.test(o.name)){ fz += w.z; fn++; } if(/door-rear/i.test(o.name)){ rz += w.z; rn++; } });
   if(fn && rn) realSedanFront = (fz/fn > rz/rn) ? 1 : -1;
   carGlbScenes['real-sedan'] = sc; applyCarGlbs();
 }, undefined, ()=>{});
+new GLTFLoader().load('car-real-sedan-s.glb', (gltf)=>{ carGlbScenes['real-sedan-s'] = gltf.scene; applyCarGlbs(); }, undefined, ()=>{});
 
 const PROP_MODELS = {
   hydrant: {file:'prop-hydrant.glb', spots:[[6,200,0],[-6,-200,0],[-6,-320,0],[-6,320,0],[166,80,0],[-166,-80,0]]},
@@ -1396,12 +1480,12 @@ for(let i=0;i<24;i++){ // V70: traffic 8 -> 24 cars for the big city
   const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a,0x00acc1,0x8d6e63,0x78909c,0xd81b60,0x3949ab,0x00897b,0xc0ca33,0x5e35b1][i%16], ['sedan','suv','pickup'][i%3]); // V92: traffic variety
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
-  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 15 + (i % 3) * 2}); carGlbTargets.push({g:car, model:CAR_GLB_MODELS[i%6]});
+  cars.push({g:car, target: intersections[(i*7+9) % intersections.length], speed: 15 + (i % 3) * 2}); carGlbTargets.push({g:car, model:'real-sedan-s'});
 }
 // V70: parked street cars in the new districts (curb-side, not driveable)
 [[-566,100,0],[-394,-300,Math.PI],[-234,400,0],[166,-400,Math.PI],[-566,-400,0],[-394,200,Math.PI],[246,300,0],[406,-100,Math.PI]].forEach((p,i)=>{
   const c = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a][i], ['sedan','suv','pickup'][i%3]); // V92: parked variety
-  c.position.set(p[0],0,p[1]); c.rotation.y = p[2]; scene.add(c); carGlbTargets.push({g:c, model:CAR_GLB_MODELS[i%6]});
+  c.position.set(p[0],0,p[1]); c.rotation.y = p[2]; scene.add(c); carGlbTargets.push({g:c, model:'real-sedan-s'});
 });
 const bus = new THREE.Group();
 bx(3.0,3.0,12,0xffc107,0,1.6,0,bus);
@@ -2069,15 +2153,6 @@ for(let gx=-790; gx<=590; gx+=24){
     const d = 10 + (Math.abs(Math.floor(x*5 + z*3)) % 3);
     const wallH = 4 + storeys*4;
     const sgn = (Math.abs(Math.floor(x*17 + z*7)) % 10) < 7 ? 1 : -1; // door face: 70% south, 30% north
-    (massWallGeos[wall] = massWallGeos[wall] || []).push(new THREE.BoxGeometry(w, wallH, d).translate(x, wallH/2, z));
-    const rg = new THREE.ConeGeometry(Math.hypot(w,d)/2*1.15, 4.5, 4);
-    rg.rotateY(Math.PI/4); rg.scale(1.3,1,1); rg.translate(x, wallH+2.25, z);
-    (massRoofGeos[roof] = massRoofGeos[roof] || []).push(rg);
-    for(let f=0; f<storeys; f++){
-      const wy = 4.5 + f*4;
-      for(const wx of [-w*0.28, w*0.28]) massWinGeos.push(new THREE.BoxGeometry(2.2,2.2,0.1).translate(x+wx, wy, z + sgn*(d/2+0.06)));
-    }
-    massDoorGeos.push(new THREE.BoxGeometry(1.3,2.6,0.15).translate(x, 1.3, z + sgn*(d/2+0.08)));
     colliders.push({x, z, r:10.5}); // V74: was 9 — same wedge vs neighbour fences; 11.3 sits outside the fence line
   }
 }
@@ -2089,10 +2164,7 @@ massRoofTex.colorSpace = THREE.SRGBColorSpace; massRoofTex.anisotropy = Math.min
 const massWallMats = {}, massRoofMats = {};
 function MMW(c){ if(!massWallMats[c]) massWallMats[c] = new THREE.MeshLambertMaterial({color:c, map:massWallTex}); return massWallMats[c]; }
 function MMR(c){ if(!massRoofMats[c]) massRoofMats[c] = new THREE.MeshLambertMaterial({color:c, map:massRoofTex}); return massRoofMats[c]; }
-for(const c in massWallGeos){ const mm = new THREE.Mesh(mergeGeometries(massWallGeos[c], false), MMW(+c)); mm.castShadow = true; mm.receiveShadow = true; scene.add(mm); }
-for(const c in massRoofGeos){ const mm = new THREE.Mesh(mergeGeometries(massRoofGeos[c], false), MMR(+c)); mm.castShadow = true; mm.receiveShadow = true; scene.add(mm); }
-{ const mm = new THREE.Mesh(mergeGeometries(massWinGeos, false), glassMat); scene.add(mm); }
-{ const mm = new THREE.Mesh(mergeGeometries(massDoorGeos, false), M(0x6d4c41)); scene.add(mm); }
+// V115: mass visuals now come from real-house InstancedMesh; code visuals only in the load-failure fallback
 // V90: crowd deleted — replaced by real 20-pack walkers (see walker loop)
 // ---- V76: CITY — downtown high-rises, roadside shops, city buildings ----
 // Downtown = blocks between roads -160..160. Mass houses are excluded here (massOk V76) so towers own the blocks.
@@ -2264,7 +2336,7 @@ tryPlace(-120, -200, 15, (x,z)=>{
   signMesh('စူပါမားကတ်', '#8e24aa', '#ffffff', x, 8.5, z+9.2, 16, 2);
   const s2 = signMesh('စူပါမားကတ်', '#8e24aa', '#ffffff', x, 8.5, z-9.2, 16, 2); s2.rotation.y = Math.PI;
   colliders.push({x, z, r:14});
-  for(let i=-1;i<=1;i++){ const pc = makeCar([0xe53935,0xffffff,0x1565c0][i+1]); pc.position.set(x+i*6, 0, z+14); scene.add(pc); carGlbTargets.push({g:pc, model:['sedan','suv','van'][i+1]}); }
+  for(let i=-1;i<=1;i++){ const pc = makeCar([0xe53935,0xffffff,0x1565c0][i+1]); pc.position.set(x+i*6, 0, z+14); scene.add(pc); carGlbTargets.push({g:pc, model:'real-sedan-s'}); }
 });
 for(const bb of [[11,-320],[-11,320]]){
   tryPlace(bb[0], bb[1], 3, (x,z)=>{
