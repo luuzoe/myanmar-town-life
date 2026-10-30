@@ -19,7 +19,7 @@
   .pill b{color:#ffd54a}
   #job{position:fixed;top:48px;left:8px;right:8px;z-index:10;pointer-events:none}
   #job span{background:rgba(255,255,255,.92);padding:6px 10px;border-radius:12px;font-size:13px;display:inline-block}
-  #msg{position:fixed;top:88px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:25;display:none;max-width:92vw;text-align:center} /* V62: above shop overlay (20) so purchase messages stay visible */
+  #msg{position:fixed;top:150px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:25;display:none;max-width:92vw;text-align:center} /* V62: above shop overlay (20) so purchase messages stay visible */
   #joy{position:fixed;left:16px;bottom:16px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
   #knob{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9)}
   #btns{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:row;gap:8px;z-index:10;align-items:flex-end}
@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V105</div>
+  <div style="font-size:12px;opacity:.6">V106</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -536,36 +536,38 @@ function tm(geo, mat, x, y, z, shadow){
   m.position.set(x, y, z); scene.add(m);
   m.castShadow = shadow; m.receiveShadow = true; return m;
 }
-function tree(x,z,detailed){
+function tree(x,z,detailed,size){
+  size = size || 1;
   const t = ((Math.abs(Math.floor(x*31 + z*17)) % 4) + 4) % 4;
   if(t === 3){
-    tm(new THREE.SphereGeometry(1.4,10,8), treeLeafA, x, 0.9, z, false);
-    tm(new THREE.SphereGeometry(0.9,10,8), treeLeafB, x+0.7, 1.3, z+0.4, false);
+    tm(new THREE.SphereGeometry(1.4*size,10,8), treeLeafA, x, 0.9*size, z, false);
+    tm(new THREE.SphereGeometry(0.9*size,10,8), treeLeafB, x+0.7*size, 1.3*size, z+0.4*size, false);
   } else if(t === 1){
-    tm(new THREE.CylinderGeometry(0.35,0.5,2.0,8), treeTrunkMat, x, 1.0, z, false);
-    tm(new THREE.ConeGeometry(1.9,3.2,8), treeLeafC, x, 3.2, z, true);
-    tm(new THREE.ConeGeometry(1.4,2.6,8), treeLeafB, x, 4.8, z, true);
-    tm(new THREE.ConeGeometry(0.9,2.0,8), treeLeafA, x, 6.2, z, true);
+    tm(new THREE.CylinderGeometry(0.35*size,0.5*size,2.0*size,8), treeTrunkMat, x, 1.0*size, z, false);
+    tm(new THREE.ConeGeometry(1.9*size,3.2*size,8), treeLeafC, x, 3.2*size, z, true);
+    tm(new THREE.ConeGeometry(1.4*size,2.6*size,8), treeLeafB, x, 4.8*size, z, true);
+    tm(new THREE.ConeGeometry(0.9*size,2.0*size,8), treeLeafA, x, 6.2*size, z, true);
   } else if(t === 2){
-    tm(new THREE.CylinderGeometry(0.3,0.45,5.0,8), treeTrunkMat, x, 2.5, z, false);
+    tm(new THREE.CylinderGeometry(0.3*size,0.45*size,5.0*size,8), treeTrunkMat, x, 2.5*size, z, false);
     for(let k = 0; k < 6; k++){
       const a = k * Math.PI/3;
-      const fr = tm(new THREE.BoxGeometry(0.25,0.25,2.6), treeLeafB, x+Math.cos(a)*1.1, 5.2, z+Math.sin(a)*1.1, true);
+      const fr = tm(new THREE.BoxGeometry(0.25*size,0.25*size,2.6*size), treeLeafB, x+Math.cos(a)*1.1*size, 5.2*size, z+Math.sin(a)*1.1*size, true);
       fr.rotation.y = -a; fr.rotation.x = 0.5;
     }
-    tm(new THREE.SphereGeometry(0.5,8,6), M(0x6d4c41), x, 5.1, z, false);
+    tm(new THREE.SphereGeometry(0.5*size,8,6), M(0x6d4c41), x, 5.1*size, z, false);
   } else {
-    tm(new THREE.CylinderGeometry(0.45,0.6,3.2,8), treeTrunkMat, x, 1.6, z, false);
-    tm(new THREE.CylinderGeometry(0.7,0.7,0.3,8), M(0x5d4037), x, 0.15, z, false);
-    tm(new THREE.SphereGeometry(1.9,12,10), treeLeafB, x, 4.6, z, false);
-    if(detailed){ tm(new THREE.SphereGeometry(1.2,10,8), treeLeafA, x+0.8, 5.5, z+0.5, false); tm(new THREE.SphereGeometry(1.0,10,8), treeLeafB, x-0.8, 5.2, z-0.5, false); }
+    tm(new THREE.CylinderGeometry(0.45*size,0.6*size,3.2*size,8), treeTrunkMat, x, 1.6*size, z, false);
+    tm(new THREE.CylinderGeometry(0.7*size,0.7*size,0.3*size,8), M(0x5d4037), x, 0.15*size, z, false);
+    tm(new THREE.SphereGeometry(1.9*size,12,10), treeLeafB, x, 4.6*size, z, false);
+    if(detailed){ tm(new THREE.SphereGeometry(1.2*size,10,8), treeLeafA, x+0.8*size, 5.5*size, z+0.5*size, false); tm(new THREE.SphereGeometry(1.0*size,10,8), treeLeafB, x-0.8*size, 5.2*size, z-0.5*size, false); }
   }
-  colliders.push({x,z,r:1.2});
-  treeBlockers.push({x,z,r:2.0});
+  colliders.push({x,z,r:1.2*size});
+  treeBlockers.push({x,z,r:2.0*size});
 }
-[[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-28,-20],[28,20],[-70,-60],[70,60],[-60,70],[60,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1],true));
-[[-140,-140],[-20,-140],[140,-140],[-140,140],[20,140],[140,140],[-140,-20],[140,20]].forEach(p=>tree(p[0],p[1],true));
-tree(-130,110,true); tree(-110,110,true); tree(-130,130,true); tree(-110,130,true); // park corner trees (safe here: treeBlockers already initialised)
+[[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-28,-20],[28,20],[-70,-60],[70,60],[-60,70],[60,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1],true,1.25));
+[[-140,-140],[-20,-140],[140,-140],[-140,140],[20,140],[140,140],[-140,-20],[140,20]].forEach(p=>tree(p[0],p[1],true,1.25));
+tree(-130,110,true,1.25); tree(-110,110,true,1.25); tree(-130,130,true,1.25); tree(-110,130,true,1.25); // park corner trees (safe here: treeBlockers already initialised)
+tree(-60,-140,false,1.9); tree(-200,200,false,1.9); tree(60,200,false,1.9);
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3,8,6), new THREE.MeshBasicMaterial({color:0xffeb3b}));
@@ -620,8 +622,8 @@ for(const f of fieldCenters){
   const fb = new THREE.Mesh(new THREE.BoxGeometry(22,0.3,28), fieldMat); fb.position.set(f[0],0.15,f[1]); fb.castShadow = true; fb.receiveShadow = true; scene.add(fb);
   for(const rz of [-8,0,8]) bx(18,0.4,1,0x2e7d32,f[0],0.4,f[1]+rz);
 }
-for(let i=0;i<40;i++){ // V69: 30 -> 40 trees
-  const fx = 138 + ((i*29)%28), fz = -118 + ((i*47)%236);
+for(let i=0;i<64;i++){ // V106: 40 -> 64 trees, full belt length
+  const fx = 138 + ((i*29)%28), fz = -590 + ((i*47)%1180);
   if(Math.abs(fz) < 8) continue;
   if(fx > 162) continue; // V69: stream bank starts at 162, stream spans 165..185
   // forest loop had NO road guard (grass loop below has one) - it planted trees on outer ring x=160 + sidewalks + road -80
@@ -630,7 +632,7 @@ for(let i=0;i<40;i++){ // V69: 30 -> 40 trees
   for(const f of fieldCenters){ if(Math.hypot(fx-f[0], fz-f[1]) < 20){ nearField = true; break; } }
   if(nearField) continue;
   if(fx > 166) continue;
-  tree(fx, fz);
+  tree(fx, fz, false, 1.4);
 }
 bx(20,0.3,1200,0x2196f3,175,0.15,0); // V73: full-map stream (was 260 — ended at z ±130 on the big map)
 bx(2,0.4,1200,0xd7ccc8,163,0.2,0); bx(2,0.4,1200,0xd7ccc8,187,0.2,0);
@@ -672,19 +674,19 @@ for(const mp of mountainPeaks){
     sph(1.3,0x1b5e20,mx2+dx,slopeY+3.6,mz2+dz);
   }
 }
-for(let i=0;i<28;i++){ // V69: 20 -> 28, guarded (was planting trees on fields + in house yards)
+for(let i=0;i<36;i++){ // V106: 28 -> 36 field trees, bigger
   const fx = 205 + ((i*37)%60), fz = -115 + ((i*53)%230);
   if(Math.abs(fz) < 8) continue;
   if(houseList.some(h=>Math.abs(fx-h[0]) < 14 && Math.abs(fz-h[1]) < 12)) continue;
   if(fieldCenters.some(f=>Math.abs(fx-f[0]) < 13 && Math.abs(fz-f[1]) < 16)) continue;
-  tree(fx, fz);
+  tree(fx, fz, false, 1.4);
 }
-for(let i=0;i<28;i++){ // V69: 20 -> 28, guarded (a tree used to land inside the (320,20) yard)
+for(let i=0;i<36;i++){ // V106: 28 -> 36 field trees, bigger
   const fx = 300 + ((i*37)%60), fz = -115 + ((i*53)%230);
   if(Math.abs(fz) < 8) continue;
   if(houseList.some(h=>Math.abs(fx-h[0]) < 14 && Math.abs(fz-h[1]) < 12)) continue;
   if(fieldCenters.some(f=>Math.abs(fx-f[0]) < 13 && Math.abs(fz-f[1]) < 16)) continue;
-  tree(fx, fz);
+  tree(fx, fz, false, 1.4);
 }
 sph(1.5,0x9e9e9e,195,0.8,-20); sph(1.2,0x9e9e9e,198,0.6,25); sph(1.8,0x9e9e9e,192,0.9,60);
 const streamSign = signMesh('ရေချောင်း', '#4fc3f7', '#ffffff', 161, 2.5, 12, 6, 1.2);
@@ -1582,7 +1584,7 @@ let dayEvent = 'none'; // V88: daily event — 'fair' day pays +300 per sale
 const HOT_JOBS = [{k:'sell', label:'🏪 ရောင်းတာ'}, {k:'deliver', label:'📦 ပို့တာ'}, {k:'taxi', label:'🚕 Taxi'}, {k:'fish', label:'🎣 ငါးဖမ်းတာ'}];
 const _hj = localStorage.getItem('mtl_hotjob'); let hotJob = HOT_JOBS.some(h=>h.k===_hj) ? _hj : 'sell';
 const MAYOR_RANKS = [{money:10000, houses:1, level:1, title:'🏘️ ရပ်ကွက်လူကြီး', bonus:2000}, {money:50000, houses:3, level:3, title:'🏙️ မြို့လူကြီး', bonus:5000}, {money:200000, houses:5, level:5, title:'🏛️ မြို့တော်ဝန်', bonus:10000}];
-function checkMayor(){ let nr = rankIdx; for(let i=0;i<MAYOR_RANKS.length;i++){ const r = MAYOR_RANKS[i]; if(money >= r.money && ownedHouses >= r.houses && level >= r.level) nr = i+1; } if(nr > rankIdx){ rankIdx = nr; const r = MAYOR_RANKS[nr-1]; money += r.bonus; showMsg('🏆 ရာထူးတက်ပြီ! ' + r.title + ' — ဆု +' + r.bonus + ' ကျပ်'); playChime(); save(); } }
+function checkMayor(){ let nr = rankIdx; for(let i=0;i<MAYOR_RANKS.length;i++){ const r = MAYOR_RANKS[i]; if(money >= r.money && ownedHouses >= r.houses && level >= r.level) nr = i+1; } if(nr > rankIdx){ const oldRank = rankIdx; rankIdx = nr; for(let k=oldRank;k<nr && k<RANK_GARDENS.length;k++) plantRankGarden(k, true); const r = MAYOR_RANKS[nr-1]; money += r.bonus; showMsg('🏆 ရာထူးတက်ပြီ! ' + r.title + ' — ဆု +' + r.bonus + ' ကျပ်'); playChime(); save(); } }
 function questProgress(key){ const q = QUESTS[questIdx]; if(!q || q.key !== key) return; questProg++;
   if(questProg >= q.target){ money += q.reward; showMsg('🎯 Quest ပြီးပြီ +'+q.reward+' ကျပ်'); questIdx = (questIdx+1) % QUESTS.length; questProg = 0; }
   save(); refresh(); }
@@ -1626,7 +1628,7 @@ function refresh(){
   if(!delivery) jobEl.textContent = 'ဆိုင်ကို သွား၊ အမှာတစ်ခုလက်ခံပါ';
   const lvEl = document.getElementById('level'); if(lvEl) lvEl.textContent = level;
   const xpEl = document.getElementById('xp'); if(xpEl) xpEl.textContent = xp % 500;
-  const qEl = document.getElementById('questPill'); if(qEl && QUESTS[questIdx]) qEl.textContent = QUESTS[questIdx].label + ' ' + questProg + '/' + QUESTS[questIdx].target;
+  const qEl = document.getElementById('questPill'); if(qEl && QUESTS[questIdx]) qEl.textContent = QUESTS[questIdx].label + ' ' + questProg + '/' + QUESTS[questIdx].target + (storyIdx < 5 ? ' · ' + STORY_STAGES[storyIdx] : '');
   const gEl = document.getElementById('goalPill'); if(gEl){ const nr = MAYOR_RANKS[rankIdx]; gEl.textContent = nr ? ('နောက် ' + nr.title + ' · ငွေ ' + money.toLocaleString() + '/' + nr.money.toLocaleString() + ' · အိမ် ' + ownedHouses + '/' + nr.houses + ' · Lv' + level + '/' + nr.level) : '🏛️ မြို့တော်ဝန် ဖြစ်ပြီ!'; }
   const bh = document.getElementById('buyHouse'); if(bh) bh.textContent = '🏠 အိမ်ဝယ် (' + (5000 + ownedHouses*3000) + ' ကျပ်) — ပိုင်ဆိုင် ' + ownedHouses;
   const bi = document.getElementById('buyHouseItem'); if(bi) bi.textContent = '🪑 အိမ်ပစ္စည်း (၁၀၀၀ ကျပ်) — ရှိ ' + houseItems;
@@ -1674,7 +1676,7 @@ function nearest(){
   opts.push({d:dist(36,-20), label: raceOn ? '🏁 ပြိုင်ပွဲ ရပ်မယ်' : '🏁 ပြိုင်ပွဲစ (၄ ဂိတ်)', fn: raceOn ? cancelRace : startRace, r:8}); // V91: race start
   if(thiefActive) opts.push({d:dist(thiefP.g.position.x, thiefP.g.position.z), label:'🚨 သူခိုး ဖမ်းမယ်', fn:catchThief, r:6}); // V91: thief chase
   if(seekActive) opts.push({d:dist(seekP.g.position.x, seekP.g.position.z), label:'👧 ကလေးကို တွေ့ပြီ!', fn:foundSeek, r:8}); // V91: hide-and-seek
-  function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; dc.position.y = 0; dc.rotation.x = 0; dc.rotation.z = 0; flyMode = false; flyAlt = 0; flyTarget = 0; const bl0 = dc.getObjectByName('blobshadow'); if(bl0) bl0.visible = true; const fb0 = document.getElementById('flyBtn'); if(fb0){ fb0.style.display = 'none'; fb0.textContent = '🛫'; } drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; flyMode = false; flyAlt = 0; flyTarget = 0; car.position.y = 0; driveWheels = (car.userData.glbWheels && car.userData.glbWheels.length) ? car.userData.glbWheels : wheels; driveBrakes = car.userData.glbApplied ? [] : brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်'); } refresh(); }, r:5}; }
+  function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; dc.position.y = 0; dc.rotation.x = 0; dc.rotation.z = 0; flyMode = false; flyAlt = 0; flyTarget = 0; const bl0 = dc.getObjectByName('blobshadow'); if(bl0) bl0.visible = true; const fb0 = document.getElementById('flyBtn'); if(fb0){ fb0.style.display = 'none'; fb0.textContent = '🛫'; } drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; flyMode = false; flyAlt = 0; flyTarget = 0; car.position.y = 0; driveWheels = (car.userData.glbWheels && car.userData.glbWheels.length) ? car.userData.glbWheels : wheels; driveBrakes = car.userData.glbApplied ? [] : brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်, 🛫 ပျံချင် 🛫 ခလုတ် (PC: F)'); } refresh(); }, r:5}; }
   opts.push(carOpt(parkedCar, parkedWheels, parkedBrakes, 30, 'ကား'));
   opts.push(tukBought ? carOpt(tukTuk, tukWheels, tukBrakes, 32, 'တူတူ') : {d:dist(tukTuk.position.x, tukTuk.position.z), label:'🛺 တူတူ ဝယ် (၈၀၀၀ ကျပ်)', fn:()=>{ if(money < 8000){ showMsg('ငွေမလုံလောက်ဘူး — ၈၀၀၀ ကျပ် လိုတယ်'); return; } money -= 8000; tukBought = true; save(); refresh(); showMsg('🛺 တူတူ ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
   opts.push(truckBought ? carOpt(truck, truckWheels, truckBrakes, 24, 'ထရပ်') : {d:dist(truck.position.x, truck.position.z), label:'🚚 ထရပ် ဝယ် (၁၅၀၀၀ ကျပ်)', fn:()=>{ if(money < 15000){ showMsg('ငွေမလုံလောက်ဘူး — ၁၅၀၀၀ ကျပ် လိုတယ်'); return; } money -= 15000; truckBought = true; save(); refresh(); showMsg('🚚 ထရပ် ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
@@ -1714,20 +1716,20 @@ function talkTo(key){
   if(lv === 3){ money += 100; line = '🎁 ' + nm + ' က ခင်လို့ လက်ဆောင် +၁၀၀ ကျပ် ပေးတယ်!'; playCoin(); }
   if(lv === 5){ money += 300; treasureTimer = 0; line = '🎁 ' + nm + ' က +၃၀၀ ကျပ် ပေးပြီး 🗺️ ရတနာနေရာကို ပြောပြတယ်! (ရွှေအလင်းတန်း ပေါ်လာမယ်)'; playCoin(); }
   if(lv === 10){ money += 500; line = '🎁 ' + nm + ' (ခင်မင်မှု ၁၀) က +၅၀၀ ကျပ် ပေးတယ်!'; playCoin(); }
-  save(); refresh(); showMsg(line);
+  const storyMsg = storyTalked(); save(); refresh(); showMsg(storyMsg || line);
 }
 function harvest(){
   if(!cropReady){ showMsg('စပါးမမှည့်သေးဘူး၊ ခဏစောင့်ပါ'); return; }
   cropReady = false; crops.visible = false; cropTimer = 10;
-  money += 500; gainXP(20); questProgress('harvest'); save(); refresh(); playCoin(); showMsg('🌾 ရိတ်ပြီးပြီ +၅၀၀ ကျပ်');
+  money += 500; gainXP(20); questProgress('harvest'); const storyMsg = storyAct(1); save(); refresh(); playCoin(); showMsg(storyMsg || '🌾 ရိတ်ပြီးပြီ +၅၀၀ ကျပ်');
 }
 function sell(){
   if(marketTimer > 0){ showMsg('ဈေးဝယ်သူ မလာသေးဘူး၊ '+Math.ceil(marketTimer)+' စက္ကန့်စောင့်'); return; }
-  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; if(dayEvent === 'fair') sp += 300; if(hotJob === 'sell') sp *= 2; money += sp; gainXP(25); questProgress('sell'); save(); refresh(); playCoin(); showMsg('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်');
+  marketTimer = 8; let sp = stallUpg ? 1200 : 800; sp = Math.round(sp * marketFactor); if(schoolLessons >= 3) sp += 100; if(dayEvent === 'fair') sp += 300; if(hotJob === 'sell') sp *= 2; if(isNight) sp = Math.round(sp*1.2); money += sp; gainXP(25); questProgress('sell'); const storyMsg = storyAct(2); save(); refresh(); playCoin(); showMsg(storyMsg || ('🏪 ရောင်းပြီးပြီ +'+sp+' ကျပ်' + (isNight ? ' 🌙 ညဈေး +20%!' : '')));
 }
 function fish(){
   if(fishTimer > 0){ showMsg('ငါးမလာသေးဘူး၊ '+Math.ceil(fishTimer)+' စက္ကန့်စောင့်'); return; }
-  fishTimer = 10; const fr = Math.random(); let fpay = fr < 0.12 ? 2000 : fr < 0.45 ? 500 : fr < 0.75 ? 300 : 150; if(hotJob === 'fish') fpay *= 2; money += fpay; gainXP(15); questProgress('fish'); save(); refresh(); playCoin(); showMsg(fr < 0.12 ? '🐟 ရွှေငါးရှားရပြီ! +' + fpay + ' ကျပ်' : '🎣 ငါးရပြီ +' + fpay + ' ကျပ်');
+  fishTimer = 10; const fr = Math.random(); let fpay = fr < 0.12 ? 2000 : fr < 0.45 ? 500 : fr < 0.75 ? 300 : 150; if(hotJob === 'fish') fpay *= 2; money += fpay; gainXP(15); questProgress('fish'); const storyMsg = storyAct(3); save(); refresh(); playCoin(); showMsg(storyMsg || (fr < 0.12 ? '🐟 ရွှေငါးရှားရပြီ! +' + fpay + ' ကျပ်' : '🎣 ငါးရပြီ +' + fpay + ' ကျပ်'));
 }
 // V91: race / thief / hide-and-seek
 const RACE_CPS = [{x:0,z:160},{x:160,z:160},{x:160,z:-160},{x:0,z:-160}];
@@ -2241,6 +2243,45 @@ for(const cc of [[8.5,100],[-8.5,-100],[8.5,140],[-8.5,-140]]){
 // V29 collider grid: V28 fences added ~1200 post colliders, so per-frame O(N) scans (player + animals + camera x12)
 // stuttered on phones. Grid cells 20u: each collider stored in every cell its (r+1) box overlaps,
 // so a point query only checks its own cell and a camera segment only its sampled cells.
+// V106: festival story chain + rank gardens (town visibly grows with rank)
+let isNight = false;
+let storyIdx = parseInt(localStorage.getItem('mtl_story')||'0',10) || 0;
+const STORY_STAGES = [
+  '📖 ပွဲတော်: ဈေးသည်နဲ့ စကားပြော',
+  '📖 ပွဲတော်: လယ် ၁ ခါရိတ်',
+  '📖 ပွဲတော်: ဈေး ၁ ခါရောင်း',
+  '📖 ပွဲတော်: ငါး ၁ ကောင်ဖမ်း',
+  '📖 ပွဲတော်: ပန်းခြံမှာ ရွာသားနဲ့ စကားပြော',
+];
+function storyAdvance(){
+  if(storyIdx >= 5) return null;
+  storyIdx++;
+  try{ localStorage.setItem('mtl_story', String(storyIdx)); }catch(e){}
+  if(storyIdx === 5){ money += 1500; gainXP(100); save(); return '🎉 ပွဲတော်ပြင်ဆင်မှု ပြီးပြီ! +၁၅၀၀ ကျပ် +XP100'; }
+  save();
+  return '📖 နောက်အဆင့်: ' + STORY_STAGES[storyIdx];
+}
+function storyTalked(){
+  if(storyIdx === 0) return storyAdvance();
+  if(storyIdx === 4 && Math.hypot(player.g.position.x + 120, player.g.position.z - 120) < 30) return storyAdvance();
+  return null;
+}
+function storyAct(stage){ return storyIdx === stage ? storyAdvance() : null; }
+const RANK_GARDENS = [
+  [[-136,112],[-104,112],[-136,134],[-104,134],[-120,106],[-120,138]],
+  [[88,88],[112,88],[88,112],[112,112],[100,84],[84,100]],
+  [[88,-112],[112,-112],[88,-88],[112,-88],[100,-114],[86,-100]],
+];
+function plantRankGarden(k, live){
+  const bc = colliders.length, bb = treeBlockers.length;
+  const fcols = [0xec407a,0xffeb3b,0xffffff,0xab47bc,0xff7043];
+  for(const p of RANK_GARDENS[k]){
+    tree(p[0], p[1], false);
+    for(let f=0; f<6; f++){ const a = f*Math.PI/3; sph(0.2, fcols[(k*6+f)%5], p[0]+Math.cos(a)*4, 0.3, p[1]+Math.sin(a)*4); }
+  }
+  if(live){ for(let i=bc;i<colliders.length;i++) gridAdd(colliders[i], false); for(let i=bb;i<treeBlockers.length;i++) gridAdd(treeBlockers[i], true); }
+}
+for(let k=0;k<rankIdx && k<RANK_GARDENS.length;k++) plantRankGarden(k, false);
 const GRID = 20, colliderGrid = new Map();
 function gridAdd(c, tb){
   const r = c.r + 1;
@@ -2293,6 +2334,7 @@ function animate(now){
   // day 5 min + night 5 min = 600s cycle, day = sun above horizon (180 deg), night = below
   const phase = (dayT % 600) / 600, angle = phase * Math.PI * 2, sunH = Math.sin(angle);
   const dayF = Math.max(0, Math.min(1, 0.5 + sunH*1.5));
+  isNight = dayF < 0.3;
   skyColor.lerpColors(nightColor, dayColor, dayF);
   const dawnF = Math.max(0, 1 - Math.abs(sunH)*3);
   if(dawnF > 0) skyColor.lerp(sunsetColor, dawnF*0.6);
