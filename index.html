@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V117</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks (CC-BY)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
+  <div style="font-size:12px;opacity:.6">V118</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks (CC-BY)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -481,7 +481,7 @@ function updateLoadStatus(){
   const el = document.getElementById('loadStatus'); if(!el) return;
   const ok = houseLoadState.filter(v=>v===1).length;
   const fail = houseLoadState.filter(v=>v===-1).length;
-  el.textContent = '🏠 အိမ်အစစ် ' + ok + '/3' + (fail ? ' (' + fail + ' ခု မရသေးဘူး)' : ' ဒေါင်းနေတယ်') + ' · 🚗 ကားအစစ် ' + (sedanSLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်');
+  el.textContent = '🏠 အိမ်အစစ် ' + ok + '/3' + (ok === 3 ? ' ရောက်ပြီ' : (fail ? ' (' + fail + ' ခု မရသေးဘူး)' : ' ဒေါင်းနေတယ်')) + ' · 🚗 ကားအစစ် ' + (sedanSLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်');
 }
 function loadHouseGlb(mi, tries){
   new GLTFLoader().load(REAL_HOUSE_FILES[mi], (gltf)=>{ houseLoadState[mi] = 1; updateLoadStatus(); hideCodeHousesForModel(mi); buildRealHousesForModel(mi, gltf.scene); }, undefined, ()=>{
