@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V108</div>
+  <div style="font-size:12px;opacity:.6">V109</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -243,6 +243,7 @@ const grassTex = noiseTex('#6fbf5a', ['#5da34a','#7ec96a','#8fd67e','#679f52'], 
 function brickTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#fdfdf5'; g.fillRect(0,0,128,128); g.strokeStyle = '#d8d0b8'; g.lineWidth = 2; for(let row=0; row<8; row++){ const y = row*16; g.beginPath(); g.moveTo(0,y); g.lineTo(128,y); g.stroke(); const off = (row%2)*16; for(let col=-1; col<5; col++){ const x = col*32 + off; g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+16); g.stroke(); } } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4,2); t.colorSpace = THREE.SRGBColorSpace; return t; }
 function tileTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#f2f2ee'; g.fillRect(0,0,128,128); for(let row=0; row<8; row++){ const y = row*16; g.fillStyle = '#c9c9c2'; g.fillRect(0,y+13,128,3); g.strokeStyle = '#c9c9c2'; g.lineWidth = 2; const off = (row%2)*16; for(let col=-1; col<5; col++){ const x = col*32 + off; g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+13); g.stroke(); } } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6,4); t.colorSpace = THREE.SRGBColorSpace; return t; }
 const wallTex = brickTex();
+const wallTexB = brickTex();
 const roofTileTex = tileTex();
 const roofMatCache = {};
 function RM(color){ if(!roofMatCache[color]) roofMatCache[color] = new THREE.MeshLambertMaterial({map:roofTileTex, color}); return roofMatCache[color]; }
@@ -253,6 +254,7 @@ const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat
 const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
 // V101: real CC0 photo surfaces (ambientCG) — plaster walls, gray roof tiles, asphalt roads
 new THREE.TextureLoader().load('Textures/plaster001.jpg', t => { wallTex.image = t.image; wallTex.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/wallbrick.jpg', t => { wallTexB.image = t.image; wallTexB.needsUpdate = true; });
 new THREE.TextureLoader().load('Textures/rooftile-gray.jpg', t => { roofTileTex.image = t.image; roofTileTex.needsUpdate = true; });
 const asphaltMatH = new THREE.MeshLambertMaterial({color:0x444444});
 new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 150); t.colorSpace = THREE.SRGBColorSpace; asphaltMat.map = t; asphaltMat.color.set(0xffffff); asphaltMat.needsUpdate = true; });
@@ -343,12 +345,12 @@ function groundHeight(x,z){
 }
 const colliders = [];
 const houseDoors = [];
-function house(x,z,wall,roof,storeys){
+function house(x,z,wall,roof,storeys,hi){
   // V28: storeys 1/2/3 - wall 8/12/16 high, one window row per floor, glass windows + glass door panel, 4-sided yard fence
   storeys = storeys || 1;
   const wallH = 4 + storeys*4, wallTop = 0.5 + wallH;
   bx(16.4,0.5,13,0x9e9e9e,x,0.25,z);
-  const wm = bx(16,wallH,12,wall,x,0.5+wallH/2,z); wm.material = new THREE.MeshLambertMaterial({map:wallTex, color:wall});
+  const wm = bx(16,wallH,12,wall,x,0.5+wallH/2,z); wm.material = new THREE.MeshLambertMaterial({map:(hi % 3 === 1 ? wallTexB : wallTex), color:wall});
   const r = mesh(new THREE.ConeGeometry(12,4.5,4), roof, x, wallTop+2.25, z);
   r.rotation.y = Math.PI/4; r.scale.x = 1.3; r.material = RM(roof); // V92: tiled roof
   (porchGeos[roof] = porchGeos[roof] || []).push(new THREE.BoxGeometry(3.4,0.15,1.8).translate(x,3.5,z+6.9)); // V93: porch merged (was a mesh per house)
@@ -399,7 +401,7 @@ const houseList = [
   [250,186,0xf5f5f5,0x37474f],[310,186,0xfff8dc,0x6d4c41],[370,186,0xfff2cc,0xb3402a]
 ]; // V69: +7 houses (81 total) — west band x=-180 + south band z=186, all audit-clear (roads/houses/fields/mountains, corridors >= 6)
 const porchGeos = {}, whiteGeos = [], stepGeos = []; // V93: V92 house details collected here, merged below (was ~650 meshes — the lag)
-for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1)); }
+for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; const d0 = Math.hypot(h[0],h[1]); house(h[0],h[1],h[2],h[3], d0 < 40 ? 3 : (hi % 3 === 0 ? 2 : 1), hi); }
 for(const rc in porchGeos){ const pm = new THREE.Mesh(mergeGeometries(porchGeos[rc], false), RM(Number(rc))); pm.castShadow = true; pm.receiveShadow = true; scene.add(pm); }
 { const wm = new THREE.Mesh(mergeGeometries(whiteGeos, false), M(0xffffff)); wm.castShadow = true; wm.receiveShadow = true; scene.add(wm); }
 { const sm = new THREE.Mesh(mergeGeometries(stepGeos, false), M(0x9e9e9e)); sm.castShadow = true; sm.receiveShadow = true; scene.add(sm); }
@@ -1088,6 +1090,7 @@ const bikeG = new THREE.Group(); bikeG.visible = false; player.g.add(bikeG);
 // stays as fallback and is hidden only after the GLB loads successfully.
 let glbMixer = null, glbAction = null, glbBody = null, glbBones = null, glbRest = null, idleBlend = 0;
 let stuckTimer = 0, stuckPX = 0, stuckPZ = 0, ghostUntil = 0; // V75: stuck rescue state
+let walkVX = 0, walkVZ = 0; // V109: smoothed walk velocity
 // V66: seated bike pose — extrapolated from the walk clip itself (thigh forward 1.35 rad, calf flex 1.80 rad), quaternions (x,y,z,w)
 const SEAT_POSE = {
   L_Thigh: [0.8341, 0.2163, -0.1708, -0.4778], R_Thigh: [0.7529, -0.0486, 0.2737, 0.5966],
@@ -2410,12 +2413,17 @@ function animate(now){
   let dx = camRight.x*inRight + camFwd.x*inUp;
   let dz = camRight.z*inRight + camFwd.z*inUp;
   const len = Math.hypot(dx,dz);
-  const moving = len > 0.1;
+  const wantMove = len > 0.1;
+  if(wantMove){ dx/=Math.max(1,len); dz/=Math.max(1,len); }
+  const sp = (riding ? (fastBike?26:18) : 10.5) * (raining ? 0.8 : 1);
+  if(drivingCar){ walkVX = 0; walkVZ = 0; }
+  const tVX = wantMove ? dx*sp : 0, tVZ = wantMove ? dz*sp : 0;
+  const vRate = Math.min(1, dt*10);
+  walkVX += (tVX - walkVX)*vRate; walkVZ += (tVZ - walkVZ)*vRate;
+  const moving = Math.hypot(walkVX, walkVZ) > 0.5;
   if(moving){
-    dx/=Math.max(1,len); dz/=Math.max(1,len);
-    const sp = (riding ? (fastBike?26:18) : 10.5) * (raining ? 0.8 : 1);
-    player.g.position.x += dx*sp*dt; player.g.position.z += dz*sp*dt;
-    turnTo(player.g, Math.atan2(dx,dz), dt, 10);
+    player.g.position.x += walkVX*dt; player.g.position.z += walkVZ*dt;
+    turnTo(player.g, Math.atan2(walkVX, walkVZ), dt, 10);
     player.g.position.x = Math.max(-795, Math.min(595, player.g.position.x));
     player.g.position.z = Math.max(-595, Math.min(595, player.g.position.z));
     // V73: stream rect barrier (circle colliders only cover z ±131; the stream now spans the whole map) — bridge gap z -5..5
@@ -2438,7 +2446,7 @@ function animate(now){
         if(stuckTimer > 2.5){ ghostUntil = gt + 1.5; stuckTimer = 0; showMsg('🚪 ပိတ်မိနေလို့ ခနလောက် ဖြတ်လျှောက်လို့ရပြီ — အပြင်ဘက်ကို ထွက်သွားပါ'); }
       }
     }
-    walkT += sp*dt;
+    walkT += Math.hypot(walkVX, walkVZ)*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
   player.g.position.y = (drivingCar && flyAlt > 0) ? flyAlt : groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
