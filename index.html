@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V107</div>
+  <div style="font-size:12px;opacity:.6">V108</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -2372,7 +2372,7 @@ function animate(now){
     const braking = inUp < -0.1 && carSpeed > 0.5;
     if(inUp > 0.1) carSpeed = Math.min(flyAlt > 1 ? Math.max(driveMax, 45) : driveMax, carSpeed + 18*dt*inUp);
     else if(inUp < -0.1){ if(carSpeed > 0.5) carSpeed = Math.max(0, carSpeed - 28*dt*(-inUp)); else carSpeed = Math.max(-8, carSpeed - 8*dt*(-inUp)); }
-    else { if(carSpeed > 0) carSpeed = Math.max(0, carSpeed - 6*dt); else if(carSpeed < 0) carSpeed = Math.min(0, carSpeed + 6*dt); }
+    else { const drag = flyAlt > 1 ? 2 : 6; if(carSpeed > 0) carSpeed = Math.max(0, carSpeed - drag*dt); else if(carSpeed < 0) carSpeed = Math.min(0, carSpeed + drag*dt); }
     if(Math.abs(carSpeed) > 0.5) carHeading -= inRight * dt * 1.2 * Math.min(1, Math.abs(carSpeed)/10) * (carSpeed >= 0 ? 1 : -1); // V45 fix: was += (left went right)
     driveCar.position.x += Math.sin(carHeading)*carSpeed*dt; driveCar.position.z += Math.cos(carHeading)*carSpeed*dt;
     driveCar.rotation.y = carHeading;
@@ -2681,8 +2681,10 @@ function animate(now){
   }
   const cf = {x: Math.sin(camYaw), z: Math.cos(camYaw)};
   // camera occlusion: pull camera in / raise it until no big building blocks the view
-  let targetDist = drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 5, targetH = drivingCar ? 6.5 : 3.5; // V93: walking camera raised 2.5 -> 3.5 (felt too low); driving unchanged
-  for(let a=0; a<12; a++){
+  // V108: dedicated aerial chase — ground chase caused the giant-car view + surge feel in the air
+  const flyingCam = drivingCar && flyAlt > 1;
+  let targetDist = flyingCam ? 26 + Math.abs(carSpeed)*0.15 : (drivingCar ? 16 + Math.abs(carSpeed)*0.3 : 5), targetH = flyingCam ? flyAlt + 7 : (drivingCar ? 6.5 : 3.5);
+  for(let a=0; a<12 && !flyingCam; a++){
     const cx = player.g.position.x - cf.x*targetDist, cz = player.g.position.z - cf.z*targetDist;
     if(!camBlocked(cx, cz, player.g.position.x, player.g.position.z)) break;
     targetDist = Math.max(3, targetDist - 1.5);
@@ -2690,15 +2692,15 @@ function animate(now){
     if(targetDist <= 3) break;
   }
   // V96: camera shake fix — pull in fast when blocked, ease out slow when clear (was same fast rate both ways, so the camera pumped in/out every time the blocked state flickered while strafing)
-  smoothCamDist += (targetDist - smoothCamDist) * Math.min(1, dt*(targetDist < smoothCamDist ? 8 : 2.5));
-  smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*(targetH > smoothCamH ? 8 : 2.5));
+  smoothCamDist += (targetDist - smoothCamDist) * Math.min(1, dt*(flyingCam ? 5 : (targetDist < smoothCamDist ? 8 : 2.5)));
+  smoothCamH += (targetH - smoothCamH) * Math.min(1, dt*(flyingCam ? 5 : (targetH > smoothCamH ? 8 : 2.5)));
   // V83: pitch works EXACTLY like yaw — a pure rotation, no camera dive, no gaze shoot (the dive was the dizziness)
   // glide: same 4 rad/s rate limit as yaw (was dt*1.5 lerp — laggy/mushy, felt nothing like yaw)
   { const pdiff = camPitch - smoothPitch; const pstep = Math.max(-4*dt, Math.min(4*dt, pdiff)); smoothPitch += pstep; }
   const tilt = Math.atan(4.3/16) - smoothPitch; // positive = looking up
   let pitchH = Math.max(0.5, player.g.position.y + 0.2, smoothCamH); // camera height NEVER dives with pitch now
   camera.position.set(player.g.position.x - cf.x*smoothCamDist, pitchH, player.g.position.z - cf.z*smoothCamDist);
-  { const tf = drivingCar ? 55 + Math.abs(carSpeed)*0.4 : 55; if(Math.abs(camera.fov - tf) > 0.1){ camera.fov += (tf - camera.fov) * Math.min(1, dt*5); camera.updateProjectionMatrix(); } }
+  { const tf = flyingCam ? 60 : (drivingCar ? 55 + Math.abs(carSpeed)*0.4 : 55); if(Math.abs(camera.fov - tf) > 0.1){ camera.fov += (tf - camera.fov) * Math.min(1, dt*5); camera.updateProjectionMatrix(); } }
   { const baseLookY = player.g.position.y + 1.4; const viewAng = Math.atan((baseLookY - pitchH)/smoothCamDist) + tilt; const lookY = pitchH + Math.tan(viewAng)*smoothCamDist; camera.lookAt(player.g.position.x, lookY, player.g.position.z); } // V83: pure tilt — view angle = default angle + tilt, exactly like yaw rotating the view
   renderer.render(scene,camera);
 }
