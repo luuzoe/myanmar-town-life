@@ -79,6 +79,7 @@
   <div id="actWrap"><div id="actLabel"></div><button id="act">လုပ်</button></div>
   <button id="shopBtn">🛒</button>
   <button id="hornBtn" style="display:none;background:#e53935;font-size:22px">📣</button>
+  <button id="flyBtn" style="display:none;background:#1565c0;font-size:22px">🛫</button>
   <button id="busDestBtn" style="display:none;background:#1565c0;font-size:14px">🚌 ဂိတ်</button>
 </div>
 <button id="rotL">↺</button><button id="rotR">↻</button>
@@ -90,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V104</div>
+  <div style="font-size:12px;opacity:.6">V105</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -197,6 +198,7 @@ function mesh(geo, color, x, y, z, parent){
 function blobShadow(parent, rx, rz){
   if(!isMobile) return;
   const b = new THREE.Mesh(new THREE.CircleGeometry(1,16), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.25, depthWrite:false}));
+  b.name = 'blobshadow';
   b.rotation.x = -Math.PI/2; b.scale.set(rx, rz, 1); b.position.y = 0.02; parent.add(b);
 }
 function bx(w,h,d,color,x,y,z,parent){ return mesh(new THREE.BoxGeometry(w,h,d), color, x, y, z, parent); }
@@ -1444,6 +1446,25 @@ const ownCar = makeCar(CAR_PAINTS[carPaintIdx]); ownCar.position.set(30,0,-12); 
 const tukTuk = makeCar(0xffeb3b); tukTuk.scale.set(0.8,0.8,0.8); tukTuk.position.set(38,0,-20); scene.add(tukTuk);
 const truck = makeCar(0xffffff); truck.scale.set(1.2,1.1,1.3); truck.position.set(30,0,-32); scene.add(truck);
 let driveCar = null, driveWheels = [], driveBrakes = [], driveMax = 30;
+// V105: flying car state
+let flyMode = false, flyAlt = 0, flyTarget = 0;
+const FLY_CRUISE = 100;
+function setFlyBlob(vis){ if(!driveCar) return; const bl = driveCar.getObjectByName('blobshadow'); if(bl) bl.visible = vis; }
+function toggleFly(){
+  if(!drivingCar || !driveCar) return;
+  if(flyTarget === 0){
+    flyTarget = FLY_CRUISE; flyMode = true;
+    driveCar.rotation.order = 'YXZ';
+    setFlyBlob(false);
+    document.getElementById('flyBtn').textContent = '🛬';
+    showMsg('🛫 ပျံတက်နေပြီ — လေပေါ်မှာ ကားမောင်းလို့ရပြီ!');
+  } else {
+    flyTarget = 0;
+    document.getElementById('flyBtn').textContent = '🛫';
+    showMsg('🛬 ပြန်ဆင်းနေပြီ...');
+  }
+  refresh();
+}
 const BUS_STOPS = [{label:'ဘတ်စ်ဂိတ်',x:100,z:-100},{label:'ကျောင်း',x:-100,z:60},{label:'ဆေးရုံ',x:100,z:-20},{label:'ဈေးကြီး',x:95,z:-72},{label:'ဘုရား',x:100,z:100},{label:'ပန်းခြံ',x:-120,z:120}];
 let busDest = null, busDestIdx = 0;
 let taxi = null, taxiPerson = null;
@@ -1623,6 +1644,7 @@ function refresh(){
 }
 function dist(x,z){ return Math.hypot(player.g.position.x-x, player.g.position.z-z); }
 function nearest(){
+  if(drivingCar && flyAlt > 1) return null;
   const opts = [
     {d:dist(-18,-32), label:'🌾 လယ်ရိတ်မယ်', fn:harvest},
     {d:dist(18,32), label:'🏪 ဈေးရောင်းမယ်', fn:sell},
@@ -1652,7 +1674,7 @@ function nearest(){
   opts.push({d:dist(36,-20), label: raceOn ? '🏁 ပြိုင်ပွဲ ရပ်မယ်' : '🏁 ပြိုင်ပွဲစ (၄ ဂိတ်)', fn: raceOn ? cancelRace : startRace, r:8}); // V91: race start
   if(thiefActive) opts.push({d:dist(thiefP.g.position.x, thiefP.g.position.z), label:'🚨 သူခိုး ဖမ်းမယ်', fn:catchThief, r:6}); // V91: thief chase
   if(seekActive) opts.push({d:dist(seekP.g.position.x, seekP.g.position.z), label:'👧 ကလေးကို တွေ့ပြီ!', fn:foundSeek, r:8}); // V91: hide-and-seek
-  function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; driveWheels = (car.userData.glbWheels && car.userData.glbWheels.length) ? car.userData.glbWheels : wheels; driveBrakes = car.userData.glbApplied ? [] : brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်'); } refresh(); }, r:5}; }
+  function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; dc.position.y = 0; dc.rotation.x = 0; dc.rotation.z = 0; flyMode = false; flyAlt = 0; flyTarget = 0; const bl0 = dc.getObjectByName('blobshadow'); if(bl0) bl0.visible = true; const fb0 = document.getElementById('flyBtn'); if(fb0){ fb0.style.display = 'none'; fb0.textContent = '🛫'; } drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; flyMode = false; flyAlt = 0; flyTarget = 0; car.position.y = 0; driveWheels = (car.userData.glbWheels && car.userData.glbWheels.length) ? car.userData.glbWheels : wheels; driveBrakes = car.userData.glbApplied ? [] : brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်'); } refresh(); }, r:5}; }
   opts.push(carOpt(parkedCar, parkedWheels, parkedBrakes, 30, 'ကား'));
   opts.push(tukBought ? carOpt(tukTuk, tukWheels, tukBrakes, 32, 'တူတူ') : {d:dist(tukTuk.position.x, tukTuk.position.z), label:'🛺 တူတူ ဝယ် (၈၀၀၀ ကျပ်)', fn:()=>{ if(money < 8000){ showMsg('ငွေမလုံလောက်ဘူး — ၈၀၀၀ ကျပ် လိုတယ်'); return; } money -= 8000; tukBought = true; save(); refresh(); showMsg('🛺 တူတူ ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
   opts.push(truckBought ? carOpt(truck, truckWheels, truckBrakes, 24, 'ထရပ်') : {d:dist(truck.position.x, truck.position.z), label:'🚚 ထရပ် ဝယ် (၁၅၀၀၀ ကျပ်)', fn:()=>{ if(money < 15000){ showMsg('ငွေမလုံလောက်ဘူး — ၁၅၀၀၀ ကျပ် လိုတယ်'); return; } money -= 15000; truckBought = true; save(); refresh(); showMsg('🚚 ထရပ် ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
@@ -1744,7 +1766,7 @@ addEventListener('keydown', e=>{
   if(e.code==='Escape'){ const sh = document.getElementById('shop'); if(sh.style.display==='flex'){ sh.style.display='none'; return; } const tu = document.getElementById('tutorial'); if(tu.style.display==='flex'){ tu.style.display='none'; return; } } // V62: Escape closes shop/tutorial (old code returned early when UI open, so Escape did nothing)
   const uiOpen = document.getElementById('shop').style.display==='flex' || document.getElementById('start').style.display!=='none';
   if(uiOpen) return;
-  if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike(); if(e.code==='KeyP'){ paused = !paused; document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸'; showMsg(paused ? '⏸ ရပ်ထားတယ် (P နဲ့ ပြန်စ)' : '▶ ပြန်ဆော့နေပြီ'); }
+  if(e.code==='KeyE') doAction(); if(e.code==='KeyB') toggleBike(); if(e.code==='KeyF') toggleFly(); if(e.code==='KeyP'){ paused = !paused; document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸'; showMsg(paused ? '⏸ ရပ်ထားတယ် (P နဲ့ ပြန်စ)' : '▶ ပြန်ဆော့နေပြီ'); }
 });
 addEventListener('keyup', e=>keys[e.code]=false);
 let joy = {x:0,y:0}, joyTouchId = null;
@@ -1799,6 +1821,7 @@ document.getElementById('photoBtn').addEventListener('click', ()=>{ photoMode = 
   for(const id of ['hud','job','joy','btns','rotL','rotR','soundBtn','pauseBtn']) { const el = document.getElementById(id); if(el) el.style.display = d; }
   showMsg(photoMode ? '📸 ဓာတ်ပုံမုဒ် — ပြန်ထွက်ချင် 📸 နှိပ်' : '📸 ဓာတ်ပုံမုဒ် ပိတ်ပြီ'); });
 document.getElementById('hornBtn').addEventListener('click', ()=>{ if(!drivingCar) return; tone(420,0.3,0.08,'square'); setTimeout(()=>tone(520,0.3,0.08,'square'),120); showMsg('📣 ဟွန်း!'); });
+document.getElementById('flyBtn').addEventListener('click', ()=>{ toggleFly(); });
 document.getElementById('qualityBtn').addEventListener('click', ()=>{ lowQuality = !lowQuality; renderer.setPixelRatio(lowQuality ? 1 : Math.min(devicePixelRatio, 1.25)); renderer.shadowMap.enabled = !lowQuality; save(); refresh(); showMsg('🎮 အရည်အသွေး: ' + (lowQuality ? 'အနိမ့်' : 'အမြင့်')); });
 document.getElementById('musicBtn').addEventListener('click', ()=>{ musicOn = !musicOn; save(); refresh(); showMsg('🎵 ဂီတ: ' + (musicOn ? 'ဖွင့်' : 'ပိတ်')); });
 document.getElementById('shirtBtn').addEventListener('click', ()=>{ showMsg('👕 ဇာတ်ကောင်အသစ်မှာ အင်္ကျီအရောင် ပြောင်းမရသေးဘူး'); }); // V64: vest deleted with the old character
@@ -2304,28 +2327,43 @@ function animate(now){
   if(drivingCar){
     // V44 real driving: accel / brake / reverse / steering (steers only while moving, like a real car)
     const braking = inUp < -0.1 && carSpeed > 0.5;
-    if(inUp > 0.1) carSpeed = Math.min(driveMax, carSpeed + 18*dt*inUp);
+    if(inUp > 0.1) carSpeed = Math.min(flyAlt > 1 ? Math.max(driveMax, 45) : driveMax, carSpeed + 18*dt*inUp);
     else if(inUp < -0.1){ if(carSpeed > 0.5) carSpeed = Math.max(0, carSpeed - 28*dt*(-inUp)); else carSpeed = Math.max(-8, carSpeed - 8*dt*(-inUp)); }
     else { if(carSpeed > 0) carSpeed = Math.max(0, carSpeed - 6*dt); else if(carSpeed < 0) carSpeed = Math.min(0, carSpeed + 6*dt); }
     if(Math.abs(carSpeed) > 0.5) carHeading -= inRight * dt * 1.2 * Math.min(1, Math.abs(carSpeed)/10) * (carSpeed >= 0 ? 1 : -1); // V45 fix: was += (left went right)
     driveCar.position.x += Math.sin(carHeading)*carSpeed*dt; driveCar.position.z += Math.cos(carHeading)*carSpeed*dt;
     driveCar.rotation.y = carHeading;
+    if(flyAlt !== flyTarget){
+      flyAlt += (flyTarget - flyAlt) * Math.min(1, dt*1.2);
+      if(Math.abs(flyTarget - flyAlt) < 0.5){
+        flyAlt = flyTarget;
+        if(flyTarget === 0){ flyMode = false; setFlyBlob(true); showMsg('🛬 ဆင်းပြီးပြီ'); }
+        else showMsg('🛫 လေပေါ်ရောက်ပြီ! အမြင့် 100m');
+      }
+    }
+    driveCar.position.y = flyAlt;
+    if(flyAlt > 1){
+      driveCar.rotation.z += (inRight * 0.18 - driveCar.rotation.z) * Math.min(1, dt*6);
+      const pitchT = flyTarget > flyAlt ? -0.12 : (flyTarget < flyAlt ? 0.08 : 0);
+      driveCar.rotation.x += (pitchT - driveCar.rotation.x) * Math.min(1, dt*6);
+    } else { driveCar.rotation.z *= Math.max(0, 1 - dt*6); driveCar.rotation.x *= Math.max(0, 1 - dt*6); }
     driveCar.position.x = Math.max(-795, Math.min(595, driveCar.position.x)); driveCar.position.z = Math.max(-595, Math.min(595, driveCar.position.z)); // V70: big-city bounds
     // V73: stream rect barrier — cars can't drive through water either; bridge gap z -5..5
-    if(Math.abs(driveCar.position.z) > 5 && driveCar.position.x > 162 && driveCar.position.x < 188){
+    if(flyAlt <= 1 && Math.abs(driveCar.position.z) > 5 && driveCar.position.x > 162 && driveCar.position.x < 188){
       driveCar.position.x = driveCar.position.x < 175 ? 162 : 188;
     }
-    for(let pass=0; pass<3; pass++) for(const c of nearbyColliders(driveCar.position.x, driveCar.position.z)){ if(Math.abs(driveCar.position.x-c.x) > c.r+1.5 || Math.abs(driveCar.position.z-c.z) > c.r+1.5) continue; const ddx = driveCar.position.x-c.x, ddz = driveCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ driveCar.position.x = c.x + ddx/dd*(c.r+1.5); driveCar.position.z = c.z + ddz/dd*(c.r+1.5); } }
+    if(flyAlt <= 1) for(let pass=0; pass<3; pass++) for(const c of nearbyColliders(driveCar.position.x, driveCar.position.z)){ if(Math.abs(driveCar.position.x-c.x) > c.r+1.5 || Math.abs(driveCar.position.z-c.z) > c.r+1.5) continue; const ddx = driveCar.position.x-c.x, ddz = driveCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ driveCar.position.x = c.x + ddx/dd*(c.r+1.5); driveCar.position.z = c.z + ddz/dd*(c.r+1.5); } }
     // traffic collision: bounce back + health -10
-    for(const oc of [...cars.map(c=>c.g), bus]){ if(oc === driveCar) continue; const od = Math.hypot(driveCar.position.x-oc.position.x, driveCar.position.z-oc.position.z); if(od < 3.5){ driveCar.position.x -= Math.sin(carHeading)*2; driveCar.position.z -= Math.cos(carHeading)*2; carSpeed = 0; health -= 10; if(health <= 0){ health = 100; money = Math.max(0, money-500); showMsg('🏥 ကားတိုက်ပြီး ဆေးရုံရောက်ပြီ — ၅၀၀'); } else showMsg('💥 ကားနဲ့ တိုက်မိပြီ! ကျန်းမာ ' + health); save(); refresh(); break; } }
+    if(flyAlt <= 1) for(const oc of [...cars.map(c=>c.g), bus]){ if(oc === driveCar) continue; const od = Math.hypot(driveCar.position.x-oc.position.x, driveCar.position.z-oc.position.z); if(od < 3.5){ driveCar.position.x -= Math.sin(carHeading)*2; driveCar.position.z -= Math.cos(carHeading)*2; carSpeed = 0; health -= 10; if(health <= 0){ health = 100; money = Math.max(0, money-500); showMsg('🏥 ကားတိုက်ပြီး ဆေးရုံရောက်ပြီ — ၅၀၀'); } else showMsg('💥 ကားနဲ့ တိုက်မိပြီ! ကျန်းမာ ' + health); save(); refresh(); break; } }
     for(const w of driveWheels) w.rotation.x += carSpeed*dt/0.45;
     for(const bm of driveBrakes) bm.visible = braking;
     if(Math.abs(carSpeed) > 1){ carEngineTimer -= dt; if(carEngineTimer <= 0){ tone(50 + Math.abs(carSpeed)*3, 0.25, 0.05, 'sawtooth'); carEngineTimer = 0.25; } }
-    speedEl.textContent = '🚗 ' + Math.round(Math.abs(carSpeed)*3.6) + ' km/h';
+    speedEl.textContent = (flyAlt > 1 ? '🛫 ' : '🚗 ') + Math.round(Math.abs(carSpeed)*3.6) + ' km/h' + (flyAlt > 1 ? ' · ' + Math.round(flyAlt) + 'm' : '');
     const hb = document.getElementById('hornBtn'); if(hb) hb.style.display = 'block';
+    const fb2 = document.getElementById('flyBtn'); if(fb2) fb2.style.display = 'block';
     targetCamYaw = carHeading;
-    player.g.position.set(driveCar.position.x, 0, driveCar.position.z); inRight = 0; inUp = 0;
-  } else { const hb = document.getElementById('hornBtn'); if(hb && hb.style.display !== 'none') hb.style.display = 'none'; }
+    player.g.position.set(driveCar.position.x, flyAlt, driveCar.position.z); inRight = 0; inUp = 0;
+  } else { const hb = document.getElementById('hornBtn'); if(hb && hb.style.display !== 'none') hb.style.display = 'none'; const fb2 = document.getElementById('flyBtn'); if(fb2 && fb2.style.display !== 'none') fb2.style.display = 'none'; }
   let dx = camRight.x*inRight + camFwd.x*inUp;
   let dz = camRight.z*inRight + camFwd.z*inUp;
   const len = Math.hypot(dx,dz);
@@ -2360,7 +2398,7 @@ function animate(now){
     walkT += sp*dt;
   }
   animatePerson(player, moving, walkT, gt, riding);
-  player.g.position.y = groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
+  player.g.position.y = (drivingCar && flyAlt > 0) ? flyAlt : groundHeight(player.g.position.x, player.g.position.z); // V58: feet follow the surface
   if(glbMixer){
     if(moving && !riding){ glbMixer.update(dt * 3.0 * (raining ? 0.8 : 1)); idleBlend = 0; } // V60: 3x walk rate
     else if(riding){ if(glbAction) glbAction.time = 0.667; glbMixer.update(0); idleBlend = 0; }
@@ -2575,8 +2613,8 @@ function animate(now){
   if(thiefActive){ const px = player.g.position.x, pz = player.g.position.z; const dx = thiefP.g.position.x - px, dz = thiefP.g.position.z - pz, dl = Math.hypot(dx,dz)||1; thiefP.g.position.x += dx/dl*7*dt; thiefP.g.position.z += dz/dl*7*dt; turnTo(thiefP.g, Math.atan2(dx,dz), dt, 8); animatePerson(thiefP, true, gt*7, gt, false); thiefT -= dt; if(thiefT <= 0){ thiefActive = false; thiefP.g.visible = false; thiefTimer = 180 + Math.floor(Math.random()*120); showMsg('🚨 သူခိုး ထွက်ပြေးသွားပြီ...'); } }
   if(seekActive) animatePerson(seekP, false, 0, gt, false);
   if(taxi){ const cx = drivingCar ? driveCar.position.x : player.g.position.x, cz = drivingCar ? driveCar.position.z : player.g.position.z;
-    if(taxi.stage === 'pickup'){ if(drivingCar && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; if(taxiPerson) taxiPerson.g.visible = false; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
-    else { if(drivingCar && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ const tpay = hotJob === 'taxi' ? 2400 : 1200; money += tpay; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +' + tpay + ' ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
+    if(taxi.stage === 'pickup'){ if(drivingCar && flyAlt <= 1 && Math.hypot(cx-taxi.px, cz-taxi.pz) < 6){ taxi.stage = 'drop'; if(taxiPerson) taxiPerson.g.visible = false; taxiBeacon.position.set(taxi.dx, 0, taxi.dz); showMsg('🚕 ခရီးသည်တင်ပြီ — ' + taxi.dlabel + ' ကို ပို့ပါ'); } }
+    else { if(drivingCar && flyAlt <= 1 && Math.hypot(cx-taxi.dx, cz-taxi.dz) < 8){ const tpay = hotJob === 'taxi' ? 2400 : 1200; money += tpay; gainXP(50); questProgress('taxi'); if(taxiPerson){ taxiPerson.g.position.set(taxi.dx, 0, taxi.dz); taxiPerson.g.visible = true; } save(); refresh(); playCoin(); showMsg('🚕 ပို့ပြီးပြီ +' + tpay + ' ကျပ်'); taxi = null; taxiBeacon.position.set(0,-20,0); } } }
   taxiBeacon.rotation.y += dt*2; if(taxi) taxiBeacon.position.y = Math.sin(now/300)*0.6;
   { const bd = document.getElementById('busDestBtn'); if(bd) bd.style.display = ridingBus ? 'block' : 'none'; }
   // objective distance in job text so the player always knows how far the shop / delivery is
