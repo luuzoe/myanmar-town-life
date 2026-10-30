@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V111</div><div style="font-size:11px;opacity:.5">🏠 ဓနိအိမ်: rhcreations</div>
+  <div style="font-size:12px;opacity:.6">V112</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1353,18 +1353,7 @@ const PROP_MODELS = {
   desk: {file:'prop-desk.glb', spots:[[-100,65,0],[-110,65,0]]}
 };
 for(const k in PROP_MODELS){ new GLTFLoader().load(PROP_MODELS[k].file, (gltf)=>{ for(const sp of PROP_MODELS[k].spots){ const c = gltf.scene.clone(true); c.traverse((o)=>{ if(o.isMesh){ o.castShadow = false; o.receiveShadow = true; } }); c.position.set(sp[0], groundHeight(sp[0], sp[1]), sp[1]); c.rotation.y = sp[2]; scene.add(c); } }, undefined, ()=>{}); }
-// V111: real Sketchfab thatch hut landmark (Zaw's file, rhcreations CC-BY) — textures embedded, single file
-const HUT_SPOT = [-40, 10];
-new GLTFLoader().load('hut-thatched.glb', (gltf)=>{
-  const h = gltf.scene;
-  h.scale.setScalar(2);
-  h.traverse((o)=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
-  h.position.set(HUT_SPOT[0], groundHeight(HUT_SPOT[0], HUT_SPOT[1]) + 1.01*2, HUT_SPOT[1] - 4.97);
-  scene.add(h);
-  const c = {x:HUT_SPOT[0], z:HUT_SPOT[1], r:6};
-  colliders.push(c);
-  try{ gridAdd(c, false); }catch(e){}
-}, undefined, ()=>{});
+
 const cars = [];
 for(let i=0;i<24;i++){ // V70: traffic 8 -> 24 cars for the big city
   const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a,0x00acc1,0x8d6e63,0x78909c,0xd81b60,0x3949ab,0x00897b,0xc0ca33,0x5e35b1][i%16], ['sedan','suv','pickup'][i%3]); // V92: traffic variety
