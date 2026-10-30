@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V109</div>
+  <div style="font-size:12px;opacity:.6">V110</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -2418,7 +2418,7 @@ function animate(now){
   const sp = (riding ? (fastBike?26:18) : 10.5) * (raining ? 0.8 : 1);
   if(drivingCar){ walkVX = 0; walkVZ = 0; }
   const tVX = wantMove ? dx*sp : 0, tVZ = wantMove ? dz*sp : 0;
-  const vRate = Math.min(1, dt*10);
+  const vRate = Math.min(1, dt*(wantMove ? 16 : 25)); // V110: tightened — V109 rate 10 glided 0.83m (walk) / 2.07m (bike) after release
   walkVX += (tVX - walkVX)*vRate; walkVZ += (tVZ - walkVZ)*vRate;
   const moving = Math.hypot(walkVX, walkVZ) > 0.5;
   if(moving){
