@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V112</div>
+  <div style="font-size:12px;opacity:.6">V113</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -172,8 +172,8 @@ const sun = new THREE.DirectionalLight(0xffffff, 1.2);
 sun.position.set(30, 50, 20); scene.add(sun); scene.add(sun.target);
 sun.castShadow = true;
 sun.shadow.mapSize.set(1024, 1024); // V96: halved for phone perf (was 2048 — the shadow pass is the heaviest draw; slightly softer shadows)
-sun.shadow.camera.left = -80; sun.shadow.camera.right = 80;
-sun.shadow.camera.top = 80; sun.shadow.camera.bottom = -80; // V51: tighter shadow frustum around player
+sun.shadow.camera.left = -60; sun.shadow.camera.right = 60;
+sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60; // V113: tighter shadow frustum around player
 sun.shadow.camera.near = 1; sun.shadow.camera.far = 250;
 sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05; // V51: normalBias fights surface acne/banding
 sun.shadow.camera.updateProjectionMatrix();
@@ -240,8 +240,8 @@ function noiseTex(base, speckles, rx, ry){
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.colorSpace = THREE.SRGBColorSpace; try{ t.anisotropy = renderer.capabilities.getMaxAnisotropy(); }catch(e){} return t; }
 const grassTex = noiseTex('#6fbf5a', ['#5da34a','#7ec96a','#8fd67e','#679f52'], 10, 8);
 // V92: brick wall texture + roof tile texture (light bases so the house colour tint still works)
-function brickTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#fdfdf5'; g.fillRect(0,0,128,128); g.strokeStyle = '#d8d0b8'; g.lineWidth = 2; for(let row=0; row<8; row++){ const y = row*16; g.beginPath(); g.moveTo(0,y); g.lineTo(128,y); g.stroke(); const off = (row%2)*16; for(let col=-1; col<5; col++){ const x = col*32 + off; g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+16); g.stroke(); } } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4,2); t.colorSpace = THREE.SRGBColorSpace; return t; }
-function tileTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#f2f2ee'; g.fillRect(0,0,128,128); for(let row=0; row<8; row++){ const y = row*16; g.fillStyle = '#c9c9c2'; g.fillRect(0,y+13,128,3); g.strokeStyle = '#c9c9c2'; g.lineWidth = 2; const off = (row%2)*16; for(let col=-1; col<5; col++){ const x = col*32 + off; g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+13); g.stroke(); } } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6,4); t.colorSpace = THREE.SRGBColorSpace; return t; }
+function brickTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#fdfdf5'; g.fillRect(0,0,128,128); g.strokeStyle = '#d8d0b8'; g.lineWidth = 2; for(let row=0; row<8; row++){ const y = row*16; g.beginPath(); g.moveTo(0,y); g.lineTo(128,y); g.stroke(); const off = (row%2)*16; for(let col=-1; col<5; col++){ const x = col*32 + off; g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+16); g.stroke(); } } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4,2); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+function tileTex(){ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#f2f2ee'; g.fillRect(0,0,128,128); for(let row=0; row<8; row++){ const y = row*16; g.fillStyle = '#c9c9c2'; g.fillRect(0,y+13,128,3); g.strokeStyle = '#c9c9c2'; g.lineWidth = 2; const off = (row%2)*16; for(let col=-1; col<5; col++){ const x = col*32 + off; g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+13); g.stroke(); } } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6,4); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
 const wallTex = brickTex();
 const wallTexB = brickTex();
 const roofTileTex = tileTex();
@@ -249,7 +249,7 @@ const roofMatCache = {};
 function RM(color){ if(!roofMatCache[color]) roofMatCache[color] = new THREE.MeshLambertMaterial({map:roofTileTex, color}); return roofMatCache[color]; }
 const grassMat = new THREE.MeshLambertMaterial({map:grassTex});
 // V98: real CC0 grass photo (ambientCG Grass004) replaces the flat procedural green once loaded
-new THREE.TextureLoader().load('Textures/grass004.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40, 34); t.colorSpace = THREE.SRGBColorSpace; grassMat.map = t; grassMat.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/grass004.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40, 34); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); grassMat.map = t; grassMat.needsUpdate = true; });
 const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat, no texture (texture streaked on 400-long boxes)
 const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
 // V101: real CC0 photo surfaces (ambientCG) — plaster walls, gray roof tiles, asphalt roads
@@ -257,8 +257,8 @@ new THREE.TextureLoader().load('Textures/plaster001.jpg', t => { wallTex.image =
 new THREE.TextureLoader().load('Textures/wallbrick.jpg', t => { wallTexB.image = t.image; wallTexB.needsUpdate = true; });
 new THREE.TextureLoader().load('Textures/rooftile-gray.jpg', t => { roofTileTex.image = t.image; roofTileTex.needsUpdate = true; });
 const asphaltMatH = new THREE.MeshLambertMaterial({color:0x444444});
-new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 150); t.colorSpace = THREE.SRGBColorSpace; asphaltMat.map = t; asphaltMat.color.set(0xffffff); asphaltMat.needsUpdate = true; });
-new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(150, 2); t.colorSpace = THREE.SRGBColorSpace; asphaltMatH.map = t; asphaltMatH.color.set(0xffffff); asphaltMatH.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 150); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); asphaltMat.map = t; asphaltMat.color.set(0xffffff); asphaltMat.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/asphalt033.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(150, 2); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); asphaltMatH.map = t; asphaltMatH.color.set(0xffffff); asphaltMatH.needsUpdate = true; });
 // ---- map (V70: big city — ground x -800..600, z -600..600) ----
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400,1200), grassMat);
 ground.rotation.x = -Math.PI/2; ground.position.set(-100,0,0); ground.receiveShadow = !isMobile; scene.add(ground);
@@ -524,10 +524,10 @@ bx(2.2,0.25,0.6, 0x8d6e63, -91, 0.55, -91); bx(2.2,0.7,0.2, 0x8d6e63, -91, 0.9, 
 const treeBlockers = [];
 // V104: photo-textured trees - real bark on trunks, leaf-mass photo on foliage
 const barkTex = new THREE.TextureLoader().load('Textures/bark001.jpg');
-barkTex.colorSpace = THREE.SRGBColorSpace;
+barkTex.colorSpace = THREE.SRGBColorSpace; barkTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 barkTex.wrapS = barkTex.wrapT = THREE.RepeatWrapping; barkTex.repeat.set(2,2);
 const leafTex = new THREE.TextureLoader().load('Textures/grass004.jpg');
-leafTex.colorSpace = THREE.SRGBColorSpace;
+leafTex.colorSpace = THREE.SRGBColorSpace; leafTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 leafTex.wrapS = leafTex.wrapT = THREE.RepeatWrapping; leafTex.repeat.set(2,2);
 const treeTrunkMat = new THREE.MeshLambertMaterial({map:barkTex});
 const treeLeafA = new THREE.MeshLambertMaterial({map:leafTex});
@@ -614,11 +614,11 @@ for(let i=0;i<5;i++){
 // ---- EAST: fields + forest belt, north-south stream, bridge, mountain range ----
 // V98: east dirt road uses real CC0 dirt-path photo (ambientCG Ground030), raised above main road so it does not z-fight
 const dirtMat = new THREE.MeshLambertMaterial({color:0x8d6e63});
-new THREE.TextureLoader().load('Textures/ground030.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(8, 1); t.colorSpace = THREE.SRGBColorSpace; dirtMat.map = t; dirtMat.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/ground030.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(8, 1); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); dirtMat.map = t; dirtMat.needsUpdate = true; });
 const dirtRoad = new THREE.Mesh(new THREE.BoxGeometry(60,0.1,7), dirtMat); dirtRoad.position.set(160,0.12,0); dirtRoad.castShadow = true; dirtRoad.receiveShadow = true; scene.add(dirtRoad);
 // V98: fields use real CC0 dry-dirt photo (ambientCG Ground109)
 const fieldMat = new THREE.MeshLambertMaterial({color:0x8d5a2b});
-new THREE.TextureLoader().load('Textures/ground109.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 2); t.colorSpace = THREE.SRGBColorSpace; fieldMat.map = t; fieldMat.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/ground109.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 2); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); fieldMat.map = t; fieldMat.needsUpdate = true; });
 const fieldCenters = [[220,-90],[220,-45],[220,45],[220,90]]; // V63: moved east past the stream (x 209..231) — old x=148 fields sat ON the east-west roads at z=±40/±80
 for(const f of fieldCenters){
   const fb = new THREE.Mesh(new THREE.BoxGeometry(22,0.3,28), fieldMat); fb.position.set(f[0],0.15,f[1]); fb.castShadow = true; fb.receiveShadow = true; scene.add(fb);
@@ -2046,9 +2046,9 @@ for(let gx=-790; gx<=590; gx+=24){
 }
 // V104: mass houses get photo surfaces too - plaster walls, tile roofs (tints still work)
 const massWallTex = new THREE.TextureLoader().load('Textures/plaster001.jpg');
-massWallTex.colorSpace = THREE.SRGBColorSpace;
+massWallTex.colorSpace = THREE.SRGBColorSpace; massWallTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const massRoofTex = new THREE.TextureLoader().load('Textures/rooftile-gray.jpg');
-massRoofTex.colorSpace = THREE.SRGBColorSpace;
+massRoofTex.colorSpace = THREE.SRGBColorSpace; massRoofTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const massWallMats = {}, massRoofMats = {};
 function MMW(c){ if(!massWallMats[c]) massWallMats[c] = new THREE.MeshLambertMaterial({color:c, map:massWallTex}); return massWallMats[c]; }
 function MMR(c){ if(!massRoofMats[c]) massRoofMats[c] = new THREE.MeshLambertMaterial({color:c, map:massRoofTex}); return massRoofMats[c]; }
