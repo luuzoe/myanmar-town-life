@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V119</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium (CC-BY)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
+  <div style="font-size:12px;opacity:.6">V120</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro (CC-BY); Lexyc16 (CC-BY-NC)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1417,12 +1417,15 @@ function swapCarGlb(t){
   const g = t.g; if(g.userData.glbApplied) return; const src = carGlbScenes[t.model]; if(!src) return;
   const clone = src.clone(true);
   if(t.model === 'real-sedan' && realSedanFront < 0) clone.rotation.y = Math.PI;
+  if(t.model === 'tuk-tuk') clone.rotation.y = Math.PI;
+  if(t.model === 'bus') clone.rotation.y = Math.PI / 2;
+  if(t.model === 'lambo') clone.rotation.y = Math.PI;
   const bb = new THREE.Box3().setFromObject(clone);
   const lenZ = Math.max(0.1, bb.max.z - bb.min.z);
-  const targetLen = (t.model === 'truck' ? 6.5 : 4.2);
+  const targetLen = (t.model === 'truck' ? 6.5 : t.model === 'bus' ? 11 : t.model === 'tuk-tuk' ? 2.8 : t.model === 'lambo' ? 4.5 : 4.2);
   const s = targetLen / (lenZ * (g.scale.z || 1));
   clone.scale.setScalar(s);
-  clone.position.set(-(bb.max.x + bb.min.x)/2, -bb.min.y, -(bb.max.z + bb.min.z)/2);
+  clone.position.set(-(bb.max.x + bb.min.x)/2 * s, -bb.min.y * s, -(bb.max.z + bb.min.z)/2 * s);
   clone.traverse(o=>{ if(o.isMesh){ o.castShadow = false; o.receiveShadow = false; if(o.material && o.material.isMeshStandardMaterial){ if(!carLambertCache.has(o.material)) carLambertCache.set(o.material, new THREE.MeshLambertMaterial({map: o.material.map})); o.material = carLambertCache.get(o.material); } } }); // V96: Lambert (same map) is much cheaper on phone GPUs; blob shadows ground the cars
   g.children.forEach(ch=>{ if(ch.userData.procMesh) ch.visible = false; });
   for(const sp of (g.userData.spokes || [])) sp.visible = false;
@@ -1439,6 +1442,10 @@ function swapCarGlb(t){
     const tw = [];
     clone.traverse(o=>{ if(o.isMesh && /^Wheels/.test(o.name)) tw.push(o); });
     for(const wm of tw){ const wg = new THREE.Group(); clone.add(wg); wg.attach(wm); wheels.push(wg); }
+  }
+  if(t.model === 'lambo'){
+    clone.traverse(o=>{ if(o.isMesh && /^Object_(23|24|36|37|38|39)$/.test(o.name)) wheels.push(o); });
+    g.userData.spinSign = -1;
   }
   if(t.model === 'real-sedan-s' && g.userData.glbBody && g.userData.carColor !== undefined){ g.userData.glbBody.material = g.userData.glbBody.material.clone(); g.userData.glbBody.material.color.set(g.userData.carColor); }
   g.add(clone);
@@ -1471,6 +1478,24 @@ function loadTruck(tries){
   });
 }
 loadTruck(3);
+function loadTukTuk(tries){
+  new GLTFLoader().load('tuk-tuk-real.glb', (gltf)=>{ carGlbScenes['tuk-tuk'] = gltf.scene; applyCarGlbs(); }, undefined, ()=>{
+    if(tries > 1) setTimeout(()=>{ loadTukTuk(tries - 1); }, 2000);
+  });
+}
+loadTukTuk(3);
+function loadBus(tries){
+  new GLTFLoader().load('bus-real.glb', (gltf)=>{ carGlbScenes['bus'] = gltf.scene; applyCarGlbs(); }, undefined, ()=>{
+    if(tries > 1) setTimeout(()=>{ loadBus(tries - 1); }, 2000);
+  });
+}
+loadBus(3);
+function loadLambo(tries){
+  new GLTFLoader().load('lambo-real.glb', (gltf)=>{ carGlbScenes['lambo'] = gltf.scene; applyCarGlbs(); }, undefined, ()=>{
+    if(tries > 1) setTimeout(()=>{ loadLambo(tries - 1); }, 2000);
+  });
+}
+loadLambo(3);
 
 const PROP_MODELS = {
   hydrant: {file:'prop-hydrant.glb', spots:[[6,200,0],[-6,-200,0],[-6,-320,0],[-6,320,0],[166,80,0],[-166,-80,0]]},
@@ -1502,7 +1527,7 @@ for(const wx of [-1.5,1.5]) for(const wz of [-4.5,-1.5,1.5,4.5]){
   const w = cyl(0.7,0.7,0.3,0x212121,wx,0.7,wz,bus); w.rotation.z = Math.PI/2;
 }
 blobShadow(bus, 2.0, 6.5);
-bus.position.set(0,0,-160); scene.add(bus);
+bus.position.set(0,0,-160); scene.add(bus); bus.traverse(o=>{ if(o.isMesh && o.name !== 'blobshadow') o.userData.procMesh = true; }); carGlbTargets.push({g:bus, model:'bus'});
 const busRoute = [{x:0,z:-160},{x:160,z:-160},{x:160,z:160},{x:-560,z:160},{x:-560,z:-160},{x:-160,z:-160},{x:-160,z:-80},{x:160,z:-80},{x:160,z:-160},{x:0,z:-160}]; // V84: extended west to -560 (new city districts) — all legs axis-aligned on road lines; -80 leg passes (100,-80), 20 south of bus station (100,-100); east has no road grid past x=160 (stream/fields/forest), so no east leg
 let busIdx = 1;
 // state
@@ -1617,7 +1642,7 @@ ownedHouses = ownedList.length;
 { const tk = new THREE.Group(); bx(1.4,0.6,2.2,0xffeb3b,0,0.5,0,tk); bx(1.4,0.5,1.4,0x212121,0,1.0,-0.2,tk); glassBx(1.2,0.4,0.06,0,1.0,0.55,tk);
   for(const wx of [-0.7,0.7]){ const w = cyl(0.35,0.35,0.25,0x212121,wx,0.35,0.8,tk); w.rotation.z = Math.PI/2; (tk.userData.procWheels = tk.userData.procWheels || []).push(w); } // V97: wheels tagged for spin
   const wf = cyl(0.35,0.35,0.25,0x212121,0,0.35,-0.9,tk); wf.rotation.z = Math.PI/2; (tk.userData.procWheels = tk.userData.procWheels || []).push(wf); // V97: front wheel tagged for spin
-  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:16}); tk.traverse(o=>{ if(o.isMesh) o.castShadow = false; }); }
+  tk.position.set(0,0,160); scene.add(tk); cars.push({g:tk, target:intersections[3], speed:16}); tk.traverse(o=>{ if(o.isMesh) o.castShadow = false; }); tk.traverse(o=>{ if(o.isMesh) o.userData.procMesh = true; }); carGlbTargets.push({g:tk, model:'tuk-tuk'}); }
 // traffic lights at (0,0): NS pole at (8,8), EW pole at (-8,-8)
 function trafficLight(x,z){ cyl(0.12,0.12,4.5,0x455a64,x,2.25,z); bx(0.6,1.6,0.3,0x212121,x,4.2,z);
   const mats = [new THREE.MeshBasicMaterial({color:0x550000}), new THREE.MeshBasicMaterial({color:0x554400}), new THREE.MeshBasicMaterial({color:0x003300})];
@@ -1672,6 +1697,13 @@ for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.
 for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Group(); wg.position.set(wx,0.45,wz); truck.add(wg); bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); truckWheels.push(wg); }
 for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; truck.add(bm); truckBrakes.push(bm); }
 truck.userData.spokes = truckWheels; truck.userData.brakes = truckBrakes; carGlbTargets.push({g:truck, model:'truck'});
+tukTuk.userData.spokes = tukWheels; tukTuk.userData.brakes = tukBrakes; carGlbTargets.push({g:tukTuk, model:'tuk-tuk'});
+const lambo = makeCar(0xffffff); lambo.position.set(38,0,-12); scene.add(lambo);
+const lamboWheels = [], lamboBrakes = [];
+for(const wx of [-1.1,1.1]) for(const wz of [-1.7,1.7]){ const wg = new THREE.Group(); wg.position.set(wx,0.45,wz); lambo.add(wg); bx(0.06,0.8,0.12,0xeeeeee,(wx<0?-0.18:0.18),0,0,wg); lamboWheels.push(wg); }
+for(const bx2 of [-0.7,0.7]){ const bm = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.2,0.06), new THREE.MeshBasicMaterial({color:0xe53935})); bm.position.set(bx2,0.6,-2.78); bm.visible = false; lambo.add(bm); lamboBrakes.push(bm); }
+lambo.userData.spokes = lamboWheels; lambo.userData.brakes = lamboBrakes; carGlbTargets.push({g:lambo, model:'lambo'});
+headCone(lambo, 4.5);
 // player vest (shirt colour, changeable in shop)
 // V47: one interior room per owned house (first 6 owned houses, each own room)
 function buildRoom(rx, rz){
@@ -1822,6 +1854,7 @@ function nearest(){
   if(seekActive) opts.push({d:dist(seekP.g.position.x, seekP.g.position.z), label:'👧 ကလေးကို တွေ့ပြီ!', fn:foundSeek, r:8}); // V91: hide-and-seek
   function carOpt(car, wheels, brakes, maxSp, name){ return {d:dist(car.position.x, car.position.z), label: drivingCar ? '🚗 ကားက ဆင်းမယ်' : '🚗 ' + name + ' မောင်းမယ်', fn:()=>{ if(drivingCar){ const dc = driveCar; dc.position.y = 0; dc.rotation.x = 0; dc.rotation.z = 0; flyMode = false; flyAlt = 0; flyTarget = 0; const bl0 = dc.getObjectByName('blobshadow'); if(bl0) bl0.visible = true; const fb0 = document.getElementById('flyBtn'); if(fb0){ fb0.style.display = 'none'; fb0.textContent = '🛫'; } drivingCar = false; driveCar = null; carSpeed = 0; player.g.visible = true; player.g.position.set(dc.position.x + 4, 0, dc.position.z); showMsg('🚗 ကားက ဆင်းပြီ'); } else { drivingCar = true; driveCar = car; flyMode = false; flyAlt = 0; flyTarget = 0; car.position.y = 0; driveWheels = (car.userData.glbWheels && car.userData.glbWheels.length) ? car.userData.glbWheels : wheels; driveBrakes = car.userData.glbApplied ? [] : brakes; driveMax = maxSp; carHeading = car.rotation.y; carSpeed = 0; riding = false; bikeG.visible = false; player.g.visible = false; showMsg('🚗 ကားမောင်းနေတယ် — ⬆️ အရှိန်, ⬇️ ဘရိတ်/နောက်, ⬅️➡️ စတီယာရင်, 🛫 ပျံချင် 🛫 ခလုတ် (PC: F)'); } refresh(); }, r:5}; }
   opts.push(carOpt(parkedCar, parkedWheels, parkedBrakes, 30, 'ကား'));
+  opts.push(carOpt(lambo, lamboWheels, lamboBrakes, 38, 'Lamborghini'));
   opts.push(tukBought ? carOpt(tukTuk, tukWheels, tukBrakes, 32, 'တူတူ') : {d:dist(tukTuk.position.x, tukTuk.position.z), label:'🛺 တူတူ ဝယ် (၈၀၀၀ ကျပ်)', fn:()=>{ if(money < 8000){ showMsg('ငွေမလုံလောက်ဘူး — ၈၀၀၀ ကျပ် လိုတယ်'); return; } money -= 8000; tukBought = true; save(); refresh(); showMsg('🛺 တူတူ ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
   opts.push(truckBought ? carOpt(truck, truckWheels, truckBrakes, 24, 'ထရပ်') : {d:dist(truck.position.x, truck.position.z), label:'🚚 ထရပ် ဝယ် (၁၅၀၀၀ ကျပ်)', fn:()=>{ if(money < 15000){ showMsg('ငွေမလုံလောက်ဘူး — ၁၅၀၀၀ ကျပ် လိုတယ်'); return; } money -= 15000; truckBought = true; save(); refresh(); showMsg('🚚 ထရပ် ဝယ်ပြီးပြီ! မောင်းလို့ရပြီ'); }, r:5});
   if(ownCarBought) opts.push(carOpt(ownCar, ownWheels, ownBrakes, 40 + carUpg*10, 'ကိုယ်ပိုင်ကား'));
@@ -2529,7 +2562,7 @@ function animate(now){
     if(flyAlt <= 1) for(let pass=0; pass<3; pass++) for(const c of nearbyColliders(driveCar.position.x, driveCar.position.z)){ if(Math.abs(driveCar.position.x-c.x) > c.r+1.5 || Math.abs(driveCar.position.z-c.z) > c.r+1.5) continue; const ddx = driveCar.position.x-c.x, ddz = driveCar.position.z-c.z, dd = Math.hypot(ddx,ddz); if(dd < c.r+1.5 && dd > 0.01){ driveCar.position.x = c.x + ddx/dd*(c.r+1.5); driveCar.position.z = c.z + ddz/dd*(c.r+1.5); } }
     // traffic collision: bounce back + health -10
     if(flyAlt <= 1) for(const oc of [...cars.map(c=>c.g), bus]){ if(oc === driveCar) continue; const od = Math.hypot(driveCar.position.x-oc.position.x, driveCar.position.z-oc.position.z); if(od < 3.5){ driveCar.position.x -= Math.sin(carHeading)*2; driveCar.position.z -= Math.cos(carHeading)*2; carSpeed = 0; health -= 10; if(health <= 0){ health = 100; money = Math.max(0, money-500); showMsg('🏥 ကားတိုက်ပြီး ဆေးရုံရောက်ပြီ — ၅၀၀'); } else showMsg('💥 ကားနဲ့ တိုက်မိပြီ! ကျန်းမာ ' + health); save(); refresh(); break; } }
-    for(const w of driveWheels) w.rotation.x += carSpeed*dt/0.45;
+    for(const w of driveWheels) w.rotation.x += (driveCar && driveCar.userData.spinSign ? driveCar.userData.spinSign : 1) * carSpeed*dt/0.45;
     for(const bm of driveBrakes) bm.visible = braking;
     if(Math.abs(carSpeed) > 1){ carEngineTimer -= dt; if(carEngineTimer <= 0){ tone(50 + Math.abs(carSpeed)*3, 0.25, 0.05, 'sawtooth'); carEngineTimer = 0.25; } }
     speedEl.textContent = (flyAlt > 1 ? '🛫 ' : '🚗 ') + Math.round(Math.abs(carSpeed)*3.6) + ' km/h' + (flyAlt > 1 ? ' · ' + Math.round(flyAlt) + 'm' : '');
@@ -2686,7 +2719,7 @@ function animate(now){
     if(mx !== 0) car.g.position.z += (nearestLine(pz) + (mx>0?2:-2) - car.g.position.z) * Math.min(1, dt*4);
     else car.g.position.x += (nearestLine(px) + (mz>0?-2:2) - car.g.position.x) * Math.min(1, dt*4);
     car.g.rotation.y = Math.atan2(mx,mz); // V54: snap heading to road direction (no diagonal slide at corners)
-    { const ws = (car.g.userData.glbWheels && car.g.userData.glbWheels.length) ? car.g.userData.glbWheels : (car.g.userData.procWheels || []); for(const w of ws) w.rotation.x += car.speed*dt/0.45; } // V97: traffic wheels spin (they never did — GLB wheels made it obvious)
+    { const ws = (car.g.userData.glbWheels && car.g.userData.glbWheels.length) ? car.g.userData.glbWheels : (car.g.userData.procWheels || []); for(const w of ws) w.rotation.x += (car.g.userData.spinSign || 1) * car.speed*dt/0.45; } // V97: traffic wheels spin (they never did — GLB wheels made it obvious)
     const fx = Math.sin(car.g.rotation.y), fz = Math.cos(car.g.rotation.y);
     carHitCheck(car.g.position.x, car.g.position.z, fx, fz, 2.75, 1.8);
   }
