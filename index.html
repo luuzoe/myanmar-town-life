@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V122</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro (CC-BY); Lexyc16 (CC-BY-NC)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
+  <div style="font-size:12px;opacity:.6">V123</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro (CC-BY); Lexyc16 (CC-BY-NC)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1444,7 +1444,7 @@ function swapCarGlb(t){
   if(t.model === 'lambo'){
     clone.updateMatrixWorld(true);
     const lw = [];
-    clone.traverse(o=>{ if(o.isMesh && /^Object_(22|23|24|25|36|37|38|39)$/.test(o.name)) lw.push(o); });
+    clone.traverse(o=>{ if(o.isMesh && /^Object_(22|23|36|37|38)$/.test(o.name)) lw.push(o); });
     for(const wm of lw){
       const wp = new THREE.Box3().setFromObject(wm).getCenter(new THREE.Vector3());
       clone.worldToLocal(wp);
