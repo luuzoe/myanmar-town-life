@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V124</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro (CC-BY); Lexyc16 (CC-BY-NC)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
+  <div style="font-size:12px;opacity:.6">V125</div><div style="font-size:11px;opacity:.5">🏠🚗🌳🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); evolveduk, Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🌳 သစ်ပင်အစစ် ဒေါင်းနေတယ် · 🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -494,7 +494,9 @@ for(let hi = 0; hi < houseList.length; hi++){ const h = houseList[hi]; if(HERO_H
 for(const rc in porchGeos){ const pm = new THREE.Mesh(mergeGeometries(porchGeos[rc], false), RM(Number(rc))); pm.castShadow = true; pm.receiveShadow = true; scene.add(pm); }
 if(whiteGeos.length){ const wm = new THREE.Mesh(mergeGeometries(whiteGeos, false), M(0xffffff)); wm.castShadow = true; wm.receiveShadow = true; scene.add(wm); }
 if(stepGeos.length){ const sm = new THREE.Mesh(mergeGeometries(stepGeos, false), M(0x9e9e9e)); sm.castShadow = true; sm.receiveShadow = true; scene.add(sm); }
+const schoolSigns = [];
 // ---- school (big, 2 floors), hospital (was clinic) ----
+const _sc0 = scene.children.length;
 bx(30,0.5,16,0x9e9e9e,-100,0.25,60);
 bx(28,10,14,0xfff9c4,-100,5.5,60);
 bx(30,0.4,16,0x1565c0,-100,10.7,60);
@@ -506,8 +508,9 @@ for(const wy of [3.5,7.5]) for(const wx of [-12,-8,-4,4,8,12]){
   bx(2,2,0.1,0xffffff,wx-100,wy,52.97);
   glassBx(1.8,1.8,0.12,wx-100,wy,52.95);
 }
-signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 67.1, 12, 1.8);
-{ const sN = signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 52.9, 12, 1.8); sN.rotation.y = Math.PI; }
+for(let i=_sc0;i<scene.children.length;i++) scene.children[i].userData.codeSchool = true;
+schoolSigns.push(signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 67.1, 12, 1.8));
+{ const sN = signMesh('စာသင်ကျောင်း', '#ffeb3b', '#1565c0', -100, 9.5, 52.9, 12, 1.8); sN.rotation.y = Math.PI; schoolSigns.push(sN); }
 cyl(0.08,0.08,6,0x455a64,-118,3,70);
 bx(2,1.2,0.1,0xe53935,-117,5.5,70);
 fenceRect(-107,60,15,12,10,-100); // school compound: x -122..-92, z 48..72, gate at -100 (road at -80 limits east side)
@@ -627,8 +630,11 @@ function tm(geo, mat, x, y, z, shadow){
   m.position.set(x, y, z); scene.add(m);
   m.castShadow = shadow; m.receiveShadow = true; return m;
 }
+const treeSpots = [];
 function tree(x,z,detailed,size){
   size = size || 1;
+  treeSpots.push({x, z, size});
+  const _tc0 = scene.children.length;
   const t = ((Math.abs(Math.floor(x*31 + z*17)) % 4) + 4) % 4;
   if(t === 3){
     tm(new THREE.SphereGeometry(1.4*size,10,8), treeLeafA, x, 0.9*size, z, false);
@@ -652,6 +658,7 @@ function tree(x,z,detailed,size){
     tm(new THREE.SphereGeometry(1.9*size,12,10), treeLeafB, x, 4.6*size, z, false);
     if(detailed){ tm(new THREE.SphereGeometry(1.2*size,10,8), treeLeafA, x+0.8*size, 5.5*size, z+0.5*size, false); tm(new THREE.SphereGeometry(1.0*size,10,8), treeLeafB, x-0.8*size, 5.2*size, z-0.5*size, false); }
   }
+  for(let i=_tc0;i<scene.children.length;i++) scene.children[i].userData.codeTree = true;
   colliders.push({x,z,r:1.2*size});
   treeBlockers.push({x,z,r:2.0*size});
 }
@@ -1022,6 +1029,7 @@ function makeHumanNPC(scale, tint){
   return {g, bones, isGLB:true};
 }
 // V77: nearby people become real human models — blocky placeholders are swapped for GLB clones once the model loads
+const STATIC_PEOPLE_MODELS = ['scan', 'yakuza', 'badguy'];
 function upgradeNPCs(){
   if(!glbBody || !glbRest) return;
   const tints = [0xffffff,0xf5e8dc,0xe8e0d0,0xdfe8f0,0xf0e0e0];
@@ -1030,7 +1038,7 @@ function upgradeNPCs(){
   for(const n of npcs){ n.p = swap(n.p, 0.80 + (ti % 5) * 0.025); n.modelIdx = (mi++ % 20) + 1; } // V78: slight height variety (was all exactly 0.85); V84: real-model assignment
   for(const y of yardPeople){ y.p = swap(y.p, 0.80 + (ti % 5) * 0.025); y.modelIdx = (mi++ % 20) + 1; }
   for(const k of schoolKids){ k.p = swap(k.p, 0.57); k.modelIdx = (mi++ % 20) + 1; }
-  for(let i=0;i<staticPeople.length;i++){ staticPeople[i] = swap(staticPeople[i], 0.80 + (ti % 5) * 0.025); staticPeople[i].modelIdx = (mi++ % 20) + 1; }
+  for(let i=0;i<staticPeople.length;i++){ staticPeople[i] = swap(staticPeople[i], 0.80 + (ti % 5) * 0.025); staticPeople[i].newModel = STATIC_PEOPLE_MODELS[i % STATIC_PEOPLE_MODELS.length]; }
   loadNpcModels(); // V84: background-load all 20 real NPC models; each swaps in when its file arrives (game starts instantly, no 72MB wait)
 }
 // V84: real NPC models (Zaw's 20-GLB pack) — same pipeline as the player (scale 2.40, rotation -PI/2, own idle/walk clips)
@@ -1505,6 +1513,145 @@ function loadLambo(tries){
   });
 }
 loadLambo(3);
+const STATIC_PEOPLE_FILES = {scan: 'person-scan-real.glb', yakuza: 'person-yakuza-real.glb', badguy: 'person-badguy-real.glb'};
+const staticPeopleLoaded = {};
+let tropicsLoaded = false;
+let schoolGlbLoaded = false;
+let hotelGlbLoaded = false;
+function updateLoadStatus2(){
+  const el = document.getElementById('loadStatus2');
+  if(!el) return;
+  const pk = Object.keys(staticPeopleLoaded).filter((k) => staticPeopleLoaded[k]).length;
+  const pt = Object.keys(STATIC_PEOPLE_FILES).length;
+  el.textContent = '🌳 သစ်ပင်အစစ် ' + (tropicsLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🏫 ကျောင်း ' + (schoolGlbLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🏨 ဟိုတယ် ' + (hotelGlbLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🧍 လူအစစ် ' + pk + '/' + pt;
+}
+function lambertize(o){
+  if(!o.isMesh) return;
+  const m = o.material;
+  if(m && m.isMeshStandardMaterial){
+    o.material = new THREE.MeshLambertMaterial({map: m.map || null, color: m.color, transparent: m.transparent, opacity: m.opacity, side: m.side, vertexColors: m.vertexColors, emissive: m.emissive, emissiveMap: m.emissiveMap});
+  }
+}
+function applyStaticPerson(key){
+  const gltf = staticPeopleLoaded[key];
+  if(!gltf) return;
+  for(let i = 0; i < staticPeople.length; i++){
+    const sp = staticPeople[i];
+    if(sp.newModel !== key || sp.staticGlb) continue;
+    const clone = gltf.scene.clone(true);
+    clone.rotation.y = -Math.PI / 2;
+    clone.traverse(lambertize);
+    clone.traverse((o) => { if(o.isMesh) o.castShadow = false; });
+    const bb = new THREE.Box3().setFromObject(clone);
+    const h = bb.max.y - bb.min.y;
+    const s = (h > 0) ? (2.40 / h) : 1;
+    clone.scale.setScalar(s);
+    clone.position.set(-(bb.max.x + bb.min.x) / 2 * s, -bb.min.y * s, -(bb.max.z + bb.min.z) / 2 * s);
+    const g = new THREE.Group();
+    g.scale.setScalar(sp.g.scale.x);
+    g.add(clone);
+    g.position.copy(sp.g.position);
+    g.rotation.y = sp.g.rotation.y;
+    scene.remove(sp.g);
+    scene.add(g);
+    staticPeople[i] = {g, staticGlb: true};
+  }
+}
+function loadStaticPerson(key, tries){
+  new GLTFLoader().load(STATIC_PEOPLE_FILES[key], (gltf) => {
+    staticPeopleLoaded[key] = gltf;
+    applyStaticPerson(key);
+    updateLoadStatus2();
+  }, undefined, () => {
+    if(tries > 1) setTimeout(() => { loadStaticPerson(key, tries - 1); }, 2000);
+    else { staticPeopleLoaded[key] = null; updateLoadStatus2(); }
+  });
+}
+function loadTropics(tries){
+  new GLTFLoader().load('tree-tropics-real.glb', (gltf) => {
+    const variants = [];
+    for(const nm of ['Tree_0', 'Tree_1', 'Tree_2']){
+      const v = gltf.scene.getObjectByName(nm);
+      if(v) variants.push(v);
+    }
+    if(variants.length){
+      gltf.scene.traverse(lambertize);
+      scene.traverse((o) => { if(o.userData && o.userData.codeTree) o.visible = false; });
+      for(let i = 0; i < treeSpots.length; i++){
+        const sp = treeSpots[i];
+        const src = variants[i % variants.length];
+        const clone = src.clone(true);
+        clone.rotation.y = (i * 2.399963) % (Math.PI * 2);
+        const bb = new THREE.Box3().setFromObject(clone);
+        const s = sp.size;
+        clone.scale.setScalar(s);
+        clone.position.set(sp.x - (bb.max.x + bb.min.x) / 2 * s, -bb.min.y * s, sp.z - (bb.max.z + bb.min.z) / 2 * s);
+        clone.traverse((o) => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+        scene.add(clone);
+      }
+    }
+    tropicsLoaded = true;
+    updateLoadStatus2();
+  }, undefined, () => {
+    if(tries > 1) setTimeout(() => { loadTropics(tries - 1); }, 2000);
+    else updateLoadStatus2();
+  });
+}
+function loadSchoolGlb(tries){
+  new GLTFLoader().load('school-real.glb', (gltf) => {
+    const clone = gltf.scene.clone(true);
+    clone.rotation.y = 0;
+    clone.traverse(lambertize);
+    const bb = new THREE.Box3().setFromObject(clone);
+    const w = bb.max.x - bb.min.x;
+    const s = (w > 0) ? (30 / w) : 1;
+    clone.scale.setScalar(s);
+    clone.position.set(-100 - (bb.max.x + bb.min.x) / 2 * s, -bb.min.y * s, 60 - (bb.max.z + bb.min.z) / 2 * s);
+    clone.traverse((o) => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(clone);
+    scene.traverse((o) => { if(o.userData && o.userData.codeSchool) o.visible = false; });
+    const hgt = (bb.max.y - bb.min.y) * s;
+    for(const sg of schoolSigns) sg.position.y = hgt + 1.0;
+    schoolGlbLoaded = true;
+    updateLoadStatus2();
+  }, undefined, () => {
+    if(tries > 1) setTimeout(() => { loadSchoolGlb(tries - 1); }, 2000);
+    else updateLoadStatus2();
+  });
+}
+function loadHotelGlb(tries){
+  new GLTFLoader().load('hotel-tower-real.glb', (gltf) => {
+    const clone = gltf.scene.clone(true);
+    clone.rotation.y = 0;
+    clone.traverse(lambertize);
+    const bb = new THREE.Box3().setFromObject(clone);
+    const h = bb.max.y - bb.min.y;
+    const s = (h > 0) ? (20 / h) : 1;
+    clone.scale.setScalar(s);
+    const hx = hotelPos ? hotelPos.x : 120;
+    const hz = hotelPos ? hotelPos.z : 200;
+    clone.position.set(hx - (bb.max.x + bb.min.x) / 2 * s, -bb.min.y * s, hz - (bb.max.z + bb.min.z) / 2 * s);
+    clone.traverse((o) => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+    scene.add(clone);
+    scene.traverse((o) => { if(o.userData && o.userData.codeHotel) o.visible = false; });
+    const halfD = (bb.max.z - bb.min.z) * s / 2;
+    for(const sg of hotelSigns){
+      const dz = sg.position.z - hz;
+      sg.position.z = hz + (dz >= 0 ? halfD + 0.3 : -halfD - 0.3);
+      sg.position.x = hx;
+    }
+    hotelGlbLoaded = true;
+    updateLoadStatus2();
+  }, undefined, () => {
+    if(tries > 1) setTimeout(() => { loadHotelGlb(tries - 1); }, 2000);
+    else updateLoadStatus2();
+  });
+}
+for(const key of Object.keys(STATIC_PEOPLE_FILES)) loadStaticPerson(key, 3);
+loadTropics(3);
+loadSchoolGlb(3);
+loadHotelGlb(3);
+
 
 const PROP_MODELS = {
   hydrant: {file:'prop-hydrant.glb', spots:[[6,200,0],[-6,-200,0],[-6,-320,0],[-6,320,0],[166,80,0],[-166,-80,0]]},
@@ -2368,6 +2515,8 @@ const nearShops = roadShops.filter(s=>Math.hypot(s.x, s.z) < 80).slice(0,4);
 });
 // V91: bus waiters — 6 walkers wait at route-side spots (bus passes within ~6u, so boarding triggers)
 // V100: bus waiters removed — they stood at bare road edges for minutes (bus loop ~280s) with no shelter or sign, which looked like stuck NPCs; those 6 walkers now walk normally like everyone else
+let hotelPos = null;
+const hotelSigns = [];
 // city buildings: gas station, bank, hotel, mall (+ parking), billboards, bus shelters, food carts
 tryPlace(40, -200, 10, (x,z)=>{
   for(const px of [-4,4]) for(const pz of [-3,3]) cyl(0.25,0.25,4,0x9e9e9e,x+px,2,z+pz);
@@ -2384,11 +2533,12 @@ tryPlace(-40, 200, 10, (x,z)=>{
   const s2 = signMesh('ဘဏ်', '#1565c0', '#ffffff', x, 9.5, z-5.2, 10, 2); s2.rotation.y = Math.PI;
   colliders.push({x, z, r:9});
 });
-tryPlace(120, 200, 12, (x,z)=>{
+tryPlace(120, 200, 12, (x,z)=>{ hotelPos = {x, z}; const _ht0 = scene.children.length;
   bx(16,20,14,0xfff3e0,x,10,z);
   bx(16.5,0.5,14.5,0x37474f,x,20.2,z);
-  signMesh('ဟိုတယ်', '#ff8f00', '#ffffff', x, 12, z+7.2, 10, 2);
-  const s2 = signMesh('ဟိုတယ်', '#ff8f00', '#ffffff', x, 12, z-7.2, 10, 2); s2.rotation.y = Math.PI;
+  for(let i=_ht0;i<scene.children.length;i++) scene.children[i].userData.codeHotel = true;
+  hotelSigns.push(signMesh('ဟိုတယ်', '#ff8f00', '#ffffff', x, 12, z+7.2, 10, 2));
+  const s2 = signMesh('ဟိုတယ်', '#ff8f00', '#ffffff', x, 12, z-7.2, 10, 2); s2.rotation.y = Math.PI; hotelSigns.push(s2);
   colliders.push({x, z, r:11});
 });
 tryPlace(-120, -200, 15, (x,z)=>{
