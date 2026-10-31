@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V121</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro (CC-BY); Lexyc16 (CC-BY-NC)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
+  <div style="font-size:12px;opacity:.6">V122</div><div style="font-size:11px;opacity:.5">🏠🚗 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro (CC-BY); Lexyc16 (CC-BY-NC)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -658,6 +658,9 @@ function tree(x,z,detailed,size){
 [[-10,-28],[10,-28],[-28,-10],[28,10],[-10,28],[10,28],[-28,-20],[28,20],[-70,-60],[70,60],[-60,70],[60,-70],[-110,-60],[110,60]].forEach(p=>tree(p[0],p[1],true,1.25));
 [[-140,-140],[-20,-140],[140,-140],[-140,140],[20,140],[140,140],[-140,-20],[140,20]].forEach(p=>tree(p[0],p[1],true,1.25));
 tree(-130,110,true,1.25); tree(-110,110,true,1.25); tree(-130,130,true,1.25); tree(-110,130,true,1.25); // park corner trees (safe here: treeBlockers already initialised)
+tree(-140,100,true,1.25); tree(-100,100,true,1.25); tree(-140,140,true,1.25); tree(-100,140,true,1.25); tree(-120,100,true,1.25); tree(-120,140,true,1.25); tree(-140,120,true,1.25); tree(-100,120,true,1.25);
+tree(150,-100,true,1.25); tree(187,-100,true,1.25); tree(150,100,true,1.25); tree(187,100,true,1.25); tree(150,-200,true,1.25); tree(187,-200,true,1.25); tree(150,200,true,1.25); tree(187,200,true,1.25);
+tree(-130,86,true,1.25); tree(-70,86,true,1.25); tree(-130,114,true,1.25); tree(-70,114,true,1.25);
 tree(-60,-140,false,1.9); tree(-200,200,false,1.9); tree(60,200,false,1.9);
 function lamp(x,z){
   cyl(0.12,0.12,4.5,0x455a64,x,2.25,z);
@@ -1246,7 +1249,7 @@ const NPC_JOBS = [
 ];
 function nearestHouse(x,z){ let best = null, bd = 1e9; for(const h of houseList){ const d = Math.hypot(h[0]-x, h[1]-z); if(d < bd){ bd = d; best = h; } } return best ? {x: best[0], z: best[1]+11, rot: Math.PI} : {x: x+15, z: z+15, rot: 0}; }
 for(const j of NPC_JOBS) j.home = nearestHouse(j.x, j.z); // V91: workers go home at night
-for(let i=0;i<96;i++){ // V90: road walkers 48 -> 96 (crowd deleted, replaced by real 20-pack walkers)
+for(let i=0;i<128;i++){ // V90: road walkers 48 -> 96 (crowd deleted, replaced by real 20-pack walkers); V122: 96 -> 128
   const female = i % 3 === 0;
   const p = makePerson(npcShirts[i%12], female ? 0x7b1fa2 : 0x37474f, {skin:skins[i%4], female, longHair:female, beard:(i%4===1 && !female)});
   p.g.scale.setScalar(0.85);
@@ -1443,8 +1446,7 @@ function swapCarGlb(t){
     const lw = [];
     clone.traverse(o=>{ if(o.isMesh && /^Object_(22|23|24|25|36|37|38|39)$/.test(o.name)) lw.push(o); });
     for(const wm of lw){
-      const wp = new THREE.Vector3();
-      wm.getWorldPosition(wp);
+      const wp = new THREE.Box3().setFromObject(wm).getCenter(new THREE.Vector3());
       clone.worldToLocal(wp);
       const wg = new THREE.Group();
       wg.position.copy(wp);
@@ -1513,7 +1515,7 @@ const PROP_MODELS = {
 for(const k in PROP_MODELS){ new GLTFLoader().load(PROP_MODELS[k].file, (gltf)=>{ for(const sp of PROP_MODELS[k].spots){ const c = gltf.scene.clone(true); c.traverse((o)=>{ if(o.isMesh){ o.castShadow = false; o.receiveShadow = true; } }); c.position.set(sp[0], groundHeight(sp[0], sp[1]), sp[1]); c.rotation.y = sp[2]; scene.add(c); } }, undefined, ()=>{}); }
 
 const cars = [];
-for(let i=0;i<24;i++){ // V70: traffic 8 -> 24 cars for the big city
+for(let i=0;i<30;i++){ // V70: traffic 8 -> 24 cars for the big city; V122: 24 -> 30
   const car = makeCar([0xe53935,0x1565c0,0xffffff,0xffeb3b,0x43a047,0x8e24aa,0xef6c00,0xec407a,0x00acc1,0x8d6e63,0x78909c,0xd81b60,0x3949ab,0x00897b,0xc0ca33,0x5e35b1][i%16], ['sedan','suv','pickup'][i%3]); // V92: traffic variety
   const start = intersections[i*7 % intersections.length];
   car.position.set(start.x, 0, start.z); scene.add(car);
@@ -2184,8 +2186,8 @@ function massOk(x,z,mass){
 }
 const massPlaced = [];
 const massWallGeos = {}, massRoofGeos = {}, massWinGeos = {}, massDoorGeos = {};
-for(let gx=-790; gx<=590; gx+=24){
-  for(let gz=-580; gz<=580; gz+=24){
+for(let gx=-790; gx<=590; gx+=20){
+  for(let gz=-580; gz<=580; gz+=20){
     const x = gx + (massRnd()*10 - 5), z = gz + (massRnd()*10 - 6);
     if(!massOk(x,z,massPlaced)) continue;
     massPlaced.push([x,z]);
