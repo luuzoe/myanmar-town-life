@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V125</div><div style="font-size:11px;opacity:.5">🏠🚗🌳🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); evolveduk, Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🌳 သစ်ပင်အစစ် ဒေါင်းနေတယ် · 🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
+  <div style="font-size:12px;opacity:.6">V126</div><div style="font-size:11px;opacity:.5">🏠🚗🌳🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); evolveduk, Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🌳 သစ်ပင်အစစ် ဒေါင်းနေတယ် · 🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1587,7 +1587,14 @@ function loadTropics(tries){
         clone.scale.setScalar(s);
         clone.position.set(sp.x - (bb.max.x + bb.min.x) / 2 * s, -bb.min.y * s, sp.z - (bb.max.z + bb.min.z) / 2 * s);
         clone.traverse((o) => { if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+        clone.userData.treeX = sp.x;
+        clone.userData.treeZ = sp.z;
+        clone.userData.canopyR = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2 * s;
+        clone.userData.treeTop = (bb.max.y - bb.min.y) * s;
+        clone.userData.treeHidden = false;
         scene.add(clone);
+        if(!scene.userData.tropicsClones) scene.userData.tropicsClones = [];
+        scene.userData.tropicsClones.push(clone);
       }
     }
     tropicsLoaded = true;
@@ -3031,6 +3038,34 @@ function animate(now){
   camera.position.set(player.g.position.x - cf.x*smoothCamDist, pitchH, player.g.position.z - cf.z*smoothCamDist);
   { const tf = flyingCam ? 60 : (drivingCar ? 55 + Math.min(8, Math.abs(carSpeed)*0.4) : 55); if(Math.abs(camera.fov - tf) > 0.1){ camera.fov += (tf - camera.fov) * Math.min(1, dt*5); camera.updateProjectionMatrix(); } }
   { const baseLookY = player.g.position.y + 1.4; const viewAng = Math.atan((baseLookY - pitchH)/smoothCamDist) + tilt; const lookY = pitchH + Math.tan(viewAng)*smoothCamDist; camera.lookAt(player.g.position.x, lookY, player.g.position.z); } // V83: pure tilt — view angle = default angle + tilt, exactly like yaw rotating the view
+  const _v126tcl = scene.userData.tropicsClones;
+  if(_v126tcl){
+    const _v126px = player.g.position.x;
+    const _v126pz = player.g.position.z;
+    const _v126py = player.g.position.y;
+    const _v126cx = camera.position.x;
+    const _v126cz = camera.position.z;
+    const _v126cy = camera.position.y;
+    for(let _v126i = 0; _v126i < _v126tcl.length; _v126i++){
+      const _v126t = _v126tcl[_v126i];
+      const _v126ud = _v126t.userData;
+      const _v126dxp = _v126px - _v126ud.treeX;
+      const _v126dzp = _v126pz - _v126ud.treeZ;
+      const _v126dp2 = _v126dxp * _v126dxp + _v126dzp * _v126dzp;
+      const _v126dxc = _v126cx - _v126ud.treeX;
+      const _v126dzc = _v126cz - _v126ud.treeZ;
+      const _v126dc2 = _v126dxc * _v126dxc + _v126dzc * _v126dzc;
+      const _v126rp = _v126ud.canopyR + 2.0;
+      const _v126rc = _v126ud.canopyR + 1.5;
+      const _v126under = ((_v126dp2 < _v126rp * _v126rp && _v126py < _v126ud.treeTop) || (_v126dc2 < _v126rc * _v126rc && _v126cy < _v126ud.treeTop));
+      if(_v126under && !_v126ud.treeHidden){ _v126t.visible = false; _v126ud.treeHidden = true; }
+      else if(!_v126under && _v126ud.treeHidden){
+        const _v126rp2 = _v126rp + 1.0;
+        const _v126rc2 = _v126rc + 1.0;
+        if((_v126dp2 > _v126rp2 * _v126rp2 || _v126py > _v126ud.treeTop + 1.0) && (_v126dc2 > _v126rc2 * _v126rc2 || _v126cy > _v126ud.treeTop + 1.0)){ _v126t.visible = true; _v126ud.treeHidden = false; }
+      }
+    }
+  }
   renderer.render(scene,camera);
 }
 requestAnimationFrame(animate);
