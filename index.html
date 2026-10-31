@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V128</div><div style="font-size:11px;opacity:.5">🏠🚗🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
+  <div style="font-size:12px;opacity:.6">V129</div><div style="font-size:11px;opacity:.5">🏠🚗🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -419,7 +419,7 @@ for(const hi in HERO_HOUSES){
 }
 // V115: whole-town real houses — simplified Sketchfab models as InstancedMesh per (region, model, material)
 const pending81 = [];
-const REAL_HOUSE_FILES = ['house-real-1s2.glb','house-real-2s2.glb','house-real-3s2.glb'];
+const REAL_HOUSE_FILES = ['house-real-1s3.glb','house-real-2s3.glb','house-real-3s3.glb'];
 const realHouseBuilt = {};
 function realHouseRegion(x, z){ return (x < 0 ? 0 : 1) + (z < 0 ? 0 : 2); }
 function buildRealHousesForModel(mi, sc){
@@ -1513,7 +1513,7 @@ function loadLambo(tries){
   });
 }
 loadLambo(3);
-const STATIC_PEOPLE_FILES = {scan: 'person-scan-real.glb', yakuza: 'person-yakuza-real.glb', badguy: 'person-badguy-real.glb'};
+const STATIC_PEOPLE_FILES = {scan: 'person-scan-real.glb', yakuza: 'person-yakuza-real2.glb', badguy: 'person-badguy-real.glb'};
 const staticPeopleLoaded = {};
 let tropicsLoaded = false;
 let schoolGlbLoaded = false;
@@ -2344,6 +2344,7 @@ for(let gx=-790; gx<=590; gx+=20){
   for(let gz=-580; gz<=580; gz+=20){
     const x = gx + (massRnd()*10 - 5), z = gz + (massRnd()*10 - 6);
     if(!massOk(x,z,massPlaced)) continue;
+    if(Math.abs(Math.floor(x*31 + z*17)) % 6 === 0) continue;
     massPlaced.push([x,z]);
     // variety from position hash (no RNG — keeps the jitter stream identical to the audit, so the count holds)
     const hh = Math.abs(Math.floor(x*31 + z*17));
