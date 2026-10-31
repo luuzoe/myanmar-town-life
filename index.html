@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V126</div><div style="font-size:11px;opacity:.5">🏠🚗🌳🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); evolveduk, Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🌳 သစ်ပင်အစစ် ဒေါင်းနေတယ် · 🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
+  <div style="font-size:12px;opacity:.6">V127</div><div style="font-size:11px;opacity:.5">🏠🚗🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -1523,7 +1523,7 @@ function updateLoadStatus2(){
   if(!el) return;
   const pk = Object.keys(staticPeopleLoaded).filter((k) => staticPeopleLoaded[k]).length;
   const pt = Object.keys(STATIC_PEOPLE_FILES).length;
-  el.textContent = '🌳 သစ်ပင်အစစ် ' + (tropicsLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🏫 ကျောင်း ' + (schoolGlbLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🏨 ဟိုတယ် ' + (hotelGlbLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🧍 လူအစစ် ' + pk + '/' + pt;
+  el.textContent = '🏫 ကျောင်း ' + (schoolGlbLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🏨 ဟိုတယ် ' + (hotelGlbLoaded ? 'ရောက်ပြီ' : 'ဒေါင်းနေတယ်') + ' · 🧍 လူအစစ် ' + pk + '/' + pt;
 }
 function lambertize(o){
   if(!o.isMesh) return;
@@ -1655,7 +1655,6 @@ function loadHotelGlb(tries){
   });
 }
 for(const key of Object.keys(STATIC_PEOPLE_FILES)) loadStaticPerson(key, 3);
-loadTropics(3);
 loadSchoolGlb(3);
 loadHotelGlb(3);
 
