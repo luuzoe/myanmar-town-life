@@ -17,7 +17,7 @@
   #hud{position:fixed;top:8px;left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;z-index:10;pointer-events:none}
   .pill{background:rgba(0,0,0,.65);color:#fff;padding:6px 10px;border-radius:16px;font-size:13px}
   .pill b{color:#ffd54a}
-  #job{position:fixed;top:48px;left:8px;right:8px;z-index:10;pointer-events:none}
+  #job{position:fixed;top:90px;left:8px;right:8px;z-index:10;pointer-events:none}
   #job span{background:rgba(255,255,255,.92);padding:6px 10px;border-radius:12px;font-size:13px;display:inline-block}
   #msg{position:fixed;top:150px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;z-index:25;display:none;max-width:92vw;text-align:center} /* V62: above shop overlay (20) so purchase messages stay visible */
   #joy{position:fixed;left:16px;bottom:16px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.6);z-index:10;touch-action:none}
@@ -91,7 +91,7 @@
 <canvas id="minimap" width="240" height="120"></canvas>
 <div id="start"><div class="card">
   <h1>🏡 မြန်မာမြို့လေး</h1>
-  <div style="font-size:12px;opacity:.6">V127</div><div style="font-size:11px;opacity:.5">🏠🚗🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
+  <div style="font-size:12px;opacity:.6">V128</div><div style="font-size:11px;opacity:.5">🏠🚗🏫 Models: Desant_Art, ciolan, taz83, mmcworks, Cesium, bhagathartworks, The_Ping Pro, OverseerThuror, Woliński, Render_Vendor, Leomanish (CC-BY); Lexyc16 (CC-BY-NC); Bornx (Standard)</div><div id="loadStatus" style="font-size:11px;opacity:.6">🏠 အိမ်အစစ် ဒေါင်းနေတယ် 0/3 · 🚗 ကားအစစ် ဒေါင်းနေတယ်</div><div id="loadStatus2" style="font-size:11px;opacity:.6">🏫 ကျောင်း ဒေါင်းနေတယ် · 🏨 ဟိုတယ် ဒေါင်းနေတယ် · 🧍 လူအစစ် ဒေါင်းနေတယ် 0/3</div>
   <button id="playBtn">▶ ဆော့မယ်</button>
   <button id="tutorialBtn" style="background:#1565c0">📖 သင်ခန်းစာ ကြည့်မယ်</button>
   <button id="shareBtn" style="background:#00897b">🔗 သူငယ်ချင်းကို မျှဝေမယ်</button>
@@ -247,9 +247,9 @@ const wallTexB = brickTex();
 const roofTileTex = tileTex();
 const roofMatCache = {};
 function RM(color){ if(!roofMatCache[color]) roofMatCache[color] = new THREE.MeshLambertMaterial({map:roofTileTex, color}); return roofMatCache[color]; }
-const grassMat = new THREE.MeshLambertMaterial({map:grassTex});
+const grassMat = new THREE.MeshLambertMaterial({map:grassTex, color:0xBFFFD9});
 // V98: real CC0 grass photo (ambientCG Grass004) replaces the flat procedural green once loaded
-new THREE.TextureLoader().load('Textures/grass004.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(40, 34); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); grassMat.map = t; grassMat.needsUpdate = true; });
+new THREE.TextureLoader().load('Textures/grass004.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(80, 68); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); grassMat.map = t; grassMat.needsUpdate = true; });
 const asphaltMat = new THREE.MeshLambertMaterial({color:0x444444}); // V50: flat, no texture (texture streaked on 400-long boxes)
 const sidewalkMat = new THREE.MeshLambertMaterial({color:0x9e9e9e}); // V50: flat, no texture (same streak cause)
 // V101: real CC0 photo surfaces (ambientCG) — plaster walls, gray roof tiles, asphalt roads
@@ -419,7 +419,7 @@ for(const hi in HERO_HOUSES){
 }
 // V115: whole-town real houses — simplified Sketchfab models as InstancedMesh per (region, model, material)
 const pending81 = [];
-const REAL_HOUSE_FILES = ['house-real-1s.glb','house-real-2s.glb','house-real-3s.glb'];
+const REAL_HOUSE_FILES = ['house-real-1s2.glb','house-real-2s2.glb','house-real-3s2.glb'];
 const realHouseBuilt = {};
 function realHouseRegion(x, z){ return (x < 0 ? 0 : 1) + (z < 0 ? 0 : 2); }
 function buildRealHousesForModel(mi, sc){
@@ -1968,6 +1968,7 @@ function refresh(){
   const xpEl = document.getElementById('xp'); if(xpEl) xpEl.textContent = xp % 500;
   const qEl = document.getElementById('questPill'); if(qEl && QUESTS[questIdx]) qEl.textContent = QUESTS[questIdx].label + ' ' + questProg + '/' + QUESTS[questIdx].target + (storyIdx < 5 ? ' · ' + STORY_STAGES[storyIdx] : '');
   const gEl = document.getElementById('goalPill'); if(gEl){ const nr = MAYOR_RANKS[rankIdx]; gEl.textContent = nr ? ('နောက် ' + nr.title + ' · ငွေ ' + money.toLocaleString() + '/' + nr.money.toLocaleString() + ' · အိမ် ' + ownedHouses + '/' + nr.houses + ' · Lv' + level + '/' + nr.level) : '🏛️ မြို့တော်ဝန် ဖြစ်ပြီ!'; }
+  const _hud=document.getElementById('hud'), _job=document.getElementById('job'); if(_hud&&_job) _job.style.top=(_hud.offsetHeight+14)+'px';
   const bh = document.getElementById('buyHouse'); if(bh) bh.textContent = '🏠 အိမ်ဝယ် (' + (5000 + ownedHouses*3000) + ' ကျပ်) — ပိုင်ဆိုင် ' + ownedHouses;
   const bi = document.getElementById('buyHouseItem'); if(bi) bi.textContent = '🪑 အိမ်ပစ္စည်း (၁၀၀၀ ကျပ်) — ရှိ ' + houseItems;
   const bs = document.getElementById('buyStall'); if(bs) bs.textContent = stallUpg ? '✅ ဈေးဆိုင်ကြီး upgrade ပြီးပြီ' : '🏪 ဈေးဆိုင်ကြီး upgrade (၄၀၀၀ ကျပ်) — ရောင်းခ ၁၂၀၀';
